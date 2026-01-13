@@ -22,7 +22,7 @@ Le système RBAC (Role-Based Access Control) d'Event Planner permet une gestion 
 - Exemples : `users.create`, `roles.read`
 
 ### 4. Ressources (Resources)
-- Entités du système : users, roles, permissions, menus, people, sessions
+- Entités du système : users, roles, permissions, menus, people, sessions, auth
 - Actions possibles : create, read, update, delete, list, assign, revoke
 
 ## Rôles Prédéfinis
@@ -80,6 +80,8 @@ Le système RBAC (Role-Based Access Control) d'Event Planner permet une gestion 
 - **people** : Gestion des personnes
 - **sessions** : Gestion des sessions
 - **auth** : Authentification
+- **accesses** : Gestion des accès user-rôle
+- **authorizations** : Gestion des autorisations rôle-permission-menu
 
 ### Actions par ressource
 
@@ -127,6 +129,22 @@ Le système RBAC (Role-Based Access Control) d'Event Planner permet une gestion 
 - `sessions.list` : Lister les sessions
 - `sessions.revoke` : Révoquer une session
 
+#### Accesses
+- `accesses.create` : Créer un accès user-rôle
+- `accesses.read` : Lire les informations accès
+- `accesses.update` : Mettre à jour un accès
+- `accesses.delete` : Supprimer un accès
+- `accesses.list` : Lister les accès
+- `accesses.activate` : Activer un accès
+- `accesses.deactivate` : Désactiver un accès
+
+#### Authorizations
+- `authorizations.create` : Créer une autorisation rôle-permission-menu
+- `authorizations.read` : Lire les informations autorisation
+- `authorizations.update` : Mettre à jour une autorisation
+- `authorizations.delete` : Supprimer une autorisation
+- `authorizations.list` : Lister les autorisations
+
 #### Auth
 - `auth.login` : Se connecter
 - `auth.logout` : Se déconnecter
@@ -171,11 +189,23 @@ router.put('/users/:id',
 ```javascript
 // Dans le service ou controller
 const hasPermission = await usersRepository.getUserPermissions(userId);
-const canDeleteUser = hasPermission.some(p => p.name === 'users.delete');
+const canDeleteUser = hasPermission.some(p => p.code === 'users.delete');
 
 if (!canDeleteUser) {
   throw new Error('Permission insuffisante pour supprimer un utilisateur');
 }
+
+// Vérification via la table accesses
+const userAccesses = await accessesRepository.getUserAccesses(userId);
+const hasActiveRole = userAccesses.some(access => 
+  access.role.code === 'admin' && access.status === 'active'
+);
+
+// Vérification via la table authorizations
+const roleAuthorizations = await authorizationsRepository.getRoleAuthorizations(roleId);
+const hasMenuPermission = roleAuthorizations.some(auth => 
+  auth.permission.code === 'users.read' && auth.menu.id === menuId
+);
 ```
 
 ## Gestion des Menus
@@ -204,9 +234,10 @@ if (!canDeleteUser) {
 
 ### Filtrage par rôle
 Les menus sont filtrés dynamiquement selon les rôles de l'utilisateur :
-- Seuls les menus associés aux rôles de l'utilisateur sont affichés
+- Seuls les menus associés aux rôles de l'utilisateur sont affichés via la table `authorizations`
 - La hiérarchie est préservée
 - Les menus sans enfants visibles sont masqués
+- Chaque autorisation lie un rôle, une permission et un menu spécifique
 
 ## Sécurité
 
@@ -216,9 +247,11 @@ Les menus sont filtrés dynamiquement selon les rôles de l'utilisateur :
 - Pas d'héritage automatique de permissions
 
 ### Audit et traçabilité
-- Toutes les assignations de rôles sont tracées
-- L'historique des modifications est conservé
+- Toutes les assignations de rôles sont tracées via la table `accesses`
+- L'historique des modifications est conservé avec les champs audit
 - Les tentatives d'accès non autorisées sont journalisées
+- Le statut des accès peut être activé/désactivé
+- Les autorisations sont traçables par rôle, permission et menu
 
 ### Validation des permissions
 - Vérification à chaque requête
@@ -247,8 +280,9 @@ Les menus sont filtrés dynamiquement selon les rôles de l'utilisateur :
 ### Cas 1 : Manager qui veut supprimer un utilisateur
 ```
 1. Vérification authentification ✓
-2. Vérification permission users.delete ✗
-3. Accès refusé (403)
+2. Vérification accès actif via table accesses ✓
+3. Vérification permission users.delete ✗
+4. Accès refusé (403)
 ```
 
 ### Cas 2 : Admin qui modifie son profil
@@ -261,23 +295,34 @@ Les menus sont filtrés dynamiquement selon les rôles de l'utilisateur :
 ### Cas 3 : Super admin qui gère les rôles
 ```
 1. Vérification authentification ✓
-2. Vérification rôle super_admin ✓
-3. Accès autorisé à toutes les opérations
+2. Vérification rôle super_admin via accesses ✓
+3. Vérification autorisations complètes via authorizations ✓
+4. Accès autorisé à toutes les opérations
+```
+
+### Cas 4 : Utilisateur avec accès désactivé
+```
+1. Vérification authentification ✓
+2. Vérification statut access = 'inactive' ✗
+3. Accès refusé (403)
 ```
 
 ## Migration et Évolution
 
 ### Ajout de nouvelles permissions
-1. Créer la permission dans la base de données
-2. L'assigner aux rôles appropriés
-3. Mettre à jour le code pour utiliser la nouvelle permission
+1. Créer la permission dans la table `permissions`
+2. L'assigner aux rôles appropriés via la table `authorizations`
+3. Associer aux menus concernés dans `authorizations`
+4. Mettre à jour le code pour utiliser la nouvelle permission
 
 ### Modification de rôles existants
-1. Analyser l'impact sur les utilisateurs
-2. Mettre à jour les assignations de permissions
-3. Communiquer les changements aux utilisateurs
+1. Analyser l'impact sur les accès via la table `accesses`
+2. Mettre à jour les autorisations dans `authorizations`
+3. Gérer les statuts d'accès si nécessaire
+4. Communiquer les changements aux utilisateurs
 
 ### Audit régulier
-- Vérifier les permissions excessives
-- Identifier les rôles inutilisés
+- Vérifier les permissions excessives dans `authorizations`
+- Identifier les accès inutilisés dans `accesses`
 - Optimiser les assignations de permissions
+- Vérifier la cohérence des statuts d'accès

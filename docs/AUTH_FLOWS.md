@@ -22,6 +22,7 @@ POST /api/auth/register
   "firstName": "John",
   "lastName": "Doe",
   "email": "john.doe@example.com",
+  "phone": "+1234567890",
   "username": "johndoe",
   "password": "Password123!"
 }
@@ -37,7 +38,17 @@ POST /api/auth/register
       "id": 1,
       "username": "johndoe",
       "email": "john.doe@example.com",
-      "isVerified": false
+      "phone": "+1234567890",
+      "isVerified": false,
+      "isActive": true,
+      "person": {
+        "id": 1,
+        "firstName": "John",
+        "lastName": "Doe",
+        "phone": "+1234567890",
+        "email": "john.doe@example.com",
+        "status": "active"
+      }
     },
     "verificationToken": "abc123..."
   }
@@ -80,7 +91,20 @@ POST /api/auth/login
       "id": 1,
       "username": "johndoe",
       "email": "john.doe@example.com",
-      "isVerified": true
+      "phone": "+1234567890",
+      "isVerified": true,
+      "isActive": true,
+      "roles": [
+        {
+          "id": 2,
+          "code": "user",
+          "label": "Utilisateur standard"
+        }
+      ],
+      "permissions": [
+        "users.read",
+        "users.update"
+      ]
     }
   }
 }
@@ -292,26 +316,39 @@ Authorization: Bearer <access_token>
     "id": 1,
     "username": "johndoe",
     "email": "john.doe@example.com",
+    "phone": "+1234567890",
     "isVerified": true,
     "isActive": true,
+    "status": "active",
     "person": {
+      "id": 1,
       "firstName": "John",
       "lastName": "Doe",
-      "phone": "+1234567890"
+      "phone": "+1234567890",
+      "email": "john.doe@example.com",
+      "status": "active"
     },
     "roles": [
       {
         "id": 2,
-        "name": "user",
-        "description": "Utilisateur standard"
+        "code": "user",
+        "label": "Utilisateur standard"
       }
     ],
     "permissions": [
       {
         "id": 1,
-        "name": "users.read",
+        "code": "users.read",
         "resource": "users",
         "action": "read"
+      }
+    ],
+    "accesses": [
+      {
+        "id": 1,
+        "userId": 1,
+        "roleId": 2,
+        "status": "active"
       }
     ]
   }
