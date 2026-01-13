@@ -1,5 +1,5 @@
 {
-  "name": "express-backend",
+  "name": "event-planner-auth",
   "version": "1.0.0",
   "description": "Backend Node.js avec Express",
   "main": "server.js",
