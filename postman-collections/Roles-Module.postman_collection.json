@@ -1,0 +1,408 @@
+{
+  "info": {
+    "_postman_id": "event-planner-roles-api",
+    "name": "Event Planner - Roles Module",
+    "description": "Collection pour tester toutes les routes du module Roles avec RBAC",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "roleId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "📖 READ OPERATIONS",
+      "item": [
+        {
+          "name": "GET All Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles?page=1&limit=10&search=admin&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "admin"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Role by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "{{roleId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Role Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/{{roleId}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "{{roleId}}", "permissions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Role Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/{{roleId}}/users?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "{{roleId}}", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET User Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "user", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET All User Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "user"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Check User Role",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/check/role?userId={{userId}}&roleName=admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "check", "role"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "roleName",
+                  "value": "admin"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET User Highest Role",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/user/{{userId}}/highest",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "user", "{{userId}}", "highest"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "✏️ WRITE OPERATIONS",
+      "item": [
+        {
+          "name": "POST Create Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"test_role\",\n  \"description\": \"Test role for API testing\",\n  \"isActive\": true,\n  \"isSystem\": false,\n  \"hierarchyLevel\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"updated_test_role\",\n  \"description\": \"Updated test role\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/roles/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "{{roleId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Role",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "{{roleId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update Role Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/roles/{{roleId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "{{roleId}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Duplicate Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"duplicated_test_role\",\n  \"description\": \"Duplicated test role\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/roles/{{roleId}}/duplicate",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "{{roleId}}", "duplicate"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔐 PERMISSION MANAGEMENT",
+      "item": [
+        {
+          "name": "POST Assign Permissions to Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionIds\": [1, 2, 3, 4, 5]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/roles/{{roleId}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "{{roleId}}", "permissions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE All Role Permissions",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/{{roleId}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "{{roleId}}", "permissions"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 ADMIN OPERATIONS",
+      "item": [
+        {
+          "name": "GET Role Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/admin/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", "admin", "stats"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

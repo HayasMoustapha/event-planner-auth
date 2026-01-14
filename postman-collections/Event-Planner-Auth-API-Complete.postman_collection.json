@@ -1,0 +1,442 @@
+{
+  "info": {
+    "_postman_id": "event-planner-auth-api",
+    "name": "Event Planner Auth API - Complete Collection",
+    "description": "Collection complète pour tester toutes les routes de l'API Event Planner Auth avec RBAC",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "roleId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// Auto-save tokens from responses",
+          "if (pm.response.code === 200) {",
+          "    const response = pm.response.json();",
+          "    if (response.data && response.data.tokens) {",
+          "        pm.collectionVariables.set('authToken', response.data.tokens.accessToken);",
+          "        pm.collectionVariables.set('refreshToken', response.data.tokens.refreshToken);",
+          "    }",
+          "}"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 AUTHENTICATION MODULE",
+      "item": [
+        {
+          "name": "POST Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@eventplanner.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Login with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@eventplanner.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login-otp"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh-token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Validate Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{authToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/validate-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "validate-token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Generate Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@eventplanner.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/email/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "email", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Verify Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@eventplanner.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/email/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "email", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Generate Phone OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+225000000000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/phone/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "phone", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Verify Phone OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+225000000000\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/phone/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "phone", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Generate Password Reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@eventplanner.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/password-reset/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "password-reset", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Reset Password with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@eventplanner.com\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"newPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/password-reset/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "password-reset", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"admin123\",\n  \"newPassword\": \"newPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "change-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET User OTPs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "user", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Invalidate User OTPs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Manual invalidation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/user/{{userId}}/invalidate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "user", "{{userId}}", "invalidate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET User Active OTP",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/user/{{userId}}/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "user", "{{userId}}", "active"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Cleanup Expired OTPs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/cleanup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "cleanup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET OTP Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "otp", "stats"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

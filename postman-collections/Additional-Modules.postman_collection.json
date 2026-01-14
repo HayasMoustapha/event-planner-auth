@@ -1,0 +1,713 @@
+{
+  "info": {
+    "_postman_id": "event-planner-additional-modules",
+    "name": "Event Planner - Additional Modules",
+    "description": "Collection pour tester les modules Permissions, Menus, People, Sessions et Authorizations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "roleId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "permissionId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "menuId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔑 PERMISSIONS MODULE",
+      "item": [
+        {
+          "name": "GET All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/permissions?page=1&limit=20&category=users&resource=users",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "category",
+                  "value": "users"
+                },
+                {
+                  "key": "resource",
+                  "value": "users"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Permission by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/permissions/{{permissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions", "{{permissionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"test.permission\",\n  \"description\": \"Test permission for API\",\n  \"category\": \"test\",\n  \"resource\": \"test\",\n  \"action\": \"read\",\n  \"isActive\": true,\n  \"isSystem\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"updated.test.permission\",\n  \"description\": \"Updated test permission\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/permissions/{{permissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions", "{{permissionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Permission",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/permissions/{{permissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions", "{{permissionId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 MENUS MODULE",
+      "item": [
+        {
+          "name": "GET All Menus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/menus?page=1&limit=20&isActive=true&parentId=null",
+              "host": ["{{baseUrl}}"],
+              "path": ["menus"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                },
+                {
+                  "key": "parentId",
+                  "value": "null"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Menu by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/menus/{{menuId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["menus", "{{menuId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Menu Tree",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/menus/tree?userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["menus", "tree"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Menu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"test_menu\",\n  \"label\": \"Test Menu\",\n  \"icon\": \"test\",\n  \"path\": \"/test\",\n  \"parentId\": null,\n  \"orderIndex\": 100,\n  \"isVisible\": true,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/menus",
+              "host": ["{{baseUrl}}"],
+              "path": ["menus"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Menu",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"updated_test_menu\",\n  \"label\": \"Updated Test Menu\",\n  \"isVisible\": true,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/menus/{{menuId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["menus", "{{menuId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Menu",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/menus/{{menuId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["menus", "{{menuId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👥 PEOPLE MODULE",
+      "item": [
+        {
+          "name": "GET All People",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/people?page=1&limit=20&search=admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["people"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "admin"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Person by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/people/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["people", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Person",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"email\": \"testuser@example.com\",\n  \"phone\": \"+225000000001\",\n  \"address\": \"Test Address\",\n  \"city\": \"Abidjan\",\n  \"country\": \"Côte d'Ivoire\",\n  \"postalCode\": \"00225\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/people",
+              "host": ["{{baseUrl}}"],
+              "path": ["people"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Person",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"User\",\n  \"email\": \"updated@example.com\",\n  \"phone\": \"+225000000002\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/people/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["people", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Person",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/people/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["people", "{{userId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔐 SESSIONS MODULE",
+      "item": [
+        {
+          "name": "GET All Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions?page=1&limit=20&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET User Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "user", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Session by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Revoke Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Manual revocation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{userId}}/revoke",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{userId}}", "revoke"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Revoke All User Sessions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Security measure\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/user/{{userId}}/revoke-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "user", "{{userId}}", "revoke-all"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Cleanup Expired Sessions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/cleanup",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "cleanup"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛡️ AUTHORIZATIONS MODULE",
+      "item": [
+        {
+          "name": "GET User Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/authorizations/user/{{userId}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["authorizations", "user", "{{userId}}", "permissions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET User Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/authorizations/user/{{userId}}/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["authorizations", "user", "{{userId}}", "roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET User Menus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/authorizations/user/{{userId}}/menus",
+              "host": ["{{baseUrl}}"],
+              "path": ["authorizations", "user", "{{userId}}", "menus"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Check Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"permissionName\": \"users.read\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/authorizations/check-permission",
+              "host": ["{{baseUrl}}"],
+              "path": ["authorizations", "check-permission"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Check Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"roleName\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/authorizations/check-role",
+              "host": ["{{baseUrl}}"],
+              "path": ["authorizations", "check-role"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Check Resource Access",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"resource\": \"users\",\n  \"action\": \"read\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/authorizations/check-resource-access",
+              "host": ["{{baseUrl}}"],
+              "path": ["authorizations", "check-resource-access"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Authorization Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/authorizations/user/{{userId}}/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["authorizations", "user", "{{userId}}", "summary"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
