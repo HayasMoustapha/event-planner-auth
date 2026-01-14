@@ -1,0 +1,421 @@
+{
+  "info": {
+    "_postman_id": "auth-module-collection-part2",
+    "name": "Auth Module - Protected & Admin Routes",
+    "description": "Routes protégées et d'administration pour le module d'authentification",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔒 Protected Authentication Routes",
+      "description": "Routes protégées nécessitant une authentification",
+      "item": [
+        {
+          "name": "POST /api/auth/logout - Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/profile - Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/change-password - Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👮 Admin OTP Management",
+      "description": "Routes d'administration pour la gestion des OTP (nécessite permissions)",
+      "item": [
+        {
+          "name": "GET /api/auth/otp/user/:userId - Get User OTPs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "user", "{{userId}}"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "email",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/otp/user/:userId/invalidate - Invalidate User OTPs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"email\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/user/{{userId}}/invalidate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "user", "{{userId}}", "invalidate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/otp/user/:userId/active - Check Active OTPs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/user/{{userId}}/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "user", "{{userId}}", "active"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "email",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/otp/cleanup - Cleanup Expired OTPs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/cleanup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "cleanup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/otp/stats - Get OTP Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "stats"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧪 Error Testing Scenarios",
+      "description": "Tests pour valider la gestion des erreurs",
+      "item": [
+        {
+          "name": "❌ Login - Invalid Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invalid-email\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Login - Wrong Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Login - Missing Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "❌ OTP Verify - Invalid Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"code\": \"999999\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/email/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "email", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Protected Route - No Token",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Protected Route - Invalid Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-token"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script for protected and admin routes",
+          "",
+          "// Set default user ID if not set",
+          "if (!pm.environment.get('userId')) {",
+          "    pm.environment.set('userId', '1');",
+          "}",
+          "",
+          "// Generate new test data for error scenarios",
+          "if (!pm.environment.get('invalidEmail')) {",
+          "    pm.environment.set('invalidEmail', 'invalid-email-format');",
+          "}",
+          "",
+          "if (!pm.environment.get('wrongPassword')) {",
+          "    pm.environment.set('wrongPassword', 'wrongpassword123');",
+          "}",
+          "",
+          "// Log current request",
+          "console.log('🔒 Protected/Admin Request:', pm.info.requestName);",
+          "console.log('👤 User ID:', pm.environment.get('userId'));",
+          "console.log('🔑 Has Auth Token:', !!pm.environment.get('authToken'));"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Test script for protected and admin routes",
+          "",
+          "// Test for expected status codes",
+          "if (pm.info.requestName.includes('❌')) {",
+          "    // Error scenarios should return appropriate error codes",
+          "    pm.test('Error scenario returns appropriate status', function () {",
+          "        pm.expect(pm.response.code).to.be.oneOf([400, 401, 403, 404, 422]);",
+          "    });",
+          "    ",
+          "    pm.test('Error response has proper structure', function () {",
+          "        const responseJson = pm.response.json();",
+          "        pm.expect(responseJson).to.have.property('success', false);",
+          "        pm.expect(responseJson).to.have.property('message');",
+          "        pm.expect(responseJson).to.have.property('code');",
+          "    });",
+          "} else {",
+          "    // Success scenarios",
+          "    pm.test('Status code is successful', function () {",
+          "        pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+          "    });",
+          "    ",
+          "    pm.test('Success response has proper structure', function () {",
+          "        const responseJson = pm.response.json();",
+          "        pm.expect(responseJson).to.have.property('success', true);",
+          "        pm.expect(responseJson).to.have.property('message');",
+          "    });",
+          "}",
+          "",
+          "// Test authentication requirement",
+          "if (pm.info.requestName.includes('Protected') || pm.info.requestName.includes('Admin')) {",
+          "    pm.test('Authentication required', function () {",
+          "        const authHeader = pm.request.headers.find(h => h.key === 'Authorization');",
+          "        pm.expect(authHeader).to.exist;",
+          "        pm.expect(authHeader.value).to.include('Bearer');",
+          "    });",
+          "}",
+          "",
+          "// Log response",
+          "console.log('📊 Response Status:', pm.response.code);",
+          "console.log('📝 Response Body:', pm.response.json());"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

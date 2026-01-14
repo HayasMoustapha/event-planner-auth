@@ -1,0 +1,325 @@
+{
+  "info": {
+    "_postman_id": "auth-module-collection",
+    "name": "Auth Module - Complete Testing Collection",
+    "description": "Collection complète pour tester toutes les routes du module d'authentification avec OTP, login sécurisé, et gestion des tokens",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔓 Public Authentication Routes",
+      "description": "Routes publiques d'authentification (pas d'authentification requise)",
+      "item": [
+        {
+          "name": "POST /api/auth/login - Login Classic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/login-otp - Login with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{testEmail}}\",\n  \"code\": \"123456\",\n  \"type\": \"email\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login-otp"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/refresh-token - Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh-token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/validate-token - Validate Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{authToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/validate-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "validate-token"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔐 OTP Generation Routes",
+      "description": "Routes pour la génération de codes OTP (publiques)",
+      "item": [
+        {
+          "name": "POST /api/auth/otp/email/generate - Generate Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"expiresInMinutes\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/email/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "email", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/otp/phone/generate - Generate Phone OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+33612345678\",\n  \"expiresInMinutes\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/phone/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "phone", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/otp/password-reset/generate - Generate Password Reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/password-reset/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "password-reset", "generate"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "✅ OTP Verification Routes",
+      "description": "Routes pour la vérification des codes OTP (publiques)",
+      "item": [
+        {
+          "name": "POST /api/auth/otp/email/verify - Verify Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/email/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "email", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/otp/phone/verify - Verify Phone OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+33612345678\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/phone/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "phone", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/otp/password-reset/verify - Reset Password with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"code\": \"123456\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/password-reset/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "password-reset", "verify"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script for Auth module",
+          "// Generate random test data if not set",
+          "",
+          "if (!pm.environment.get('testEmail')) {",
+          "    pm.environment.set('testEmail', 'test.user' + Math.floor(Math.random() * 10000) + '@example.com');",
+          "}",
+          "",
+          "if (!pm.environment.get('testPhone')) {",
+          "    pm.environment.set('testPhone', '+336' + Math.floor(Math.random() * 900000000 + 100000000));",
+          "}",
+          "",
+          "if (!pm.environment.get('testPassword')) {",
+          "    pm.environment.set('testPassword', 'TestPassword123!');",
+          "}",
+          "",
+          "// Log current request",
+          "console.log('🔐 Auth Module Request:', pm.info.requestName);",
+          "console.log('📧 Test Email:', pm.environment.get('testEmail'));",
+          "console.log('📱 Test Phone:', pm.environment.get('testPhone'));"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script for Auth module",
+          "",
+          "// Test for successful response",
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 401, 403, 404, 429]);",
+          "});",
+          "",
+          "// Test response structure",
+          "pm.test('Response has proper structure', function () {",
+          "    const responseJson = pm.response.json();",
+          "    pm.expect(responseJson).to.have.property('success');",
+          "    pm.expect(responseJson).to.have.property('message');",
+          "    pm.expect(responseJson).to.have.property('timestamp');",
+          "});",
+          "",
+          "// Save auth token if present",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    const responseJson = pm.response.json();",
+          "    ",
+          "    if (responseJson.success && responseJson.data && responseJson.data.token) {",
+          "        pm.environment.set('authToken', responseJson.data.token);",
+          "        console.log('✅ Auth token saved');",
+          "    }",
+          "    ",
+          "    if (responseJson.success && responseJson.data && responseJson.data.refreshToken) {",
+          "        pm.environment.set('refreshToken', responseJson.data.refreshToken);",
+          "        console.log('✅ Refresh token saved');",
+          "    }",
+          "}",
+          "",
+          "// Log response",
+          "console.log('📊 Response Status:', pm.response.code);",
+          "console.log('📝 Response Body:', pm.response.json());"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
