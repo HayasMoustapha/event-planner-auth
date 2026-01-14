@@ -1,0 +1,333 @@
+{
+	"info": {
+		"_postman_id": "users-module-part2-collection",
+		"name": "Users Module - Part 2",
+		"description": "Tests pour les routes de mise à jour, suppression et gestion des mots de passe",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "✏️ MISE À JOUR UTILISATEURS",
+			"item": [
+				{
+					"name": "✅ Mise à jour complète - Succès",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"{{updatedUsername}}\", \"email\": \"{{updatedEmail}}\", \"password\": \"UpdatedPassword123!\", \"role\": \"admin\", \"status\": \"active\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}"]}
+					},
+					"event": [
+						{"listen": "prerequest", "script": {"exec": ["const timestamp=Date.now();pm.globals.set('updatedUsername',`updateduser${timestamp}`);pm.globals.set('updatedEmail',`updated${timestamp}@example.com`);"]}},
+						{"listen": "test", "script": {"exec": ["pm.test(\"✅ Mise à jour réussie\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.have.property('id');pm.expect(jsonData.data).to.not.have.property('password_hash');console.log('✅ Utilisateur mis à jour:',jsonData.data.id);}});"]}}
+					]
+				},
+				{
+					"name": "✅ Mise à jour partielle - Succès",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"{{updatedEmail2}}\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}"]}
+					},
+					"event": [
+						{"listen": "prerequest", "script": {"exec": ["const timestamp=Date.now();pm.globals.set('updatedEmail2',`updated${timestamp}@example.com`);"]}},
+						{"listen": "test", "script": {"exec": ["pm.test(\"✅ Mise à jour partielle réussie\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.email).to.equal(pm.globals.get('updatedEmail2'));console.log('✅ Mise à jour partielle réussie');}});"]}}
+					]
+				},
+				{
+					"name": "❌ Mise à jour - ID invalide",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"testuser\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/0", "host": ["{{baseUrl}}"], "path": ["api", "users", "0"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur ID invalide\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;console.log('❌ ID invalide détecté');}});"]}}]
+				},
+				{
+					"name": "❌ Mise à jour - Utilisateur non trouvé",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"testuser\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/99999", "host": ["{{baseUrl}}"], "path": ["api", "users", "99999"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Utilisateur non trouvé\", function(){if(pm.response.code===404){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.code).to.equal('NOT_FOUND');console.log('❌ Utilisateur non trouvé');}});"]}}]
+				},
+				{
+					"name": "❌ Mise à jour - Email déjà utilisé",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"{{validTestEmail}}\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"🚫 Conflit d'email mise à jour\", function(){if(pm.response.code===409){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.field).to.equal('email');console.log('🚫 Email déjà utilisé');}});"]}}]
+				},
+				{
+					"name": "❌ Mise à jour - Username déjà utilisé",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"{{validTestUsername}}\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"🚫 Conflit de username mise à jour\", function(){if(pm.response.code===409){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.field).to.equal('username');console.log('🚫 Username déjà utilisé');}});"]}}]
+				}
+			]
+		},
+		{
+			"name": "🔐 GESTION MOTS DE PASSE",
+			"item": [
+				{
+					"name": "✅ Changement mot de passe - Succès",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"currentPassword\": \"Password123!\", \"newPassword\": \"NewPassword123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/password", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "password"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"✅ Mot de passe mis à jour\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.not.have.property('password_hash');console.log('✅ Mot de passe mis à jour');}});"]}}]
+				},
+				{
+					"name": "❌ Changement mot de passe - Ancien mot de passe incorrect",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"currentPassword\": \"wrongpassword\", \"newPassword\": \"NewPassword123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/password", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "password"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Ancien mot de passe incorrect\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;console.log('❌ Ancien mot de passe incorrect');}});"]}}]
+				},
+				{
+					"name": "❌ Changement mot de passe - Même mot de passe",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"currentPassword\": \"Password123!\", \"newPassword\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/password", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "password"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Même mot de passe\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;console.log('❌ Le nouveau mot de passe doit être différent');}});"]}}]
+				},
+				{
+					"name": "❌ Changement mot de passe - Nouveau mot de passe faible",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"currentPassword\": \"Password123!\", \"newPassword\": \"123\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/password", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "password"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Nouveau mot de passe faible\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const passwordError=jsonData.errors.find(e=>e.param==='newPassword');pm.expect(passwordError).to.exist;console.log('❌ Nouveau mot de passe faible');}}}});"]}}]
+				},
+				{
+					"name": "❌ Changement mot de passe - Ancien mot de passe manquant",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"newPassword\": \"NewPassword123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/password", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "password"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Ancien mot de passe manquant\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const currentPasswordError=jsonData.errors.find(e=>e.param==='currentPassword');pm.expect(currentPasswordError).to.exist;console.log('❌ Ancien mot de passe manquant');}}}});"]}}]
+				},
+				{
+					"name": "❌ Changement mot de passe - Nouveau mot de passe manquant",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"currentPassword\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/password", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "password"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Nouveau mot de passe manquant\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const newPasswordError=jsonData.errors.find(e=>e.param==='newPassword');pm.expect(newPasswordError).to.exist;console.log('❌ Nouveau mot de passe manquant');}}}});"]}}]
+				},
+				{
+					"name": "🔄 Réinitialisation mot de passe - Succès",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"{{validTestEmail}}\", \"newPassword\": \"ResetPassword123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/reset-password", "host": ["{{baseUrl}}"], "path": ["api", "users", "reset-password"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"🔄 Mot de passe réinitialisé\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.not.have.property('password_hash');console.log('🔄 Mot de passe réinitialisé');}});"]}}]
+				},
+				{
+					"name": "❌ Réinitialisation mot de passe - Email invalide",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"email-invalide\", \"newPassword\": \"ResetPassword123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/reset-password", "host": ["{{baseUrl}}"], "path": ["api", "users", "reset-password"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Email invalide pour réinitialisation\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;console.log('❌ Email invalide');}});"]}}]
+				},
+				{
+					"name": "❌ Réinitialisation mot de passe - Email non trouvé",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"nonexistent@example.com\", \"newPassword\": \"ResetPassword123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/reset-password", "host": ["{{baseUrl}}"], "path": ["api", "users", "reset-password"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Email non trouvé pour réinitialisation\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;console.log('❌ Email non trouvé');}});"]}}]
+				}
+			]
+		},
+		{
+			"name": "🔄 GESTION DES STATUTS",
+			"item": [
+				{
+					"name": "✅ Activation utilisateur",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"status\": \"active\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "status"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"✅ Utilisateur activé\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.status).to.equal('active');console.log('✅ Utilisateur activé');}});"]}}]
+				},
+				{
+					"name": "✅ Désactivation utilisateur",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"status\": \"inactive\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "status"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"✅ Utilisateur désactivé\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.status).to.equal('inactive');console.log('✅ Utilisateur désactivé');}});"]}}]
+				},
+				{
+					"name": "✅ Verrouillage utilisateur",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"status\": \"locked\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "status"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"✅ Utilisateur verrouillé\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.status).to.equal('locked');console.log('✅ Utilisateur verrouillé');}});"]}}]
+				},
+				{
+					"name": "❌ Changement statut - Statut invalide",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"status\": \"invalid-status\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}", "status"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Statut invalide\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const statusError=jsonData.errors.find(e=>e.param==='status');pm.expect(statusError).to.exist;console.log('❌ Statut invalide');}}}});"]}}]
+				},
+				{
+					"name": "❌ Changement statut - Utilisateur non trouvé",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"status\": \"active\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/99999/status", "host": ["{{baseUrl}}"], "path": ["api", "users", "99999", "status"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Utilisateur non trouvé pour statut\", function(){if(pm.response.code===404){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.code).to.equal('NOT_FOUND');console.log('❌ Utilisateur non trouvé');}});"]}}]
+				}
+			]
+		},
+		{
+			"name": "🗑️ SUPPRESSION UTILISATEURS",
+			"item": [
+				{
+					"name": "✅ Suppression utilisateur - Succès",
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/{{createdUserId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{createdUserId}}"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"✅ Utilisateur supprimé\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;console.log('✅ Utilisateur supprimé');}});"]}}]
+				},
+				{
+					"name": "❌ Suppression - Utilisateur non trouvé",
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/99999", "host": ["{{baseUrl}}"], "path": ["api", "users", "99999"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Utilisateur non trouvé pour suppression\", function(){if(pm.response.code===404){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.code).to.equal('NOT_FOUND');console.log('❌ Utilisateur non trouvé');}});"]}}]
+				},
+				{
+					"name": "❌ Suppression - ID invalide",
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/0", "host": ["{{baseUrl}}"], "path": ["api", "users", "0"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ ID invalide pour suppression\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;console.log('❌ ID invalide');}});"]}}]
+				}
+			]
+		},
+		{
+			"name": "🚫 ERREURS D'AUTHENTIFICATION",
+			"item": [
+				{
+					"name": "❌ Pas de token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Pas de token\", function(){if(pm.response.code===401){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.code).to.equal('UNAUTHORIZED');console.log('❌ Token manquant');}});"]}}]
+				},
+				{
+					"name": "❌ Token invalide",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer invalid-token"}],
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Token invalide\", function(){if(pm.response.code===401){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.code).to.equal('UNAUTHORIZED');console.log('❌ Token invalide');}});"]}}]
+				},
+				{
+					"name": "❌ Token expiré",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer expired-token"}],
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Token expiré\", function(){if(pm.response.code===401){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.code).to.equal('UNAUTHORIZED');console.log('❌ Token expiré');}});"]}}]
+				},
+				{
+					"name": "❌ Permissions insuffisantes",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{userToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"testuser\", \"email\": \"test@example.com\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Permissions insuffisantes\", function(){if(pm.response.code===403){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.code).to.equal('FORBIDDEN');console.log('❌ Permissions insuffisantes');}});"]}}]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"console.log('=== Test Users Module Part 2 ===');",
+					"console.log('URL:', pm.request.url);",
+					"console.log('Méthode:', pm.request.method);",
+					"if (!pm.globals.get('testCounter')) { pm.globals.set('testCounter', 1); } else { pm.globals.set('testCounter', pm.globals.get('testCounter') + 1); }",
+					"pm.globals.setIfUndefined('authToken', 'test-token');",
+					"pm.globals.setIfUndefined('userToken', 'user-token');",
+					"pm.globals.setIfUndefined('validTestEmail', 'test@example.com');",
+					"pm.globals.setIfUndefined('validTestUsername', 'testuser');",
+					"pm.globals.setIfUndefined('baseUrl', 'http://localhost:3000');"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"exec": [
+					"pm.test(\"📊 Response time acceptable\", function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+					"pm.test(\"📝 Response has correct structure\", function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.have.property('success'); pm.expect(jsonData).to.have.property('message'); pm.expect(jsonData).to.have.property('timestamp'); });",
+					"pm.test(\"🔍 Log response details\", function () { const jsonData = pm.response.json(); console.log('Response:', JSON.stringify(jsonData, null, 2)); });"
+				]
+			}
+		}
+	]
+}

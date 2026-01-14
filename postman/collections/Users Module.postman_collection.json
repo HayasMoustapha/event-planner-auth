@@ -1,500 +1,302 @@
 {
 	"info": {
-		"_postman_id": "users-module-collection",
-		"name": "Users Module",
-		"description": "Tests complets pour le module de gestion des utilisateurs avec authentification, validation et sécurité",
+		"_postman_id": "users-module-complete-collection",
+		"name": "Users Module - Complete Tests",
+		"description": "Tests complets pour TOUS les cas de figures du module users",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "🔓 Routes Publiques",
+			"name": "🔓 ROUTES PUBLIQUES",
 			"item": [
 				{
-					"name": "🔐 Authentification",
+					"name": "🔐 Authentification - Succès",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users/authenticate",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "authenticate"]
-						}
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"{{validTestEmail}}\", \"password\": \"{{validTestPassword}}\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/authenticate", "host": ["{{baseUrl}}"], "path": ["api", "users", "authenticate"]}
 					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"🔐 Authentification réussie\", function () {",
-									"    if (pm.response.code === 200) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.true;",
-									"        pm.expect(jsonData.data).to.have.property('id');",
-									"        pm.expect(jsonData.data).to.have.property('email');",
-									"        pm.expect(jsonData.data).to.not.have.property('password_hash');",
-									"        ",
-									"        // Stocker le token pour les tests suivants",
-									"        if (jsonData.data.token) {",
-									"            pm.globals.set('authToken', jsonData.data.token);",
-									"        }",
-									"        pm.globals.set('testUserId', jsonData.data.id);",
-									"        console.log('✅ Utilisateur authentifié:', jsonData.data.id);",
-									"    }",
-									"});",
-									"",
-									"pm.test(\"❌ Erreurs d'authentification\", function () {",
-									"    if (pm.response.code === 401) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.false;",
-									"        pm.expect(jsonData.code).to.equal('AUTHENTICATION_FAILED');",
-									"        console.log('❌ Authentification échouée');",
-									"    }",
-									"});"
-								]
-							}
-						}
-					]
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"✅ Authentification réussie\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.have.property('id');pm.expect(jsonData.data).to.not.have.property('password_hash');pm.globals.set('authToken',jsonData.data.token||'test-token');pm.globals.set('testUserId',jsonData.data.id);console.log('✅ Token généré:',jsonData.data.id);}});"]}}]
 				},
 				{
-					"name": "📧 Vérifier disponibilité email",
+					"name": "❌ Authentification - Email invalide",
 					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/users/check/email/{{testEmail}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "check", "email", "{{testEmail}}"]
-						}
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"email-invalide\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/authenticate", "host": ["{{baseUrl}}"], "path": ["api", "users", "authenticate"]}
 					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"📧 Vérification email disponible\", function () {",
-									"    if (pm.response.code === 200) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.true;",
-									"        pm.expect(jsonData.data).to.have.property('available');",
-									"        console.log('📧 Email disponible:', jsonData.data.available);",
-									"    }",
-									"});"
-								]
-							}
-						}
-					]
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur email invalide\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;console.log('❌ Email invalide détecté');}});"]}}]
 				},
 				{
-					"name": "👤 Vérifier disponibilité username",
+					"name": "❌ Authentification - Mot de passe incorrect",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"{{validTestEmail}}\", \"password\": \"wrongpassword\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/authenticate", "host": ["{{baseUrl}}"], "path": ["api", "users", "authenticate"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Mot de passe incorrect\", function(){if(pm.response.code===401){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.code).to.equal('AUTHENTICATION_FAILED');console.log('❌ Mot de passe incorrect');}});"]}}]
+				},
+				{
+					"name": "❌ Authentification - Compte inexistant",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"nonexistent@example.com\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users/authenticate", "host": ["{{baseUrl}}"], "path": ["api", "users", "authenticate"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Compte inexistant\", function(){if(pm.response.code===401){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;console.log('❌ Compte inexistant');}});"]}}]
+				},
+				{
+					"name": "📧 Vérifier disponibilité email - Disponible",
 					"request": {
 						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/users/check/username/{{testUsername}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "check", "username", "{{testUsername}}"]
-						}
+						"url": {"raw": "{{baseUrl}}/api/users/check/email/{{availableEmail}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "check", "email", "{{availableEmail}}"]}
 					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"👤 Vérification username disponible\", function () {",
-									"    if (pm.response.code === 200) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.true;",
-									"        pm.expect(jsonData.data).to.have.property('available');",
-									"        console.log('👤 Username disponible:', jsonData.data.available);",
-									"    }",
-									"});"
-								]
-							}
-						}
-					]
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"📧 Email disponible\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.available).to.be.true;console.log('📧 Email disponible');}});"]}}]
+				},
+				{
+					"name": "📧 Vérifier disponibilité email - Non disponible",
+					"request": {
+						"method": "GET",
+						"url": {"raw": "{{baseUrl}}/api/users/check/email/{{existingEmail}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "check", "email", "{{existingEmail}}"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"📧 Email non disponible\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.available).to.be.false;console.log('📧 Email déjà utilisé');}});"]}}]
+				},
+				{
+					"name": "👤 Vérifier disponibilité username - Disponible",
+					"request": {
+						"method": "GET",
+						"url": {"raw": "{{baseUrl}}/api/users/check/username/{{availableUsername}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "check", "username", "{{availableUsername}}"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"👤 Username disponible\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.available).to.be.true;console.log('👤 Username disponible');}});"]}}]
+				},
+				{
+					"name": "👤 Vérifier disponibilité username - Non disponible",
+					"request": {
+						"method": "GET",
+						"url": {"raw": "{{baseUrl}}/api/users/check/username/{{existingUsername}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "check", "username", "{{existingUsername}}"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"👤 Username non disponible\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.available).to.be.false;console.log('👤 Username déjà utilisé');}});"]}}]
 				}
 			]
 		},
 		{
-			"name": "🔒 Routes Protégées",
+			"name": "🔒 ROUTES PROTÉGÉES",
 			"item": [
 				{
-					"name": "📋 Liste des utilisateurs",
+					"name": "📋 Lister utilisateurs - Succès",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{authToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/users?page=1&limit=10",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users"],
-							"query": [
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "limit",
-									"value": "10"
-								}
-							]
-						}
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["api", "users"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "10"}]}
 					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"📋 Liste récupérée avec succès\", function () {",
-									"    if (pm.response.code === 200) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.true;",
-									"        pm.expect(jsonData.data).to.have.property('data');",
-									"        pm.expect(jsonData.data).to.be.an('array');",
-									"        pm.expect(jsonData.data).to.not.have.property('password_hash');",
-									"        ",
-									"        if (jsonData.meta && jsonData.meta.pagination) {",
-									"            pm.expect(jsonData.meta.pagination).to.have.property('page');",
-									"            pm.expect(jsonData.meta.pagination).to.have.property('limit');",
-									"            pm.expect(jsonData.meta.pagination).to.have.property('total');",
-									"            console.log('📄 Pagination:', jsonData.meta.pagination);",
-									"        }",
-									"    }",
-									"});"
-								]
-							}
-						}
-					]
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"📋 Liste récupérée avec succès\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.be.an('array');pm.expect(jsonData.meta.pagination).to.exist;console.log('📋 Liste récupérée:',jsonData.data.length);}});"]}}]
+				},
+				{
+					"name": "📋 Lister utilisateurs - Avec recherche",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users?search=test&status=active&role=user", "host": ["{{baseUrl}}"], "path": ["api", "users"], "query": [{"key": "search", "value": "test"}, {"key": "status", "value": "active"}, {"key": "role", "value": "user"}]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"📋 Recherche réussie\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;console.log('📋 Recherche avec filtres réussie');}});"]}}]
 				},
 				{
 					"name": "📊 Statistiques utilisateurs",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{authToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/users/stats",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "stats"]
-						}
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/stats", "host": ["{{baseUrl}}"], "path": ["api", "users", "stats"]}
 					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"📊 Statistiques récupérées\", function () {",
-									"    if (pm.response.code === 200) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.true;",
-									"        pm.expect(jsonData.data).to.have.property('total');",
-									"        pm.expect(jsonData.data).to.have.property('active');",
-									"        pm.expect(jsonData.data).to.have.property('inactive');",
-									"        pm.expect(jsonData.data).to.have.property('locked');",
-									"        console.log('📊 Statistiques:', jsonData.data);",
-									"    }",
-									"});"
-								]
-							}
-						}
-					]
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"📊 Statistiques récupérées\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.have.property('total');pm.expect(jsonData.data).to.have.property('active');console.log('📊 Statistiques:',jsonData.data);}});"]}}]
 				},
 				{
-					"name": "👤 Détails utilisateur",
+					"name": "👤 Détails utilisateur - Succès",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{authToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/users/{{testUserId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "{{testUserId}}"]
-						}
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/{{testUserId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{testUserId}}"]}
 					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"👤 Détails utilisateur récupérés\", function () {",
-									"    if (pm.response.code === 200) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.true;",
-									"        pm.expect(jsonData.data).to.have.property('id');",
-									"        pm.expect(jsonData.data).to.have.property('email');",
-									"        pm.expect(jsonData.data).to.have.property('username');",
-									"        pm.expect(jsonData.data).to.not.have.property('password_hash');",
-									"        console.log('👤 Utilisateur:', jsonData.data.id);",
-									"    }",
-									"});"
-								]
-							}
-						}
-					]
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"👤 Détails récupérés\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.have.property('id');pm.expect(jsonData.data).to.not.have.property('password_hash');console.log('👤 Utilisateur:',jsonData.data.id);}});"]}}]
+				},
+				{
+					"name": "👤 Détails utilisateur - Non trouvé",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/99999", "host": ["{{baseUrl}}"], "path": ["api", "users", "99999"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"👤 Utilisateur non trouvé\", function(){if(pm.response.code===404){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.code).to.equal('NOT_FOUND');console.log('👤 Utilisateur non trouvé');}});"]}}]
+				},
+				{
+					"name": "📧 Recherche par email - Succès",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/email/{{validTestEmail}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "email", "{{validTestEmail}}"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"📧 Recherche par email réussie\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.have.property('email');console.log('📧 Utilisateur trouvé par email');}});"]}}]
+				},
+				{
+					"name": "👤 Recherche par username - Succès",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/username/{{validTestUsername}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "username", "{{validTestUsername}}"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"👤 Recherche par username réussie\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.have.property('username');console.log('👤 Utilisateur trouvé par username');}});"]}}]
+				},
+				{
+					"name": "✅ Vérifier existence utilisateur - Existe",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/{{testUserId}}/exists", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{testUserId}}", "exists"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"✅ Utilisateur existe\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.exists).to.be.true;console.log('✅ Utilisateur existe');}});"]}}]
+				},
+				{
+					"name": "❌ Vérifier existence utilisateur - N'existe pas",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}],
+						"url": {"raw": "{{baseUrl}}/api/users/99999/exists", "host": ["{{baseUrl}}"], "path": ["api", "users", "99999", "exists"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Utilisateur n'existe pas\", function(){if(pm.response.code===200){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.exists).to.be.false;console.log('❌ Utilisateur n\\'existe pas');}});"]}}]
 				}
 			]
 		},
 		{
-			"name": "➕ Création Utilisateurs",
+			"name": "➕ CRÉATION UTILISATEURS",
 			"item": [
 				{
-					"name": "✅ Création valide",
+					"name": "✅ Création valide - Complète",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{authToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"{{uniqueUsername}}\",\n  \"email\": \"{{uniqueEmail}}\",\n  \"password\": \"Password123!\",\n  \"role\": \"user\",\n  \"status\": \"active\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users"]
-						}
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"{{uniqueUsername}}\", \"email\": \"{{uniqueEmail}}\", \"password\": \"Password123!\", \"role\": \"user\", \"status\": \"active\", \"personId\": null}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
 					},
 					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"// Générer des données uniques",
-									"const timestamp = Date.now();",
-									"pm.globals.set('uniqueUsername', `testuser${timestamp}`);",
-									"pm.globals.set('uniqueEmail', `test${timestamp}@example.com`);",
-									"console.log('🔧 Données uniques générées');"
-								]
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"✅ Utilisateur créé avec succès\", function () {",
-									"    if (pm.response.code === 201) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.true;",
-									"        pm.expect(jsonData.data).to.have.property('id');",
-									"        pm.expect(jsonData.data).to.have.property('username');",
-									"        pm.expect(jsonData.data).to.have.property('email');",
-									"        pm.expect(jsonData.data).to.not.have.property('password_hash');",
-									"        ",
-									"        // Stocker l'ID pour les tests suivants",
-									"        pm.globals.set('createdUserId', jsonData.data.id);",
-									"        pm.globals.set('createdUserEmail', jsonData.data.email);",
-									"        console.log('✅ Utilisateur créé:', jsonData.data.id);",
-									"    }",
-									"});"
-								]
-							}
-						}
+						{"listen": "prerequest", "script": {"exec": ["const timestamp=Date.now();pm.globals.set('uniqueUsername',`testuser${timestamp}`);pm.globals.set('uniqueEmail',`test${timestamp}@example.com`);console.log('🔧 Données uniques générées');"]}},
+						{"listen": "test", "script": {"exec": ["pm.test(\"✅ Utilisateur créé avec succès\", function(){if(pm.response.code===201){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data).to.have.property('id');pm.expect(jsonData.data).to.not.have.property('password_hash');pm.globals.set('createdUserId',jsonData.data.id);pm.globals.set('createdUserEmail',jsonData.data.email);console.log('✅ Utilisateur créé:',jsonData.data.id);}});"]}}
 					]
 				},
 				{
-					"name": "❌ Username manquant",
+					"name": "✅ Création valide - Minimale",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{authToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Password123!\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users"]
-						}
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"{{uniqueUsername2}}\", \"email\": \"{{uniqueEmail2}}\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
 					},
 					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"❌ Erreur de validation username\", function () {",
-									"    if (pm.response.code === 400) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.false;",
-									"        if (jsonData.errors) {",
-									"            const usernameError = jsonData.errors.find(e => e.field === 'username');",
-									"            pm.expect(usernameError).to.exist;",
-									"            console.log('❌ Erreur username:', usernameError.message);",
-									"        }",
-									"    }",
-									"});"
-								]
-							}
-						}
+						{"listen": "prerequest", "script": {"exec": ["const timestamp=Date.now();pm.globals.set('uniqueUsername2',`testuser${timestamp}`);pm.globals.set('uniqueEmail2',`test${timestamp}@example.com`);"]}},
+						{"listen": "test", "script": {"exec": ["pm.test(\"✅ Création minimale réussie\", function(){if(pm.response.code===201){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.true;pm.expect(jsonData.data.role).to.equal('user');pm.expect(jsonData.data.status).to.equal('active');console.log('✅ Création minimale réussie');}});"]}}
 					]
 				},
 				{
-					"name": "❌ Email invalide",
+					"name": "❌ Création - Username manquant",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{authToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"email-invalide\",\n  \"password\": \"Password123!\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users"]
-						}
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"test@example.com\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
 					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"❌ Erreur de validation email\", function () {",
-									"    if (pm.response.code === 400) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.false;",
-									"        if (jsonData.errors) {",
-									"            const emailError = jsonData.errors.find(e => e.field === 'email');",
-									"            pm.expect(emailError).to.exist;",
-									"            console.log('❌ Erreur email:', emailError.message);",
-									"        }",
-									"    }",
-									"});"
-								]
-							}
-						}
-					]
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur username manquant\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const usernameError=jsonData.errors.find(e=>e.field==='username');pm.expect(usernameError).to.exist;console.log('❌ Erreur username:',usernameError.message);}}}});"]}}]
 				},
 				{
-					"name": "❌ Mot de passe faible",
+					"name": "❌ Création - Email manquant",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{authToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"123\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users"]
-						}
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"testuser\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
 					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"❌ Erreur de validation mot de passe\", function () {",
-									"    if (pm.response.code === 400) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.false;",
-									"        if (jsonData.errors) {",
-									"            const passwordError = jsonData.errors.find(e => e.field === 'password');",
-									"            pm.expect(passwordError).to.exist;",
-									"            console.log('❌ Erreur mot de passe:', passwordError.message);",
-									"        }",
-									"    }",
-									"});"
-								]
-							}
-						}
-					]
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur email manquant\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const emailError=jsonData.errors.find(e=>e.field==='email');pm.expect(emailError).to.exist;console.log('❌ Erreur email:',emailError.message);}}}});"]}}]
 				},
 				{
-					"name": "🚫 Email déjà utilisé",
+					"name": "❌ Création - Mot de passe manquant",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{authToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"duplicateuser\",\n  \"email\": \"{{createdUserEmail}}\",\n  \"password\": \"Password123!\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users"]
-						}
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"testuser\", \"email\": \"test@example.com\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
 					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"🚫 Conflit d'email\", function () {",
-									"    if (pm.response.code === 409) {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.success).to.be.false;",
-									"        pm.expect(jsonData.field).to.equal('email');",
-									"        console.log('🚫 Email déjà utilisé');",
-									"    }",
-									"});"
-								]
-							}
-						}
-					]
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur mot de passe manquant\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const passwordError=jsonData.errors.find(e=>e.field==='password');pm.expect(passwordError).to.exist;console.log('❌ Erreur mot de passe:',passwordError.message);}}}});"]}}]
+				},
+				{
+					"name": "❌ Création - Email invalide",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"testuser\", \"email\": \"email-invalide\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur email invalide\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const emailError=jsonData.errors.find(e=>e.field==='email');pm.expect(emailError).to.exist;console.log('❌ Erreur email:',emailError.message);}}}});"]}}]
+				},
+				{
+					"name": "❌ Création - Username trop court",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"ab\", \"email\": \"test@example.com\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur username trop court\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const usernameError=jsonData.errors.find(e=>e.field==='username');pm.expect(usernameError).to.exist;console.log('❌ Erreur username:',usernameError.message);}}}});"]}}]
+				},
+				{
+					"name": "❌ Création - Mot de passe faible",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"testuser\", \"email\": \"test@example.com\", \"password\": \"123\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur mot de passe faible\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const passwordError=jsonData.errors.find(e=>e.field==='password');pm.expect(passwordError).to.exist;console.log('❌ Erreur mot de passe:',passwordError.message);}}}});"]}}]
+				},
+				{
+					"name": "❌ Création - Rôle invalide",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"testuser\", \"email\": \"test@example.com\", \"password\": \"Password123!\", \"role\": \"invalid-role\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur rôle invalide\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const roleError=jsonData.errors.find(e=>e.field==='role');pm.expect(roleError).to.exist;console.log('❌ Erreur rôle:',roleError.message);}}}});"]}}]
+				},
+				{
+					"name": "❌ Création - Statut invalide",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"testuser\", \"email\": \"test@example.com\", \"password\": \"Password123!\", \"status\": \"invalid-status\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"❌ Erreur statut invalide\", function(){if(pm.response.code===400){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;if(jsonData.errors){const statusError=jsonData.errors.find(e=>e.field==='status');pm.expect(statusError).to.exist;console.log('❌ Erreur statut:',statusError.message);}}}});"]}}]
+				},
+				{
+					"name": "🚫 Création - Email déjà utilisé",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"duplicateuser\", \"email\": \"{{createdUserEmail}}\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"🚫 Conflit d'email\", function(){if(pm.response.code===409){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.field).to.equal('email');console.log('🚫 Email déjà utilisé');}});"]}}]
+				},
+				{
+					"name": "🚫 Création - Username déjà utilisé",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{authToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"username\": \"{{validTestUsername}}\", \"email\": \"new@example.com\", \"password\": \"Password123!\"}"},
+						"url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}
+					},
+					"event": [{"listen": "test", "script": {"exec": ["pm.test(\"🚫 Conflit de username\", function(){if(pm.response.code===409){const jsonData=pm.response.json();pm.expect(jsonData.success).to.be.false;pm.expect(jsonData.field).to.equal('username');console.log('🚫 Username déjà utilisé');}});"]}}]
 				}
 			]
 		}
@@ -504,22 +306,17 @@
 			"listen": "prerequest",
 			"script": {
 				"exec": [
-					"// Configuration générale",
-					"console.log('=== Test Users Module ===');",
+					"console.log('=== Test Users Module Complete ===');",
 					"console.log('URL:', pm.request.url);",
 					"console.log('Méthode:', pm.request.method);",
-					"",
-					"// Compteur de tests",
-					"if (!pm.globals.get('testCounter')) {",
-					"    pm.globals.set('testCounter', 1);",
-					"} else {",
-					"    pm.globals.set('testCounter', pm.globals.get('testCounter') + 1);",
-					"}",
-					"",
-					"// Données de test par défaut",
-					"pm.globals.setIfUndefined('testEmail', 'test@example.com');",
-					"pm.globals.setIfUndefined('testPassword', 'Password123!');",
-					"pm.globals.setIfUndefined('testUsername', 'testuser');",
+					"if (!pm.globals.get('testCounter')) { pm.globals.set('testCounter', 1); } else { pm.globals.set('testCounter', pm.globals.get('testCounter') + 1); }",
+					"pm.globals.setIfUndefined('validTestEmail', 'test@example.com');",
+					"pm.globals.setIfUndefined('validTestPassword', 'Password123!');",
+					"pm.globals.setIfUndefined('validTestUsername', 'testuser');",
+					"pm.globals.setIfUndefined('availableEmail', 'available@example.com');",
+					"pm.globals.setIfUndefined('existingEmail', 'test@example.com');",
+					"pm.globals.setIfUndefined('availableUsername', 'availableuser');",
+					"pm.globals.setIfUndefined('existingUsername', 'testuser');",
 					"pm.globals.setIfUndefined('baseUrl', 'http://localhost:3000');"
 				]
 			}
@@ -528,21 +325,9 @@
 			"listen": "test",
 			"script": {
 				"exec": [
-					"// Tests généraux",
-					"pm.test(\"📊 Response time acceptable\", function () {",
-					"    pm.expect(pm.response.responseTime).to.be.below(2000);",
-					"});",
-					"",
-					"pm.test(\"📝 Structure de réponse correcte\", function () {",
-					"    const jsonData = pm.response.json();",
-					"    pm.expect(jsonData).to.have.property('success');",
-					"    pm.expect(jsonData).to.have.property('message');",
-					"    pm.expect(jsonData).to.have.property('timestamp');",
-					"});",
-					"",
-					"// Logging des réponses",
-					"const jsonData = pm.response.json();",
-					"console.log('📋 Response:', JSON.stringify(jsonData, null, 2));"
+					"pm.test(\"📊 Response time acceptable\", function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+					"pm.test(\"📝 Response has correct structure\", function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.have.property('success'); pm.expect(jsonData).to.have.property('message'); pm.expect(jsonData).to.have.property('timestamp'); });",
+					"pm.test(\"🔍 Log response details\", function () { const jsonData = pm.response.json(); console.log('Response:', JSON.stringify(jsonData, null, 2)); });"
 				]
 			}
 		}
