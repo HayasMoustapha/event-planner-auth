@@ -2,25 +2,84 @@ const express = require('express');
 const usersController = require('./users.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
 const rbacMiddleware = require('../../middlewares/rbac.middleware');
+const usersValidation = require('./users.validation');
 
 const router = express.Router();
 
-// Toutes les routes nécessitent une authentification
+/**
+ * Routes publiques (sans authentification)
+ * Utiles pour les vérifications de disponibilité
+ */
+router.get('/check/username/:username', usersController.checkUsernameAvailability);
+router.get('/check/email/:email', usersController.checkEmailAvailability);
+
+/**
+ * Routes d'authentification
+ */
+router.post('/authenticate', usersController.authenticate);
+
+/**
+ * Routes protégées - authentification requise
+ */
 router.use(authMiddleware.authenticate);
 
-// Routes avec permissions RBAC
+/**
+ * Routes CRUD avec permissions RBAC
+ */
 router.get('/', rbacMiddleware.requirePermission('users.list'), usersController.getAll);
+router.get('/stats', rbacMiddleware.requirePermission('users.stats'), usersController.getStats);
 router.get('/:id', rbacMiddleware.requirePermission('users.read'), usersController.getById);
-router.post('/', rbacMiddleware.requirePermission('users.create'), usersController.create);
-router.put('/:id', rbacMiddleware.requirePermission('users.update'), usersController.update);
-router.delete('/:id', rbacMiddleware.requirePermission('users.delete'), usersController.delete);
+router.get('/email/:email', rbacMiddleware.requirePermission('users.read'), usersController.getByEmail);
+router.get('/username/:username', rbacMiddleware.requirePermission('users.read'), usersController.getByUsername);
 
-// Gestion des rôles
-router.get('/:id/roles', rbacMiddleware.requirePermission('users.read'), usersController.getUserRoles);
-router.post('/:id/roles', rbacMiddleware.requirePermission('roles.assign'), usersController.assignRole);
-router.delete('/:id/roles/:roleId', rbacMiddleware.requirePermission('roles.assign'), usersController.removeRole);
+/**
+ * Routes de modification avec validation
+ */
+router.post('/', 
+  rbacMiddleware.requirePermission('users.create'),
+  usersValidation.validateCreate,
+  usersController.create
+);
 
-// Gestion du statut
-router.put('/:id/status', rbacMiddleware.requirePermission('users.update'), usersController.updateStatus);
+router.put('/:id', 
+  rbacMiddleware.requirePermission('users.update'),
+  usersValidation.validateUpdate,
+  usersController.update
+);
+
+router.patch('/:id/password', 
+  rbacMiddleware.requirePermission('users.update'),
+  usersValidation.validatePasswordUpdate,
+  usersController.updatePassword
+);
+
+router.patch('/:id/status', 
+  rbacMiddleware.requirePermission('users.update'),
+  usersValidation.validateStatusUpdate,
+  usersController.updateStatus
+);
+
+/**
+ * Routes de suppression (soft delete)
+ */
+router.delete('/:id', 
+  rbacMiddleware.requirePermission('users.delete'),
+  usersController.delete
+);
+
+/**
+ * Routes utilitaires
+ */
+router.get('/:id/exists', rbacMiddleware.requirePermission('users.read'), usersController.exists);
+router.post('/reset-password', 
+  rbacMiddleware.requirePermission('users.update'),
+  usersValidation.validatePasswordReset,
+  usersController.resetPassword
+);
+
+/**
+ * Routes de recherche
+ */
+router.get('/search', rbacMiddleware.requirePermission('users.list'), usersController.search);
 
 module.exports = router;

@@ -1,191 +1,508 @@
-const bcrypt = require('bcrypt');
-const { hashPassword } = require('../../utils/hash');
 const usersRepository = require('./users.repository');
-const peopleRepository = require('../people/people.repository');
+const { validateEmail, validatePassword } = require('../../utils/validators');
 
+/**
+ * Service métier pour la gestion des utilisateurs
+ * Contient la logique business, validation et gestion des erreurs
+ */
 class UsersService {
+  /**
+   * Récupère tous les utilisateurs avec pagination et filtres
+   * @param {Object} options - Options de recherche et pagination
+   * @returns {Promise<Object>} Données paginées
+   */
   async getAll(options = {}) {
-    const { page, limit, search, status } = options;
-    return await usersRepository.findAll({ page, limit, search, status });
+    const { page = 1, limit = 10, search, status, role } = options;
+    
+    // Validation des paramètres
+    if (page < 1) throw new Error('Le numéro de page doit être supérieur à 0');
+    if (limit < 1 || limit > 100) throw new Error('La limite doit être entre 1 et 100');
+    
+    // Validation du statut
+    if (status && !['active', 'inactive', 'locked'].includes(status)) {
+      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, locked');
+    }
+    
+    // Validation du rôle
+    if (role && !['admin', 'user', 'moderator'].includes(role)) {
+      throw new Error('Rôle invalide. Valeurs autorisées: admin, user, moderator');
+    }
+    
+    return await usersRepository.findAll({ page, limit, search, status, role });
   }
 
-  async getById(id) {
-    const user = await usersRepository.findByIdWithPerson(id);
+  /**
+   * Récupère un utilisateur par son ID
+   * @param {number} id - ID de l'utilisateur
+   * @param {boolean} includePassword - Inclure le mot de passe (pour authentification)
+   * @returns {Promise<Object>} Données de l'utilisateur
+   */
+  async getById(id, includePassword = false) {
+    if (!id || id <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+
+    const user = await usersRepository.findById(id, includePassword);
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
-
-    // Récupérer les rôles et permissions
-    const roles = await usersRepository.getUserRoles(id);
-    const permissions = await usersRepository.getUserPermissions(id);
-
-    return {
-      ...user,
-      roles,
-      permissions
-    };
+    
+    return user;
   }
 
-  async create(userData, createdBy) {
-    const { personId, username, email, password, roleIds = [] } = userData;
-
-    // Vérifier si la personne existe
-    const person = await peopleRepository.findById(personId);
-    if (!person) {
-      throw new Error('Personne non trouvée');
+  /**
+   * Récupère un utilisateur par son email
+   * @param {string} email - Email de l'utilisateur
+   * @param {boolean} includePassword - Inclure le mot de passe
+   * @returns {Promise<Object>} Données de l'utilisateur
+   */
+  async getByEmail(email, includePassword = false) {
+    if (!email) {
+      throw new Error('Email requis');
     }
 
-    // Vérifier si l'utilisateur existe déjà
-    const existingUser = await usersRepository.findByEmail(email);
-    if (existingUser) {
+    if (!validateEmail(email)) {
+      throw new Error('Format d\'email invalide');
+    }
+
+    const user = await usersRepository.findByEmail(email, includePassword);
+    if (!user) {
+      throw new Error('Utilisateur non trouvé avec cet email');
+    }
+    
+    return user;
+  }
+
+  /**
+   * Récupère un utilisateur par son username
+   * @param {string} username - Username de l'utilisateur
+   * @param {boolean} includePassword - Inclure le mot de passe
+   * @returns {Promise<Object>} Données de l'utilisateur
+   */
+  async getByUsername(username, includePassword = false) {
+    if (!username) {
+      throw new Error('Username requis');
+    }
+
+    // Validation du format du username
+    if (username.length < 3 || username.length > 50) {
+      throw new Error('Le username doit contenir entre 3 et 50 caractères');
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
+    }
+
+    const user = await usersRepository.findByUsername(username, includePassword);
+    if (!user) {
+      throw new Error('Utilisateur non trouvé avec ce username');
+    }
+    
+    return user;
+  }
+
+  /**
+   * Crée un nouvel utilisateur avec validation complète
+   * @param {Object} userData - Données de l'utilisateur
+   * @param {number} createdBy - ID de l'utilisateur qui crée
+   * @returns {Promise<Object>} Utilisateur créé
+   */
+  async create(userData, createdBy = null) {
+    const {
+      username,
+      email,
+      password,
+      role = 'user',
+      status = 'active',
+      personId = null
+    } = userData;
+
+    // Validation des champs obligatoires
+    if (!username || !username.trim()) {
+      throw new Error('Le username est obligatoire');
+    }
+    if (!email || !email.trim()) {
+      throw new Error('L\'email est obligatoire');
+    }
+    if (!password || !password.trim()) {
+      throw new Error('Le mot de passe est obligatoire');
+    }
+
+    // Validation des formats
+    if (!validateEmail(email)) {
+      throw new Error('Format d\'email invalide');
+    }
+    if (!validatePassword(password)) {
+      throw new Error('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre');
+    }
+
+    // Validation du username
+    if (username.length < 3 || username.length > 50) {
+      throw new Error('Le username doit contenir entre 3 et 50 caractères');
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
+    }
+
+    // Validation du rôle
+    if (!['admin', 'user', 'moderator'].includes(role)) {
+      throw new Error('Rôle invalide. Valeurs autorisées: admin, user, moderator');
+    }
+
+    // Validation du statut
+    if (!['active', 'inactive', 'locked'].includes(status)) {
+      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, locked');
+    }
+
+    // Nettoyage des données
+    const cleanData = {
+      username: username.trim().toLowerCase(),
+      email: email.toLowerCase().trim(),
+      password: password.trim(),
+      role,
+      status,
+      personId,
+      createdBy
+    };
+
+    // Vérification des doublons
+    const existingEmail = await usersRepository.findByEmail(cleanData.email);
+    if (existingEmail) {
       throw new Error('Un utilisateur avec cet email existe déjà');
     }
 
-    const existingUsername = await usersRepository.findByUsername(username);
+    const existingUsername = await usersRepository.findByUsername(cleanData.username);
     if (existingUsername) {
-      throw new Error('Ce nom d\'utilisateur est déjà pris');
+      throw new Error('Ce nom d\'utilisateur est déjà utilisé');
     }
 
-    // Hasher le mot de passe
-    const passwordHash = await hashPassword(password);
-
-    // Créer l'utilisateur
-    const user = await usersRepository.create({
-      personId,
-      username,
-      email,
-      passwordHash,
-      createdBy
-    });
-
-    // Assigner les rôles
-    if (roleIds.length > 0) {
-      await usersRepository.assignRoles(user.id, roleIds, createdBy);
+    // Validation de la personne si spécifiée
+    if (personId) {
+      const personExists = await this.checkPersonExists(personId);
+      if (!personExists) {
+        throw new Error('La personne spécifiée n\'existe pas');
+      }
     }
 
-    return this.getById(user.id);
+    return await usersRepository.create(cleanData);
   }
 
-  async update(id, updateData) {
+  /**
+   * Met à jour un utilisateur avec validation
+   * @param {number} id - ID de l'utilisateur
+   * @param {Object} updateData - Données à mettre à jour
+   * @param {number} updatedBy - ID de l'utilisateur qui modifie
+   * @returns {Promise<Object>} Utilisateur mis à jour
+   */
+  async update(id, updateData, updatedBy = null) {
+    if (!id || id <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+
     // Vérifier si l'utilisateur existe
     const existingUser = await usersRepository.findById(id);
     if (!existingUser) {
       throw new Error('Utilisateur non trouvé');
     }
 
-    // Si l'email est modifié, vérifier s'il n'existe pas déjà
-    if (updateData.email && updateData.email !== existingUser.email) {
-      const existingEmail = await usersRepository.findByEmail(updateData.email);
+    const {
+      username,
+      email,
+      password,
+      role,
+      status
+    } = updateData;
+
+    // Validation des formats si fournis
+    if (email && !validateEmail(email)) {
+      throw new Error('Format d\'email invalide');
+    }
+    if (password && !validatePassword(password)) {
+      throw new Error('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre');
+    }
+    if (username) {
+      if (username.length < 3 || username.length > 50) {
+        throw new Error('Le username doit contenir entre 3 et 50 caractères');
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
+      }
+    }
+    if (role && !['admin', 'user', 'moderator'].includes(role)) {
+      throw new Error('Rôle invalide. Valeurs autorisées: admin, user, moderator');
+    }
+    if (status && !['active', 'inactive', 'locked'].includes(status)) {
+      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, locked');
+    }
+
+    // Nettoyage des données
+    const cleanData = {};
+    if (username !== undefined) cleanData.username = username.trim().toLowerCase();
+    if (email !== undefined) cleanData.email = email.toLowerCase().trim();
+    if (password !== undefined) cleanData.password = password.trim();
+    if (role !== undefined) cleanData.role = role;
+    if (status !== undefined) cleanData.status = status;
+    cleanData.updatedBy = updatedBy;
+
+    // Vérification des doublons si email/username modifié
+    if (cleanData.email && cleanData.email !== existingUser.email) {
+      const existingEmail = await usersRepository.findByEmail(cleanData.email);
       if (existingEmail) {
         throw new Error('Un utilisateur avec cet email existe déjà');
       }
     }
 
-    // Si le username est modifié, vérifier s'il n'existe pas déjà
-    if (updateData.username && updateData.username !== existingUser.username) {
-      const existingUsername = await usersRepository.findByUsername(updateData.username);
+    if (cleanData.username && cleanData.username !== existingUser.username) {
+      const existingUsername = await usersRepository.findByUsername(cleanData.username);
       if (existingUsername) {
-        throw new Error('Ce nom d\'utilisateur est déjà pris');
+        throw new Error('Ce nom d\'utilisateur est déjà utilisé');
       }
     }
 
-    // Si le mot de passe est fourni, le hasher
-    if (updateData.password) {
-      updateData.passwordHash = await hashPassword(updateData.password);
-      delete updateData.password;
+    // Vérification si le mot de passe a déjà été utilisé
+    if (cleanData.password) {
+      const passwordAlreadyUsed = await usersRepository.isPasswordAlreadyUsed(id, cleanData.password);
+      if (passwordAlreadyUsed) {
+        throw new Error('Ce mot de passe a déjà été utilisé. Veuillez en choisir un autre.');
+      }
     }
 
-    await usersRepository.update(id, updateData);
-    return this.getById(id);
+    return await usersRepository.update(id, cleanData);
   }
 
-  async delete(id) {
+  /**
+   * Supprime logiquement un utilisateur
+   * @param {number} id - ID de l'utilisateur
+   * @param {number} deletedBy - ID de l'utilisateur qui supprime
+   * @returns {Promise<boolean>} Succès de l'opération
+   */
+  async delete(id, deletedBy = null) {
+    if (!id || id <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+
     // Vérifier si l'utilisateur existe
     const user = await usersRepository.findById(id);
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
 
-    // Empêcher la suppression du dernier super admin
-    const superAdminRoles = await usersRepository.getUserRoles(id);
-    const isSuperAdmin = superAdminRoles.some(role => role.name === 'super_admin');
+    // Empêcher l'auto-suppression
+    if (deletedBy && deletedBy === id) {
+      throw new Error('Impossible de supprimer votre propre compte');
+    }
+
+    return await usersRepository.softDelete(id, deletedBy);
+  }
+
+  /**
+   * Met à jour le mot de passe d'un utilisateur
+   * @param {number} id - ID de l'utilisateur
+   * @param {string} currentPassword - Mot de passe actuel
+   * @param {string} newPassword - Nouveau mot de passe
+   * @param {number} updatedBy - ID de l'utilisateur qui modifie
+   * @returns {Promise<Object>} Utilisateur mis à jour
+   */
+  async updatePassword(id, currentPassword, newPassword, updatedBy = null) {
+    if (!id || id <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+    if (!currentPassword || !currentPassword.trim()) {
+      throw new Error('Le mot de passe actuel est requis');
+    }
+    if (!newPassword || !newPassword.trim()) {
+      throw new Error('Le nouveau mot de passe est requis');
+    }
+
+    // Validation du nouveau mot de passe
+    if (!validatePassword(newPassword)) {
+      throw new Error('Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre');
+    }
+
+    // Vérifier que le nouveau mot de passe est différent de l'ancien
+    if (currentPassword === newPassword) {
+      throw new Error('Le nouveau mot de passe doit être différent de l\'ancien');
+    }
+
+    // Vérifier si l'utilisateur existe
+    const user = await usersRepository.findById(id);
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    // Vérifier le mot de passe actuel
+    const verifiedUser = await usersRepository.verifyPassword(user.email, currentPassword);
+    if (!verifiedUser) {
+      throw new Error('Mot de passe actuel incorrect');
+    }
+
+    // Vérifier si le nouveau mot de passe a déjà été utilisé
+    const passwordAlreadyUsed = await usersRepository.isPasswordAlreadyUsed(id, newPassword);
+    if (passwordAlreadyUsed) {
+      throw new Error('Ce mot de passe a déjà été utilisé. Veuillez en choisir un autre.');
+    }
+
+    return await usersRepository.updatePassword(id, newPassword, updatedBy);
+  }
+
+  /**
+   * Authentifie un utilisateur
+   * @param {string} email - Email de l'utilisateur
+   * @param {string} password - Mot de passe
+   * @returns {Promise<Object>} Utilisateur authentifié
+   */
+  async authenticate(email, password) {
+    if (!email || !email.trim()) {
+      throw new Error('Email requis');
+    }
+    if (!password || !password.trim()) {
+      throw new Error('Mot de passe requis');
+    }
+
+    if (!validateEmail(email)) {
+      throw new Error('Format d\'email invalide');
+    }
+
+    const user = await usersRepository.verifyPassword(email, password);
+    if (!user) {
+      throw new Error('Email ou mot de passe incorrect');
+    }
+
+    // Vérifier si le compte est actif
+    if (user.status !== 'active') {
+      if (user.status === 'locked') {
+        throw new Error('Ce compte est verrouillé. Veuillez contacter l\'administrateur.');
+      }
+      if (user.status === 'inactive') {
+        throw new Error('Ce compte est désactivé. Veuillez contacter l\'administrateur.');
+      }
+    }
+
+    // Mettre à jour la date de dernière connexion
+    await usersRepository.updateLastLogin(user.id);
+
+    return user;
+  }
+
+  /**
+   * Active ou désactive un utilisateur
+   * @param {number} id - ID de l'utilisateur
+   * @param {string} status - Nouveau statut
+   * @param {number} updatedBy - ID de l'utilisateur qui modifie
+   * @returns {Promise<Object>} Utilisateur mis à jour
+   */
+  async updateStatus(id, status, updatedBy = null) {
+    if (!id || id <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+
+    if (!['active', 'inactive', 'locked'].includes(status)) {
+      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, locked');
+    }
+
+    // Empêcher de verrouiller son propre compte
+    if (updatedBy && updatedBy === id && status === 'locked') {
+      throw new Error('Impossible de verrouiller votre propre compte');
+    }
+
+    return await usersRepository.updateStatus(id, status, updatedBy);
+  }
+
+  /**
+   * Recherche des utilisateurs par critères multiples
+   * @param {Object} criteria - Critères de recherche
+   * @returns {Promise<Object>} Résultats paginés
+   */
+  async search(criteria) {
+    const { search, status, role, page = 1, limit = 10 } = criteria;
     
-    if (isSuperAdmin) {
-      const superAdminCount = await usersRepository.countSuperAdmins();
-      if (superAdminCount <= 1) {
-        throw new Error('Impossible de supprimer le dernier super administrateur');
-      }
+    return await this.getAll({
+      search: search?.trim(),
+      status,
+      role,
+      page,
+      limit
+    });
+  }
+
+  /**
+   * Vérifie si un utilisateur existe (pour validation externe)
+   * @param {number} id - ID de l'utilisateur
+   * @returns {Promise<boolean>} True si l'utilisateur existe
+   */
+  async exists(id) {
+    if (!id || id <= 0) return false;
+    
+    try {
+      return await usersRepository.exists(id);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Vérifie si une personne existe
+   * @param {number} personId - ID de la personne
+   * @returns {Promise<boolean>} True si la personne existe
+   */
+  async checkPersonExists(personId) {
+    try {
+      const peopleRepository = require('../people/people.repository');
+      const person = await peopleRepository.findById(personId);
+      return !!person;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Récupère les statistiques sur les utilisateurs
+   * @returns {Promise<Object>} Statistiques
+   */
+  async getStats() {
+    try {
+      return await usersRepository.getStats();
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);
+    }
+  }
+
+  /**
+   * Réinitialise le mot de passe d'un utilisateur
+   * @param {string} email - Email de l'utilisateur
+   * @param {string} newPassword - Nouveau mot de passe
+   * @param {number} updatedBy - ID de l'utilisateur qui modifie
+   * @returns {Promise<Object>} Utilisateur mis à jour
+   */
+  async resetPassword(email, newPassword, updatedBy = null) {
+    if (!email || !email.trim()) {
+      throw new Error('Email requis');
+    }
+    if (!newPassword || !newPassword.trim()) {
+      throw new Error('Le nouveau mot de passe est requis');
     }
 
-    await usersRepository.delete(id);
-  }
+    if (!validateEmail(email)) {
+      throw new Error('Format d\'email invalide');
+    }
 
-  async getUserRoles(userId) {
-    return await usersRepository.getUserRoles(userId);
-  }
+    if (!validatePassword(newPassword)) {
+      throw new Error('Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre');
+    }
 
-  async assignRole(userId, roleId, assignedBy) {
     // Vérifier si l'utilisateur existe
-    const user = await usersRepository.findById(userId);
+    const user = await usersRepository.findByEmail(email);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw new Error('Aucun utilisateur trouvé avec cet email');
     }
 
-    // Vérifier si le rôle existe
-    const role = await usersRepository.findRoleById(roleId);
-    if (!role) {
-      throw new Error('Rôle non trouvé');
+    // Vérifier si le nouveau mot de passe a déjà été utilisé
+    const passwordAlreadyUsed = await usersRepository.isPasswordAlreadyUsed(user.id, newPassword);
+    if (passwordAlreadyUsed) {
+      throw new Error('Ce mot de passe a déjà été utilisé. Veuillez en choisir un autre.');
     }
 
-    // Vérifier si le rôle est déjà assigné
-    const existingAssignment = await usersRepository.hasRole(userId, roleId);
-    if (existingAssignment) {
-      throw new Error('Ce rôle est déjà assigné à l\'utilisateur');
-    }
-
-    await usersRepository.assignRole(userId, roleId, assignedBy);
-  }
-
-  async removeRole(userId, roleId) {
-    // Vérifier si l'utilisateur existe
-    const user = await usersRepository.findById(userId);
-    if (!user) {
-      throw new Error('Utilisateur non trouvé');
-    }
-
-    // Vérifier si le rôle est assigné
-    const existingAssignment = await usersRepository.hasRole(userId, roleId);
-    if (!existingAssignment) {
-      throw new Error('Ce rôle n\'est pas assigné à l\'utilisateur');
-    }
-
-    // Empêcher le retrait du dernier super admin
-    const role = await usersRepository.findRoleById(roleId);
-    if (role.name === 'super_admin') {
-      const superAdminCount = await usersRepository.countSuperAdmins();
-      if (superAdminCount <= 1) {
-        throw new Error('Impossible de retirer le rôle super admin du dernier administrateur');
-      }
-    }
-
-    await usersRepository.removeRole(userId, roleId);
-  }
-
-  async updateStatus(userId, statusData) {
-    const { isActive, isVerified } = statusData;
-
-    // Vérifier si l'utilisateur existe
-    const user = await usersRepository.findById(userId);
-    if (!user) {
-      throw new Error('Utilisateur non trouvé');
-    }
-
-    const updateData = {};
-    if (isActive !== undefined) updateData.isActive = isActive;
-    if (isVerified !== undefined) updateData.isVerified = isVerified;
-
-    await usersRepository.update(userId, updateData);
-    return this.getById(userId);
+    return await usersRepository.updatePassword(user.id, newPassword, updatedBy);
   }
 }
 
