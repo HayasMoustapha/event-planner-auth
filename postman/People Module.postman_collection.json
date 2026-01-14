@@ -1,0 +1,651 @@
+{
+	"info": {
+		"_postman_id": "event-planner-auth-people",
+		"name": "Event Planner Auth - People Module",
+		"description": "Collection complète pour tester le module people avec tous les cas de figure",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "🔓 Routes Publiques (Sans Auth)",
+			"description": "Routes accessibles sans authentification - pour OTP et recherche",
+			"item": [
+				{
+					"name": "Recherche de personnes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/people/search?page=1&limit=10&search=john&status=active",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "search"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Numéro de page"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Nombre de résultats par page"
+								},
+								{
+									"key": "search",
+									"value": "john",
+									"description": "Terme de recherche (nom, prénom, email, téléphone)"
+								},
+								{
+									"key": "status",
+									"value": "active",
+									"description": "Filtre par statut (active/inactive)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Recherche par email (OTP)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/people/email/john.doe@example.com",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "email", "john.doe@example.com"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Recherche par téléphone (OTP)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/people/phone/+33612345678",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "phone", "+33612345678"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vérifier l'existence d'une personne",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/people/1/exists",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "1", "exists"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔒 Routes Protégées (Avec Auth)",
+			"description": "Routes nécessitant authentification et permissions RBAC",
+			"item": [
+				{
+					"name": "Lister toutes les personnes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/people?page=1&limit=10&search=&status=",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "status",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Statistiques des personnes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/people/stats",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "stats"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Détails d'une personne",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/people/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "1"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "➕ Création de Personnes",
+			"description": "Tests de création avec tous les cas de validation",
+			"item": [
+				{
+					"name": "✅ Création valide",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+33612345678\",\n  \"photo\": \"https://example.com/photo.jpg\",\n  \"status\": \"active\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Prénom manquant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Email invalide",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"email-invalide\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Téléphone invalide",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Statut invalide",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"status\": \"invalid\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "✏️ Mise à Jour",
+			"description": "Tests de mise à jour avec validation",
+			"item": [
+				{
+					"name": "✅ Mise à jour valide",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"John Updated\",\n  \"lastName\": \"Doe Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"phone\": \"+33687654321\",\n  \"status\": \"active\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Personne non trouvée",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"John\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people/99999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "99999"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Email déjà utilisé",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"existing.email@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "1"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔄 Changement de Statut",
+			"description": "Tests de changement de statut",
+			"item": [
+				{
+					"name": "✅ Activer une personne",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"active\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "1", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "✅ Désactiver une personne",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"inactive\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "1", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Statut invalide",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"invalid\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "1", "status"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🗑️ Suppression (Soft Delete)",
+			"description": "Tests de suppression logique",
+			"item": [
+				{
+					"name": "✅ Supprimer une personne",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/people/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Personne non trouvée",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/people/99999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "99999"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Personne associée à un utilisateur",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/people/2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people", "2"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🚫 Erreurs d'Authentification",
+			"description": "Tests des cas d'erreur d'authentification et permissions",
+			"item": [
+				{
+					"name": "❌ Pas de token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/people",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Token invalide",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid-token",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/people",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "❌ Permissions insuffisantes",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"email\": \"test@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/people",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "people"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userToken",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
