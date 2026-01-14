@@ -109,7 +109,7 @@ class AuthService {
    * @param {string} token - Token à rafraîchir
    * @returns {string} Nouveau token JWT
    */
-  refreshToken(token) {
+  async refreshToken(token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
@@ -463,9 +463,15 @@ class AuthService {
    * @param {string} token - Token à rafraîchir
    * @returns {string} Nouveau token
    */
-  generateRefreshToken(token) {
+  async generateRefreshToken(token) {
     try {
-      const decoded = this.verifyToken(token);
+      const tokenValidation = this.validateToken(token);
+      
+      if (!tokenValidation.valid) {
+        throw new Error('Token de rafraîchissement invalide');
+      }
+      
+      const decoded = tokenValidation.decoded;
       
       // Récupérer l'utilisateur depuis la base de données
       const user = await usersRepository.findById(decoded.id);
