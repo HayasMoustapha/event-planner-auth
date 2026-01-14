@@ -203,6 +203,24 @@ class RBACMiddleware {
   }
 
   /**
+   * Vérifie si l'utilisateur a au moins l'un des rôles spécifiés
+   * @param {Array<string>} roles - Liste des rôles requis
+   * @returns {Function} Middleware Express
+   */
+  requireAnyRole(roles) {
+    return this.requireRoles(roles, 'any');
+  }
+
+  /**
+   * Vérifie si l'utilisateur a tous les rôles spécifiés
+   * @param {Array<string>} roles - Liste des rôles requis
+   * @returns {Function} Middleware Express
+   */
+  requireAllRoles(roles) {
+    return this.requireRoles(roles, 'all');
+  }
+
+  /**
    * Vérifie si l'utilisateur peut accéder à une ressource avec une action spécifique
    * @param {string} resource - Nom de la ressource
    * @param {string} action - Action requise
@@ -463,6 +481,57 @@ class RBACMiddleware {
   }
 
   /**
+   * Vérifie si l'utilisateur peut accéder à sa propre ressource ou a un rôle spécifique
+   * @param {string} roleName - Nom du rôle requis pour accéder aux autres ressources
+   * @returns {Function} Middleware Express
+   */
+  requireOwnershipOrRole(roleName) {
+    return async (req, res, next) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json(createResponse(
+            false,
+            'Authentification requise',
+            { code: 'AUTHENTICATION_REQUIRED' }
+          ));
+        }
+
+        const targetUserId = req.params.id || req.params.userId;
+        
+        // Vérifier si l'utilisateur accède à sa propre ressource
+        if (req.user.id === parseInt(targetUserId)) {
+          return next();
+        }
+
+        // Sinon, vérifier si l'utilisateur a le rôle requis
+        const hasRole = await authorizationService.hasRole(req.user.id, roleName);
+
+        if (!hasRole) {
+          return res.status(403).json(createResponse(
+            false,
+            'Accès refusé: vous ne pouvez accéder qu\'à vos propres ressources ou avoir le rôle requis',
+            { 
+              code: 'OWNERSHIP_OR_ROLE_REQUIRED',
+              requiredRole: roleName,
+              targetUserId,
+              userId: req.user.id
+            }
+          ));
+        }
+
+        next();
+      } catch (error) {
+        console.error('Erreur dans le middleware RBAC:', error);
+        return res.status(500).json(createResponse(
+          false,
+          'Erreur lors de la vérification des permissions',
+          { code: 'RBAC_ERROR' }
+        ));
+      }
+    };
+  }
+
+  /**
    * Middleware de logging pour les vérifications RBAC
    * @returns {Function} Middleware Express
    */
@@ -487,52 +556,14 @@ class RBACMiddleware {
   }
 }
 
-module.exports = new RBACMiddleware();
-
-// Middleware pour vérifier si l'utilisateur peut accéder à sa propre ressource
-const requireOwnershipOrRole = (roleName) => {
-  return async (req, res, next) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({
-          error: 'Accès non autorisé',
-          message: 'Authentication requise'
-        });
-      }
-
-      const targetUserId = req.params.id || req.params.userId;
-      
-      // Vérifier si l'utilisateur accède à sa propre ressource
-      if (req.user.id === parseInt(targetUserId)) {
-        return next();
-      }
-
-      // Sinon, vérifier si l'utilisateur a le rôle requis
-      const userRoles = await usersRepository.getUserRoles(req.user.id);
-      const hasRole = userRoles.some(role => role.name === roleName);
-
-      if (!hasRole) {
-        return res.status(403).json({
-          error: 'Accès refusé',
-          message: 'Vous ne pouvez accéder qu\'à vos propres ressources ou avoir le rôle requis',
-          required: roleName
-        });
-      }
-
-      next();
-    } catch (error) {
-      return res.status(500).json({
-        error: 'Erreur interne',
-        message: 'Erreur lors de la vérification des permissions'
-      });
-    }
-  };
-};
+// Créer une instance de la classe pour l'export
+const rbacMiddleware = new RBACMiddleware();
 
 module.exports = {
-  requirePermission,
-  requireRole,
-  requireAnyRole,
-  requireAllRoles,
-  requireOwnershipOrRole
+  requirePermission: rbacMiddleware.requirePermission.bind(rbacMiddleware),
+  requireRole: rbacMiddleware.requireRole.bind(rbacMiddleware),
+  requireAnyRole: rbacMiddleware.requireAnyRole.bind(rbacMiddleware),
+  requireAllRoles: rbacMiddleware.requireAllRoles.bind(rbacMiddleware),
+  requireOwnershipOrRole: rbacMiddleware.requireOwnershipOrRole.bind(rbacMiddleware),
+  rbacLogger: rbacMiddleware.withLogging.bind(rbacMiddleware)
 };
