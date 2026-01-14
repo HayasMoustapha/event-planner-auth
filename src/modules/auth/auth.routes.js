@@ -1,23 +1,131 @@
 const express = require('express');
 const authController = require('./auth.controller');
-const authValidation = require('./auth.validation');
 const authMiddleware = require('../../middlewares/auth.middleware');
+const rbacMiddleware = require('../../middlewares/rbac.middleware');
+const authValidation = require('./auth.validation');
 
 const router = express.Router();
 
-// Routes publiques
-router.post('/register', authValidation.register, authController.register);
-router.post('/login', authValidation.login, authController.login);
-router.post('/refresh', authController.refreshToken);
-router.post('/forgot-password', authValidation.forgotPassword, authController.forgotPassword);
-router.post('/reset-password', authValidation.resetPassword, authController.resetPassword);
-router.post('/verify-email', authValidation.verifyEmail, authController.verifyEmail);
-router.post('/resend-verification', authValidation.resendVerification, authController.resendVerification);
+/**
+ * Routes publiques d'authentification
+ * Ces routes ne nécessitent pas d'authentification préalable
+ */
 
-// Routes protégées
-router.post('/logout', authMiddleware.authenticate, authController.logout);
-router.get('/me', authMiddleware.authenticate, authController.getProfile);
-router.put('/me', authMiddleware.authenticate, authValidation.updateProfile, authController.updateProfile);
-router.put('/change-password', authMiddleware.authenticate, authValidation.changePassword, authController.changePassword);
+// Connexion classique avec email et mot de passe
+router.post('/login', 
+  authValidation.validateLogin,
+  authController.login
+);
+
+// Connexion avec OTP
+router.post('/login-otp', 
+  authValidation.validateLoginWithOtp,
+  authController.loginWithOtp
+);
+
+// Rafraîchissement de token
+router.post('/refresh-token', 
+  authValidation.validateRefreshToken,
+  authController.refreshToken
+);
+
+// Validation de token
+router.post('/validate-token', 
+  authValidation.validateToken,
+  authController.validateToken
+);
+
+/**
+ * Routes de gestion des OTP
+ * Ces routes peuvent être publiques pour la génération d'OTP
+ */
+
+// Générer OTP pour email
+router.post('/otp/email/generate', 
+  authValidation.validateGenerateEmailOtp,
+  authController.generateEmailOtp
+);
+
+// Générer OTP pour téléphone
+router.post('/otp/phone/generate', 
+  authValidation.validateGeneratePhoneOtp,
+  authController.generatePhoneOtp
+);
+
+// Vérifier OTP pour email
+router.post('/otp/email/verify', 
+  authValidation.validateVerifyEmailOtp,
+  authController.verifyEmailOtp
+);
+
+// Vérifier OTP pour téléphone
+router.post('/otp/phone/verify', 
+  authValidation.validateVerifyPhoneOtp,
+  authController.verifyPhoneOtp
+);
+
+// Générer OTP pour réinitialisation de mot de passe
+router.post('/otp/password-reset/generate', 
+  authValidation.validateGeneratePasswordResetOtp,
+  authController.generatePasswordResetOtp
+);
+
+// Réinitialiser le mot de passe avec OTP
+router.post('/otp/password-reset/verify', 
+  authValidation.validateResetPasswordWithOtp,
+  authController.resetPasswordWithOtp
+);
+
+/**
+ * Routes protégées - authentification requise
+ */
+router.use(authMiddleware.authenticate);
+
+// Déconnexion
+router.post('/logout', authController.logout);
+
+// Récupérer le profil utilisateur
+router.get('/profile', authController.getProfile);
+
+// Changer le mot de passe
+router.post('/change-password', 
+  authValidation.validateChangePassword,
+  authController.changePassword
+);
+
+/**
+ * Routes d'administration - permissions spécifiques requises
+ */
+
+// Récupérer les OTP d'un utilisateur
+router.get('/otp/user/:userId', 
+  rbacMiddleware.requirePermission('otp.read'),
+  authController.getUserOtps
+);
+
+// Invalider les OTP d'un utilisateur
+router.post('/otp/user/:userId/invalidate', 
+  rbacMiddleware.requirePermission('otp.manage'),
+  authValidation.validateInvalidateUserOtps,
+  authController.invalidateUserOtps
+);
+
+// Vérifier si un utilisateur a des OTP actifs
+router.get('/otp/user/:userId/active', 
+  rbacMiddleware.requirePermission('otp.read'),
+  authController.hasActiveOtp
+);
+
+// Nettoyer les OTP expirés (maintenance)
+router.post('/otp/cleanup', 
+  rbacMiddleware.requirePermission('otp.manage'),
+  authController.cleanupExpiredOtps
+);
+
+// Statistiques sur les OTP
+router.get('/otp/stats', 
+  rbacMiddleware.requirePermission('otp.stats'),
+  authController.getOtpStats
+);
 
 module.exports = router;
