@@ -1,3 +1,29 @@
+/**
+ * Crée une réponse API standardisée
+ * @param {boolean} success - Succès de l'opération
+ * @param {string} message - Message de la réponse
+ * @param {any} data - Données à retourner (optionnel)
+ * @param {Object} meta - Métadonnées (optionnel)
+ * @returns {Object} Réponse formatée
+ */
+const createResponse = (success, message, data = null, meta = null) => {
+  const response = {
+    success,
+    message,
+    timestamp: new Date().toISOString()
+  };
+
+  if (data !== null) {
+    response.data = data;
+  }
+
+  if (meta !== null) {
+    response.meta = meta;
+  }
+
+  return response;
+};
+
 const successResponse = (message, data = null, meta = null) => {
   const response = {
     success: true,
@@ -88,6 +114,7 @@ const serverErrorResponse = (message = 'Erreur interne du serveur') => {
 };
 
 module.exports = {
+  createResponse,
   successResponse,
   errorResponse,
   paginatedResponse,
