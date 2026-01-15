@@ -1,6 +1,7 @@
 const roleRepository = require('../roles/roles.repository');
 const permissionRepository = require('../permissions/permissions.repository');
 const menuRepository = require('../menus/menus.repository');
+const authorizationRepository = require('./authorizations.repository');
 
 /**
  * Service métier pour la gestion des autorisations
@@ -23,7 +24,8 @@ class AuthorizationService {
     }
 
     try {
-      return await permissionRepository.userHasPermission(userId, permissionName.trim());
+      // Utilisation du nouveau repository authorizations pour la vérification
+      return await authorizationRepository.userHasPermission(userId, permissionName.trim());
     } catch (error) {
       console.error('Erreur lors de la vérification de permission:', error);
       return false;
