@@ -48,10 +48,3 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 ('system.logs', '{"fr": "Voir logs", "en": "View logs"}', 'system', '{"fr": "Voir les logs système", "en": "View system logs"}', NOW(), NOW()),
 ('system.settings', '{"fr": "Paramètres système", "en": "System settings"}', 'system', '{"fr": "Configurer les paramètres système", "en": "Configure system settings"}', NOW(), NOW()),
 ('system.monitoring', '{"fr": "Monitoring", "en": "Monitoring"}', 'system', '{"fr": "Accéder au monitoring système", "en": "Access system monitoring"}', NOW(), NOW());
-
--- Afficher confirmation
-DO $$
-BEGIN
-    RAISE NOTICE '✅ Permissions créées avec succès: % permissions insérées', 
-        (SELECT COUNT(*) FROM permissions);
-END $$;

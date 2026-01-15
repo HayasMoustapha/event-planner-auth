@@ -19,10 +19,3 @@ INSERT INTO roles (code, label, description, is_system, level, created_at, updat
 ('support_agent', '{"fr": "Agent de support", "en": "Support Agent"}', '{"fr": "Agent de support client", "en": "Customer support agent"}', false, 4, NOW(), NOW()),
 ('moderator', '{"fr": "Modérateur", "en": "Moderator"}', '{"fr": "Modérateur de contenu et communauté", "en": "Content and community moderator"}', false, 4, NOW(), NOW()),
 ('developer', '{"fr": "Développeur", "en": "Developer"}', '{"fr": "Développeur avec accès techniques", "en": "Developer with technical access"}', false, 3, NOW(), NOW());
-
--- Afficher confirmation
-DO $$
-BEGIN
-    RAISE NOTICE '✅ Rôles créés avec succès: % rôles insérés', 
-        (SELECT COUNT(*) FROM roles);
-END $$;

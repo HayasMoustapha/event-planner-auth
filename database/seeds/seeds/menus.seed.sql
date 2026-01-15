@@ -1,274 +1,52 @@
 -- ========================================
--- SEED DES MENUS SYSTÈME RBAC
+-- SEED DES MENUS SYSTÈME RBAC (POSTGRESQL)
 -- ========================================
--- Création des menus hiérarchiques pour le système RBAC
--- Compatible PostgreSQL avec syntaxe standard
+-- Création des menus pour le système RBAC
+-- Compatible avec le schéma PostgreSQL actuel
 
--- Désactiver les contraintes temporairement
-SET session_replication_role = replica;
+-- Insertion des menus principaux et sous-menus
+INSERT INTO menus (parent_id, label, icon, route, component, menu_group, sort_order, depth, description, created_at, updated_at) VALUES
+-- Menu principal: Tableau de bord
+(NULL, '{"fr": "Tableau de bord", "en": "Dashboard"}', 'dashboard', '/dashboard', 'Dashboard', 1, 1, 0, '{"fr": "Vue d''ensemble du système", "en": "System overview"}', NOW(), NOW()),
 
--- Nettoyage des données existantes (développement uniquement)
--- DELETE FROM role_menus WHERE 1=1;
--- DELETE FROM menu_permissions WHERE 1=1;
--- DELETE FROM menus WHERE 1=1;
+-- Menu principal: Utilisateurs
+(NULL, '{"fr": "Utilisateurs", "en": "Users"}', 'users', '/users', 'Users', 1, 2, 0, '{"fr": "Gestion des utilisateurs", "en": "User management"}', NOW(), NOW()),
+-- Sous-menus Utilisateurs
+((SELECT id FROM menus WHERE route = '/users'), '{"fr": "Liste des utilisateurs", "en": "Users List"}', 'list', '/users/list', 'UsersList', 1, 1, 1, '{"fr": "Lister tous les utilisateurs", "en": "List all users"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/users'), '{"fr": "Créer un utilisateur", "en": "Create User"}', 'add', '/users/create', 'UserCreate', 1, 2, 1, '{"fr": "Créer un nouvel utilisateur", "en": "Create new user"}', NOW(), NOW()),
 
--- Réinitialiser les séquences
--- ALTER SEQUENCE menus_id_seq RESTART WITH 1;
+-- Menu principal: Rôles et Permissions
+(NULL, '{"fr": "Rôles et Permissions", "en": "Roles & Permissions"}', 'security', '/rbac', 'Rbac', 1, 3, 0, '{"fr": "Gestion des rôles et permissions", "en": "Roles and permissions management"}', NOW(), NOW()),
+-- Sous-menus RBAC
+((SELECT id FROM menus WHERE route = '/rbac'), '{"fr": "Rôles", "en": "Roles"}', 'roles', '/rbac/roles', 'Roles', 1, 1, 1, '{"fr": "Gestion des rôles", "en": "Roles management"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/rbac'), '{"fr": "Permissions", "en": "Permissions"}', 'permissions', '/rbac/permissions', 'Permissions', 1, 2, 1, '{"fr": "Gestion des permissions", "en": "Permissions management"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/rbac'), '{"fr": "Assignations", "en": "Assignments"}', 'assignment', '/rbac/assignments', 'Assignments', 1, 3, 1, '{"fr": "Assigner les rôles et permissions", "en": "Assign roles and permissions"}', NOW(), NOW()),
 
--- Insertion des menus avec structure hiérarchique
-INSERT INTO menus (name, label, icon, path, parent_id, order_index, is_visible, is_active, created_at, updated_at) VALUES
+-- Menu principal: Événements
+(NULL, '{"fr": "Événements", "en": "Events"}', 'event', '/events', 'Events', 1, 4, 0, '{"fr": "Gestion des événements", "en": "Event management"}', NOW(), NOW()),
+-- Sous-menus Événements
+((SELECT id FROM menus WHERE route = '/events'), '{"fr": "Liste des événements", "en": "Events List"}', 'list', '/events/list', 'EventsList', 1, 1, 1, '{"fr": "Lister tous les événements", "en": "List all events"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/events'), '{"fr": "Créer un événement", "en": "Create Event"}', 'add', '/events/create', 'EventCreate', 1, 2, 1, '{"fr": "Créer un nouvel événement", "en": "Create new event"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/events'), '{"fr": "Calendrier", "en": "Calendar"}', 'calendar', '/events/calendar', 'Calendar', 1, 3, 1, '{"fr": "Vue calendrier des événements", "en": "Calendar view of events"}', NOW(), NOW()),
 
--- ========================================
--- 🏠 MENU PRINCIPAL
--- ========================================
--- Tableau de bord
-('dashboard', 'Tableau de bord', 'Dashboard', '/dashboard', NULL, 1, true, true, NOW(), NOW()),
+-- Menu principal: Système
+(NULL, '{"fr": "Système", "en": "System"}', 'settings', '/system', 'System', 1, 5, 0, '{"fr": "Administration système", "en": "System administration"}', NOW(), NOW()),
+-- Sous-menus Système
+((SELECT id FROM menus WHERE route = '/system'), '{"fr": "Paramètres", "en": "Settings"}', 'settings', '/system/settings', 'Settings', 1, 1, 1, '{"fr": "Paramètres système", "en": "System settings"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/system'), '{"fr": "Logs", "en": "Logs"}', 'logs', '/system/logs', 'Logs', 1, 2, 1, '{"fr": "Journaux système", "en": "System logs"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/system'), '{"fr": "Monitoring", "en": "Monitoring"}', 'monitoring', '/system/monitoring', 'Monitoring', 1, 3, 1, '{"fr": "Monitoring système", "en": "System monitoring"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/system'), '{"fr": "Sauvegardes", "en": "Backups"}', 'backup', '/system/backups', 'Backups', 1, 4, 1, '{"fr": "Gestion des sauvegardes", "en": "Backup management"}', NOW(), NOW()),
 
--- ========================================
--- 👥 GESTION DES UTILISATEURS
--- ========================================
--- Menu parent - Gestion utilisateurs
-('users_management', 'Gestion des utilisateurs', 'Users', NULL, NULL, 2, true, true, NOW(), NOW()),
--- Sous-menus
-('users_list', 'Liste des utilisateurs', 'UserList', '/users', 2, 1, true, true, NOW(), NOW()),
-('users_create', 'Créer un utilisateur', 'UserPlus', '/users/create', 2, 2, true, true, NOW(), NOW()),
-('users_import', 'Importer des utilisateurs', 'Upload', '/users/import', 2, 3, true, true, NOW(), NOW()),
-('users_export', 'Exporter des utilisateurs', 'Download', '/users/export', 2, 4, true, true, NOW(), NOW()),
+-- Menu principal: Profil
+(NULL, '{"fr": "Profil", "en": "Profile"}', 'profile', '/profile', 'Profile', 1, 6, 0, '{"fr": "Profil utilisateur", "en": "User profile"}', NOW(), NOW()),
+-- Sous-menus Profil
+((SELECT id FROM menus WHERE route = '/profile'), '{"fr": "Mon profil", "en": "My Profile"}', 'user', '/profile/me', 'ProfileMe', 1, 1, 1, '{"fr": "Informations personnelles", "en": "Personal information"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/profile'), '{"fr": "Sécurité", "en": "Security"}', 'security', '/profile/security', 'ProfileSecurity', 1, 2, 1, '{"fr": "Paramètres de sécurité", "en": "Security settings"}', NOW(), NOW()),
+((SELECT id FROM menus WHERE route = '/profile'), '{"fr": "Préférences", "en": "Preferences"}', 'preferences', '/profile/preferences', 'ProfilePreferences', 1, 3, 1, '{"fr": "Préférences utilisateur", "en": "User preferences"}', NOW(), NOW());
 
--- ========================================
--- 🛡️ GESTION DES RÔLES
--- ========================================
--- Menu parent - Gestion rôles
-('roles_management', 'Gestion des rôles', 'Shield', NULL, NULL, 3, true, true, NOW(), NOW()),
--- Sous-menus
-('roles_list', 'Liste des rôles', 'List', '/roles', 3, 1, true, true, NOW(), NOW()),
-('roles_create', 'Créer un rôle', 'Plus', '/roles/create', 3, 2, true, true, NOW(), NOW()),
-('roles_hierarchy', 'Hiérarchie des rôles', 'GitBranch', '/roles/hierarchy', 3, 3, true, true, NOW(), NOW()),
-('roles_permissions', 'Permissions par rôle', 'Key', '/roles/permissions', 3, 4, true, true, NOW(), NOW()),
-
--- ========================================
--- 🔑 GESTION DES PERMISSIONS
--- ========================================
--- Menu parent - Gestion permissions
-('permissions_management', 'Gestion des permissions', 'Key', NULL, NULL, 4, true, true, NOW(), NOW()),
--- Sous-menus
-('permissions_list', 'Liste des permissions', 'List', '/permissions', 4, 1, true, true, NOW(), NOW()),
-('permissions_create', 'Créer une permission', 'Plus', '/permissions/create', 4, 2, true, true, NOW(), NOW()),
-('permissions_categories', 'Catégories de permissions', 'Tags', '/permissions/categories', 4, 3, true, true, NOW(), NOW()),
-('permissions_matrix', 'Matrice de permissions', 'Grid', '/permissions/matrix', 4, 4, true, true, NOW(), NOW()),
-
--- ========================================
--- 📋 GESTION DES MENUS
--- ========================================
--- Menu parent - Gestion menus
-('menus_management', 'Gestion des menus', 'Menu', NULL, NULL, 5, true, true, NOW(), NOW()),
--- Sous-menus
-('menus_list', 'Liste des menus', 'List', '/menus', 5, 1, true, true, NOW(), NOW()),
-('menus_create', 'Créer un menu', 'Plus', '/menus/create', 5, 2, true, true, NOW(), NOW()),
-('menus_organize', 'Organiser les menus', 'Move', '/menus/organize', 5, 3, true, true, NOW(), NOW()),
-('menus_permissions', 'Permissions des menus', 'Lock', '/menus/permissions', 5, 4, true, true, NOW(), NOW()),
-
--- ========================================
--- 👥 GESTION DES PERSONNES
--- ========================================
--- Menu parent - Gestion personnes
-('people_management', 'Gestion des personnes', 'People', NULL, NULL, 6, true, true, NOW(), NOW()),
--- Sous-menus
-('people_list', 'Liste des personnes', 'List', '/people', 6, 1, true, true, NOW(), NOW()),
-('people_create', 'Créer une personne', 'Plus', '/people/create', 6, 2, true, true, NOW(), NOW()),
-('people_search', 'Rechercher des personnes', 'Search', '/people/search', 6, 3, true, true, NOW(), NOW()),
-('people_import', 'Importer des personnes', 'Upload', '/people/import', 6, 4, true, true, NOW(), NOW()),
-
--- ========================================
--- 🔐 SESSIONS ACTIVES
--- ========================================
--- Menu parent - Sessions
-('sessions_management', 'Sessions actives', 'Activity', NULL, NULL, 7, true, true, NOW(), NOW()),
--- Sous-menus
-('sessions_list', 'Liste des sessions', 'List', '/sessions', 7, 1, true, true, NOW(), NOW()),
-('sessions_monitor', 'Monitoring des sessions', 'Monitor', '/sessions/monitor', 7, 2, true, true, NOW(), NOW()),
-('sessions_blacklist', 'Tokens blacklistés', 'Ban', '/sessions/blacklist', 7, 3, true, true, NOW(), NOW()),
-
--- ========================================
--- ⚙️ PARAMÈTRES
--- ========================================
--- Menu parent - Paramètres
-('settings', 'Paramètres', 'Settings', NULL, NULL, 8, true, true, NOW(), NOW()),
--- Sous-menus
-('profile', 'Mon profil', 'User', '/profile', 8, 1, true, true, NOW(), NOW()),
-('security', 'Sécurité', 'Lock', '/security', 8, 2, true, true, NOW(), NOW()),
-('preferences', 'Préférences', 'Settings', '/preferences', 8, 3, true, true, NOW(), NOW()),
-('notifications', 'Notifications', 'Bell', '/notifications', 8, 4, true, true, NOW(), NOW()),
-
--- ========================================
--- 📊 RAPPORTS
--- ========================================
--- Menu parent - Rapports
-('reports_management', 'Rapports', 'BarChart', NULL, NULL, 9, true, true, NOW(), NOW()),
--- Sous-menus
-('reports_users', 'Rapport utilisateurs', 'Users', '/reports/users', 9, 1, true, true, NOW(), NOW()),
-('reports_activities', 'Rapport activités', 'Activity', '/reports/activities', 9, 2, true, true, NOW(), NOW()),
-('reports_security', 'Rapport sécurité', 'Shield', '/reports/security', 9, 3, true, true, NOW(), NOW()),
-('reports_custom', 'Rapports personnalisés', 'FileText', '/reports/custom', 9, 4, true, true, NOW(), NOW()),
-
--- ========================================
--- 🎯 ÉVÉNEMENTS
--- ========================================
--- Menu parent - Événements
-('events_management', 'Événements', 'Calendar', NULL, NULL, 10, true, true, NOW(), NOW()),
--- Sous-menus
-('events_list', 'Liste des événements', 'List', '/events', 10, 1, true, true, NOW(), NOW()),
-('events_create', 'Créer un événement', 'Plus', '/events/create', 10, 2, true, true, NOW(), NOW()),
-('events_calendar', 'Calendrier', 'Calendar', '/events/calendar', 10, 3, true, true, NOW(), NOW()),
-('events_analytics', 'Analytiques événements', 'TrendingUp', '/events/analytics', 10, 4, true, true, NOW(), NOW()),
-
--- ========================================
--- 📝 CONTENU
--- ========================================
--- Menu parent - Contenu
-('content_management', 'Contenu', 'FileText', NULL, NULL, 11, true, true, NOW(), NOW()),
--- Sous-menus
-('content_pages', 'Pages', 'File', '/content/pages', 11, 1, true, true, NOW(), NOW()),
-('content_articles', 'Articles', 'FileText', '/content/articles', 11, 2, true, true, NOW(), NOW()),
-('content_media', 'Médias', 'Image', '/content/media', 11, 3, true, true, NOW(), NOW()),
-('content_categories', 'Catégories', 'Tags', '/content/categories', 11, 4, true, true, NOW(), NOW()),
-
--- ========================================
--- 💬 SUPPORT
--- ========================================
--- Menu parent - Support
-('support_management', 'Support', 'HelpCircle', NULL, NULL, 12, true, true, NOW(), NOW()),
--- Sous-menus
-('support_tickets', 'Tickets de support', 'MessageSquare', '/support/tickets', 12, 1, true, true, NOW(), NOW()),
-('support_faq', 'FAQ', 'HelpCircle', '/support/faq', 12, 2, true, true, NOW(), NOW()),
-('support_knowledge', 'Base de connaissances', 'BookOpen', '/support/knowledge', 12, 3, true, true, NOW(), NOW()),
-
--- ========================================
--- 🔔 NOTIFICATIONS
--- ========================================
--- Menu parent - Notifications
-('notifications_management', 'Notifications', 'Bell', NULL, NULL, 13, true, true, NOW(), NOW()),
--- Sous-menus
-('notifications_list', 'Liste des notifications', 'List', '/notifications', 13, 1, true, true, NOW(), NOW()),
-('notifications_templates', 'Modèles de notification', 'FileText', '/notifications/templates', 13, 2, true, true, NOW(), NOW()),
-('notifications_settings', 'Paramètres de notification', 'Settings', '/notifications/settings', 13, 3, true, true, NOW(), NOW()),
-
--- ========================================
--- 🛠️ ADMINISTRATION SYSTÈME
--- ========================================
--- Menu parent - Administration système (visible seulement pour les admins)
-('system_management', 'Administration système', 'Terminal', NULL, NULL, 14, true, true, NOW(), NOW()),
--- Sous-menus
-('system_monitoring', 'Monitoring système', 'Monitor', '/system/monitoring', 14, 1, true, true, NOW(), NOW()),
-('system_logs', 'Logs système', 'FileText', '/system/logs', 14, 2, true, true, NOW(), NOW()),
-('system_backup', 'Sauvegardes', 'Database', '/system/backup', 14, 3, true, true, NOW(), NOW()),
-('system_config', 'Configuration système', 'Settings', '/system/config', 14, 4, true, true, NOW(), NOW()),
-
--- ========================================
--- 🔧 UTILITAIRES
--- ========================================
--- Menu parent - Utilitaires
-('utilities', 'Utilitaires', 'Tool', NULL, NULL, 15, true, true, NOW(), NOW()),
--- Sous-menus
-('utilities_audit', 'Journal d''audit', 'FileText', '/utilities/audit', 15, 1, true, true, NOW(), NOW()),
-('utilities_cache', 'Gestion du cache', 'Database', '/utilities/cache', 15, 2, true, true, NOW(), NOW()),
-('utilities_health', 'Santé du système', 'Activity', '/utilities/health', 15, 3, true, true, NOW(), NOW());
-
--- Récupérer les IDs des menus pour les associations de permissions
-DO $$
-DECLARE
-    menu_record RECORD;
-    permission_record RECORD;
-BEGIN
-    -- Associer les permissions de lecture à tous les menus visibles
-    FOR menu_record IN 
-        SELECT id, name FROM menus WHERE is_visible = true AND is_active = true
-    LOOP
-        -- Trouver la permission de lecture correspondante
-        SELECT id INTO permission_record.id FROM permissions 
-        WHERE name = REPLACE(menu_record.name, '_management', '.read') 
-           OR name = menu_record.name || '.read'
-        LIMIT 1;
-        
-        IF permission_record.id IS NOT NULL THEN
-            -- Associer la permission au menu
-            INSERT INTO menu_permissions (menu_id, permission_id, created_at, updated_at) VALUES
-            (menu_record.id, permission_record.id, NOW(), NOW())
-            ON CONFLICT (menu_id, permission_id) DO NOTHING;
-        END IF;
-        
-        -- Réinitialiser la variable
-        permission_record.id := NULL;
-    END LOOP;
-END $$;
-
--- Journaliser la création des menus
-DO $$
-DECLARE
-    menu_record RECORD;
-BEGIN
-    FOR menu_record IN 
-        SELECT id, name, label FROM menus 
-        WHERE created_at > NOW() - INTERVAL '1 minute'
-    LOOP
-        INSERT INTO audit_logs (action, table_name, record_id, old_values, new_values, user_id, created_at) VALUES
-        ('CREATE', 'menus', menu_record.id, NULL, 
-         json_build_object('name', menu_record.name, 'label', menu_record.label), 1, NOW());
-    END LOOP;
-END $$;
-
--- Réactiver les contraintes
-SET session_replication_role = DEFAULT;
-
--- Afficher la structure des menus créés
-WITH RECURSIVE menu_tree AS (
-    SELECT 
-        id,
-        name,
-        label,
-        icon,
-        path,
-        parent_id,
-        order_index,
-        is_visible,
-        is_active,
-        0 as level,
-        ARRAY[name] as path_array
-    FROM menus 
-    WHERE parent_id IS NULL
-    
-    UNION ALL
-    
-    SELECT 
-        m.id,
-        m.name,
-        m.label,
-        m.icon,
-        m.path,
-        m.parent_id,
-        m.order_index,
-        m.is_visible,
-        m.is_active,
-        mt.level + 1,
-        mt.path_array || m.name
-    FROM menus m
-    INNER JOIN menu_tree mt ON m.parent_id = mt.id
-)
-SELECT 
-    REPEAT('  ', level) || '├─ ' || label as menu_structure,
-    name,
-    path,
-    CASE WHEN is_visible THEN '✅' ELSE '❌' END as visible,
-    CASE WHEN is_active THEN '🟢' ELSE '🔴' END as active,
-    order_index
-FROM menu_tree
-ORDER BY path_array, order_index;
-
--- Message de confirmation
+-- Afficher confirmation
 DO $$
 BEGIN
-    RAISE NOTICE '✅ Seed des menus système RBAC terminé avec succès';
-    RAISE NOTICE '📋 Menus créés: 15 menus principaux avec sous-menus hiérarchiques';
-    RAISE NOTICE '🔐 Permissions associées automatiquement aux menus';
-    RAISE NOTICE '📊 Structure hiérarchique complète avec 3-4 niveaux';
+    RAISE NOTICE '✅ Menus créés avec succès: % menus insérés', 
+        (SELECT COUNT(*) FROM menus);
 END $$;
