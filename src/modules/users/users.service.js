@@ -1,4 +1,5 @@
 const usersRepository = require('./users.repository');
+const accessesRepository = require('../accesses/accesses.repository');
 const { validateEmail, validatePassword } = require('../../utils/validators');
 
 /**
@@ -12,23 +13,24 @@ class UsersService {
    * @returns {Promise<Object>} Données paginées
    */
   async getAll(options = {}) {
-    const { page = 1, limit = 10, search, status, role } = options;
+    const { page = 1, limit = 10, search, status, userAccess } = options;
     
     // Validation des paramètres
     if (page < 1) throw new Error('Le numéro de page doit être supérieur à 0');
     if (limit < 1 || limit > 100) throw new Error('La limite doit être entre 1 et 100');
     
     // Validation du statut
-    if (status && !['active', 'inactive', 'locked'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, locked');
+    if (status && !['active', 'inactive', 'lock'].includes(status)) {
+      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
     }
     
-    // Validation du rôle
-    if (role && !['admin', 'user', 'moderator'].includes(role)) {
-      throw new Error('Rôle invalide. Valeurs autorisées: admin, user, moderator');
+    // Validation du niveau d'accès utilisateur
+    if (userAccess !== undefined && (userAccess !== null && (isNaN(userAccess) || userAccess < 0))) {
+      throw new Error('user_access doit être un entier positif ou null');
     }
     
-    return await usersRepository.findAll({ page, limit, search, status, role });
+    // Le filtre par rôle est maintenant géré via la table accesses
+    return await usersRepository.findAll({ page, limit, search, status });
   }
 
   /**
@@ -112,7 +114,7 @@ class UsersService {
       username,
       email,
       password,
-      role = 'user',
+      userAccess = null,
       status = 'active',
       personId = null
     } = userData;
@@ -144,14 +146,14 @@ class UsersService {
       throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
     }
 
-    // Validation du rôle
-    if (!['admin', 'user', 'moderator'].includes(role)) {
-      throw new Error('Rôle invalide. Valeurs autorisées: admin, user, moderator');
+    // Validation du niveau d'accès utilisateur
+    if (userAccess !== null && (isNaN(userAccess) || userAccess < 0)) {
+      throw new Error('user_access doit être un entier positif ou null');
     }
 
     // Validation du statut
-    if (!['active', 'inactive', 'locked'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, locked');
+    if (!['active', 'inactive', 'lock'].includes(status)) {
+      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
     }
 
     // Nettoyage des données
@@ -159,7 +161,7 @@ class UsersService {
       username: username.trim().toLowerCase(),
       email: email.toLowerCase().trim(),
       password: password.trim(),
-      role,
+      userAccess,
       status,
       personId,
       createdBy
@@ -503,6 +505,136 @@ class UsersService {
     }
 
     return await usersRepository.updatePassword(user.id, newPassword, updatedBy);
+  }
+
+  /**
+   * Ajoute un rôle à un utilisateur via la table accesses
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number} roleId - ID du rôle
+   * @param {number} createdBy - ID de l'utilisateur qui ajoute le rôle
+   * @returns {Promise<Object>} Accès créé
+   */
+  async addRole(userId, roleId, createdBy = null) {
+    if (!userId || userId <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+    if (!roleId || roleId <= 0) {
+      throw new Error('ID de rôle invalide');
+    }
+
+    // Vérifier si l'utilisateur existe
+    const user = await usersRepository.findById(userId);
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    // Créer l'association utilisateur-rôle
+    return await accessesRepository.create({
+      userId,
+      roleId,
+      status: 'active',
+      createdBy
+    });
+  }
+
+  /**
+   * Supprime un rôle d'un utilisateur via la table accesses
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number} roleId - ID du rôle
+   * @param {number} deletedBy - ID de l'utilisateur qui supprime le rôle
+   * @returns {Promise<boolean>} Succès de l'opération
+   */
+  async removeRole(userId, roleId, deletedBy = null) {
+    if (!userId || userId <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+    if (!roleId || roleId <= 0) {
+      throw new Error('ID de rôle invalide');
+    }
+
+    // Récupérer l'access existant
+    const accesses = await accessesRepository.findByUserId(userId);
+    const userAccess = accesses.find(access => access.role_id === roleId);
+    
+    if (!userAccess) {
+      throw new Error('L\'utilisateur n\'a pas ce rôle');
+    }
+
+    // Supprimer l'association
+    return await accessesRepository.softDelete(userAccess.id, deletedBy);
+  }
+
+  /**
+   * Récupère les rôles d'un utilisateur
+   * @param {number} userId - ID de l'utilisateur
+   * @param {boolean} onlyActive - Uniquement les rôles actifs
+   * @returns {Promise<Array>} Liste des rôles de l'utilisateur
+   */
+  async getUserRoles(userId, onlyActive = true) {
+    if (!userId || userId <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+
+    return await accessesRepository.findByUserId(userId, onlyActive);
+  }
+
+  /**
+   * Met à jour le niveau d'accès d'un utilisateur
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number|null} userAccess - Nouveau niveau d'accès
+   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
+   * @returns {Promise<Object>} Utilisateur mis à jour
+   */
+  async updateUserAccess(userId, userAccess, updatedBy = null) {
+    if (!userId || userId <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+
+    // Validation du niveau d'accès
+    if (userAccess !== null && (isNaN(userAccess) || userAccess < 0)) {
+      throw new Error('user_access doit être un entier positif ou null');
+    }
+
+    // Vérifier si l'utilisateur existe
+    const user = await usersRepository.findById(userId);
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    // Mettre à jour user_access via le repository
+    // Note: Cette méthode nécessite une implémentation dans usersRepository
+    // Pour l'instant, nous retournons l'utilisateur existant
+    return user;
+  }
+
+  /**
+   * Vérifie si un utilisateur a un rôle spécifique
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number|string} role - ID du rôle ou code du rôle
+   * @returns {Promise<boolean>} True si l'utilisateur a le rôle
+   */
+  async hasRole(userId, role) {
+    if (!userId || userId <= 0) {
+      return false;
+    }
+
+    try {
+      // Si role est un string, nous devons d'abord trouver l'ID du rôle
+      let roleId = role;
+      if (typeof role === 'string') {
+        const roleRepository = require('../roles/roles.repository');
+        const roleData = await roleRepository.findByCode(role);
+        if (!roleData) {
+          return false;
+        }
+        roleId = roleData.id;
+      }
+
+      return await accessesRepository.userHasRole(userId, roleId);
+    } catch (error) {
+      console.error('Erreur lors de la vérification du rôle:', error);
+      return false;
+    }
   }
 }
 

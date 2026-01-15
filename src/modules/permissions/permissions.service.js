@@ -15,21 +15,27 @@ class PermissionService {
     const {
       name,
       description,
-      resource,
-      action,
-      status = 'active',
+      group,
       createdBy
     } = permissionData;
 
     // Validation des entrées
     if (!name || !name.trim()) {
-      throw new Error('Le nom de la permission est requis');
+      throw new Error('Le code de la permission est requis');
     }
 
     if (name.trim().length < 3 || name.trim().length > 100) {
-      throw new Error('Le nom de la permission doit contenir entre 3 et 100 caractères');
+      throw new Error('Le code de la permission doit contenir entre 3 et 100 caractères');
     }
 
+    // Validation du format du code (format: resource.action)
+    if (!/^[a-z_]+[a-z_]*$/.test(name.trim())) {
+      throw new Error('Le code doit être en minuscules avec underscores (ex: users.create)');
+    }
+
+    // Validation du groupe (optionnel)
+    if (group && group.trim().length > 50) {
+      throw new Error('Le groupe ne peut pas dépasser 50 caractères');
     if (!resource || !resource.trim()) {
       throw new Error('La ressource est requise');
     }

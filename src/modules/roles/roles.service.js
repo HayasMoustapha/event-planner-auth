@@ -15,32 +15,43 @@ class RoleService {
     const {
       name,
       description,
-      status = 'active',
       level = 0,
+      isSystem = false,
       createdBy
     } = roleData;
 
     // Validation des entrées
     if (!name || !name.trim()) {
-      throw new Error('Le nom du rôle est requis');
+      throw new Error('Le nom du rôle (code) est requis');
     }
 
     if (name.trim().length < 2 || name.trim().length > 50) {
       throw new Error('Le nom du rôle doit contenir entre 2 et 50 caractères');
     }
 
-    if (description && description.length > 255) {
-      throw new Error('La description ne peut pas dépasser 255 caractères');
+    // Validation du format du code (alphanumérique avec underscores)
+    if (!/^[a-zA-Z0-9_]+$/.test(name.trim())) {
+      throw new Error('Le nom du rôle ne peut contenir que des lettres, chiffres et underscores');
     }
 
-    const validStatuses = ['active', 'inactive'];
-    if (!validStatuses.includes(status)) {
-      throw new Error('Le statut doit être "active" ou "inactive"');
+    // Validation du niveau
+    if (level !== null && (isNaN(level) || level < 0)) {
+      throw new Error('Le niveau doit être un entier positif ou null');
     }
 
-    if (typeof level !== 'number' || level < 0 || level > 100) {
-      throw new Error('Le niveau doit être un nombre entre 0 et 100');
+    // Validation du type boolean
+    if (typeof isSystem !== 'boolean') {
+      throw new Error('is_system doit être un boolean');
     }
+
+    // Préparation des données pour le repository
+    const cleanData = {
+      name: name.trim(),
+      description: description?.trim(),
+      level,
+      isSystem,
+      createdBy
+    };
 
     // Vérifier si le nom existe déjà
     const existingRole = await roleRepository.findByName(name.trim());
@@ -49,8 +60,7 @@ class RoleService {
     }
 
     // Créer le rôle
-    const role = await roleRepository.create({
-      name: name.trim(),
+    const role = await roleRepository.create(cleanData);
       description: description?.trim() || null,
       status,
       level,
