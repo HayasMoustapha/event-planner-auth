@@ -84,7 +84,7 @@ class RegistrationService {
       logger.info(`Utilisateur créé: ${user.id} - ${user.email}`);
 
       // 7. Générer et envoyer l'OTP
-      const otpResult = await otpService.generateOTP(person.id, 'email_verification');
+      const otpResult = await otpService.generateEmailOtp(person.id, person.email);
       
       // 8. Retourner le résultat sans données sensibles
       return {
@@ -195,10 +195,8 @@ class RegistrationService {
       }
 
       // 2. Vérifier l'OTP
-      const otpVerification = await otpService.verifyOTP(person.id, otpCode, 'email_verification');
-      if (!otpVerification.valid) {
-        throw new Error('Code de vérification invalide ou expiré');
-      }
+      const otpVerification = await otpService.verifyEmailOtp(otpCode, email, person.id);
+      // Si pas d'erreur, l'OTP est valide
 
       // 3. Récupérer l'utilisateur associé
       const user = await usersRepository.findByEmail(email);
@@ -258,7 +256,7 @@ class RegistrationService {
       }
 
       // 3. Générer un nouvel OTP
-      const otpResult = await otpService.generateOTP(person.id, 'email_verification');
+      const otpResult = await otpService.generateEmailOtp(person.id, person.email);
 
       return {
         success: true,
