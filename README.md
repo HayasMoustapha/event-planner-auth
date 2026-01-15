@@ -23,6 +23,11 @@ Service d'authentification et d'autorisation enterprise-ready pour Event Planner
 - **Postman collection** : Export automatique pour tests
 - **Exemples d'utilisation** : Code samples et best practices
 - **Dashboard développeur** : Outils de debugging et monitoring
+- **📚 Documentation**
+  - [🚀 Guide du Bootstrap Automatique](./BOOTSTRAP_GUIDE.md) - Initialisation de la base de données
+  - [📖 Documentation API](./docs/) - Documentation complète de l'API
+  - [🔐 Flux d'Authentification](./docs/AUTH_FLOWS.md) - Processus d'authentification
+  - [🛡️ RBAC](./docs/RBAC.md) - Système de contrôle d'accès
 
 ### Performance & Scalabilité
 - **Cache Redis** : Authorizations et sessions en cache
@@ -63,16 +68,16 @@ npm install
 # Configurer l'environnement
 cp .env.example .env
 # Éditer .env avec vos configurations
+# Pour le développement, activer: DB_AUTO_BOOTSTRAP=true
 
 # Démarrer la base de données
 docker-compose up -d postgres redis
 
-# Exécuter les migrations
-npm run migrate
-
-# Démarrer l'application
+# Démarrer l'application (le bootstrap s'exécutera automatiquement si DB_AUTO_BOOTSTRAP=true)
 npm start
 ```
+
+> 📖 **Pour plus de détails sur le bootstrap automatique**, voir [Guide du Bootstrap](./BOOTSTRAP_GUIDE.md)
 
 ### Configuration Docker
 ```bash
@@ -100,6 +105,9 @@ DB_PORT=5432
 DB_NAME=event_planner_auth
 DB_USER=postgres
 DB_PASSWORD=your_secure_password
+
+# Bootstrap automatique (désactivé par défaut en production)
+DB_AUTO_BOOTSTRAP=false
 
 # JWT
 JWT_SECRET=your_super_secure_256_bit_secret_key
