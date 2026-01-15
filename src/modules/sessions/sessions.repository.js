@@ -214,6 +214,53 @@ class SessionRepository {
 
   /**
    * Désactive toutes les sessions d'un utilisateur
+   * @param {number} userId - ID de l'utilisateur
+   * @returns {Promise<boolean>} True si désactivées
+   */
+  async deactivateAllSessions(userId) {
+    const query = `
+      UPDATE sessions 
+      SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = $1 AND is_active = TRUE
+    `;
+
+    try {
+      const result = await connection.query(query, [userId]);
+      return result.rowCount > 0;
+    } catch (error) {
+      throw new Error(`Erreur lors de la désactivation de toutes les sessions: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère l'historique des sessions d'un utilisateur
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number} page - Page actuelle
+   * @param {number} limit - Nombre d'éléments par page
+   * @returns {Promise<Object>} Sessions avec pagination
+   */
+  async getSessionHistory(userId, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+    
+    const countQuery = `
+      SELECT COUNT(*) as total 
+      FROM sessions 
+      WHERE user_id = $1
+    `;
+    
+    const dataQuery = `
+      SELECT 
+        id, user_id, device_info, ip_address, user_agent, 
+        created_at, updated_at, expires_at, is_active
+      FROM sessions 
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+      LIMIT $2 OFFSET $3
+    `;
+
+    try {
+      const [countResult, dataResult] = await Promise.all([
+        connection.query(countQuery, [userId]),
         connection.query(dataQuery, [userId, limit, offset])
       ]);
 
@@ -237,4 +284,4 @@ class SessionRepository {
   }
 }
 
-module.exports = new SessionRepository();
+module.exports = new SessionRepository(); /**/
