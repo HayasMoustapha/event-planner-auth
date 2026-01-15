@@ -20,13 +20,26 @@ class CacheService {
   async initialize() {
     try {
       // Vérifier si Redis est configuré
-      if (!configValidation.isServiceConfigured('redis')) {
-        logger.warn('Redis service not configured - cache disabled');
+      try {
+        if (!configValidation.isServiceConfigured('redis')) {
+          logger.warn('Redis service not configured - cache disabled');
+          this.isConnected = false;
+          return;
+        }
+      } catch (error) {
+        logger.warn('Redis service configuration check failed - cache disabled', { error: error.message });
         this.isConnected = false;
         return;
       }
 
-      const config = configValidation.getConfig();
+      let config;
+      try {
+        config = configValidation.getConfig();
+      } catch (error) {
+        logger.warn('Redis service - configuration not available - cache disabled', { error: error.message });
+        this.isConnected = false;
+        return;
+      }
       
       // Créer le client Redis
       this.client = redis.createClient({
