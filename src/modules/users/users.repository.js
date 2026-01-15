@@ -15,6 +15,7 @@ class UsersRepository {
     const { page = 1, limit = 10, search, status = null, role = null } = options;
     const offset = (page - 1) * limit;
 
+    // Colonnes selon schéma de référence : id, person_id, user_code, username, phone, email, user_access, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     let query = `
       SELECT u.id, u.username, u.email, u.status, u.user_code, u.created_at, u.updated_at,
              p.first_name, p.last_name, p.phone
@@ -77,6 +78,7 @@ class UsersRepository {
    * @returns {Promise<Object>} Données de l'utilisateur
    */
   async findById(id, includePassword = false) {
+    // Colonnes selon schéma de référence : id, person_id, user_code, username, phone, email, user_access, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     const fields = includePassword 
       ? 'u.*, p.first_name, p.last_name, p.phone, p.email as person_email'
       : 'u.id, u.username, u.email, u.status, u.user_code, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone, p.email as person_email';

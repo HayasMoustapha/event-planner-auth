@@ -21,6 +21,7 @@ class OtpRepository {
       createdBy = null
     } = otpData;
 
+    // Colonnes selon schéma de référence : id, person_id, otp_code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     const query = `
       INSERT INTO otps (person_id, otp_code, expires_at, is_used, purpose, created_at, created_by)
       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
@@ -29,11 +30,11 @@ class OtpRepository {
 
     try {
       const result = await connection.query(query, [
-        identifier, // identifier sera utilisé comme person_id (adapter selon logique métier)
-        code,
+        identifier, // identifier sera utilisé comme person_id (colonne 'person_id' du schéma)
+        code, // code sera utilisé comme otp_code (colonne 'otp_code' du schéma)
         expiresAt,
         isUsed,
-        type, // type sera utilisé comme purpose
+        type, // type sera utilisé comme purpose (colonne 'purpose' du schéma)
         createdBy
       ]);
 
@@ -50,6 +51,7 @@ class OtpRepository {
    * @param {string} type - Type d'OTP (email/phone)
    * @returns {Promise<Object|null>} OTP trouvé ou null
    */
+  // Colonnes selon schéma de référence : id, person_id, otp_code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
   async findByCodeAndIdentifier(code, identifier, type) {
     const query = `
       SELECT * FROM otps 

@@ -19,6 +19,7 @@ class RoleRepository {
       createdBy = null
     } = roleData;
 
+    // Colonnes selon schéma de référence : id, code, label (JSON), description (JSON), is_system, level, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     const query = `
       INSERT INTO roles (
         code, label, description, level, is_system, created_by, created_at, updated_at
@@ -27,11 +28,11 @@ class RoleRepository {
     `;
 
     const values = [
-      name?.trim(), // name sera utilisé comme code
-      JSON.stringify({en: name?.trim(), fr: name?.trim()}), // label en JSONB
-      description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB
+      name?.trim(), // name sera utilisé comme code (colonne 'code' du schéma)
+      JSON.stringify({en: name?.trim(), fr: name?.trim()}), // label en JSONB (colonne 'label' du schéma)
+      description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB (colonne 'description' du schéma)
       level,
-      false, // is_system par défaut
+      false, // is_system par défaut (colonne 'is_system' du schéma)
       createdBy
     ];
 
@@ -77,6 +78,7 @@ class RoleRepository {
 
     // Pas de filtre de statut dans la table roles (utilise is_system pour les rôles système)
 
+    // Colonnes selon schéma de référence : id, code, label (JSON), description (JSON), is_system, level, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     // Validation du tri
     const validSortFields = ['code', 'label', 'description', 'level', 'is_system', 'created_at', 'updated_at'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
