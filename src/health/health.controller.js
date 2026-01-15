@@ -1,7 +1,7 @@
-const { connection } = require('../../config/database');
-const cacheService = require('../../services/cache.service');
-const logger = require('../../utils/logger');
-const { createResponse } = require('../../utils/response');
+const { connection } = require('../config/database');
+const cacheService = require('../services/cache.service');
+const logger = require('../utils/logger');
+const { createResponse } = require('../utils/response');
 
 /**
  * Contrôleur pour les health checks détaillés

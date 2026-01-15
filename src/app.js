@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const env = require('./config/env');
 const { errorHandler, notFoundHandler } = require('./middlewares/error.middleware');
 const metricsMiddleware = require('./middlewares/metrics.middleware');
+const securityMiddleware = require('./middlewares/security.middleware');
 
 // Import des routes
 const authRoutes = require('./modules/auth/auth.routes');
@@ -77,6 +78,14 @@ if (env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Middleware de sécurité global (analyse toutes les requêtes)
+app.use(securityMiddleware.security({
+  enabled: true,
+  logLevel: 'warn',
+  blockOnHighRisk: true,
+  sanitizeInput: true
+}));
+
 // Middleware de métriques (après parsing pour avoir accès aux données)
 app.use(metricsMiddleware);
 
@@ -101,7 +110,16 @@ app.get('/api/health', (req, res) => {
 });
 
 // Routes API
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', 
+  securityMiddleware.bruteForceProtection({
+    identifier: 'email',
+    maxAttempts: 5,
+    windowMs: 900000, // 15 minutes
+    lockoutMs: 1800000  // 30 minutes
+  }), 
+  authLimiter, 
+  authRoutes
+);
 app.use('/api/people', peopleRoutes);
 app.use('/api/users', usersRoutes);
 
