@@ -14,11 +14,11 @@ class RoleController {
    */
   async createRole(req, res, next) {
     try {
-      const { name, description, status, level } = req.body;
+      const { code, description, status, level } = req.body;
       const createdBy = req.user?.id;
 
       const role = await roleService.createRole({
-        name,
+        code,
         description,
         status,
         level,
@@ -104,12 +104,12 @@ class RoleController {
   async updateRole(req, res, next) {
     try {
       const { id } = req.params;
-      const { name, description, status, level } = req.body;
+      const { code, description, status, level } = req.body;
       const updatedBy = req.user?.id;
 
       const role = await roleService.updateRole(
         parseInt(id),
-        { name, description, status, level },
+        { code, description, status, level },
         updatedBy
       );
 
@@ -269,24 +269,24 @@ class RoleController {
    */
   async checkUserRole(req, res, next) {
     try {
-      const { userId, roleName } = req.query;
+      const { userId, roleCode } = req.query;
       const targetUserId = userId ? parseInt(userId) : req.user?.id;
 
-      if (!targetUserId || !roleName) {
+      if (!targetUserId || !roleCode) {
         return res.status(400).json(createResponse(
           false,
-          'ID utilisateur et nom du rôle requis'
+          'ID utilisateur et code du rôle requis'
         ));
       }
 
-      const hasRole = await roleService.checkUserRole(targetUserId, roleName);
+      const hasRole = await roleService.checkUserRole(targetUserId, roleCode);
 
       res.status(200).json(createResponse(
         true,
         'Vérification de rôle effectuée',
         {
           userId: targetUserId,
-          roleName,
+          roleCode,
           hasRole
         }
       ));
@@ -357,12 +357,12 @@ class RoleController {
   async duplicateRole(req, res, next) {
     try {
       const { id } = req.params;
-      const { name, description } = req.body;
+      const { code, description } = req.body;
       const createdBy = req.user?.id;
 
       const newRole = await roleService.duplicateRole(
         parseInt(id),
-        { name, description },
+        { code, description },
         createdBy
       );
 

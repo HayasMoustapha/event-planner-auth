@@ -12,7 +12,7 @@ class RoleRepository {
    */
   async create(roleData) {
     const {
-      name,
+      code,
       description,
       status = 'active',
       level = 0,
@@ -28,8 +28,8 @@ class RoleRepository {
     `;
 
     const values = [
-      name?.trim(), // name sera utilisé comme code (colonne 'code' du schéma)
-      JSON.stringify({en: name?.trim(), fr: name?.trim()}), // label en JSONB (colonne 'label' du schéma)
+      code?.trim(), // code sera utilisé comme code (colonne 'code' du schéma)
+      JSON.stringify({en: code?.trim(), fr: code?.trim()}), // label en JSONB (colonne 'label' du schéma)
       description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB (colonne 'description' du schéma)
       level,
       false, // is_system par défaut (colonne 'is_system' du schéma)
@@ -130,7 +130,7 @@ class RoleRepository {
    */
   async findById(id) {
     const query = `
-      SELECT id, name, description, status, level, created_by, created_at, updated_at
+      SELECT id, code, label, description, level, is_system, created_by, created_at, updated_at
       FROM roles
       WHERE id = $1
     `;
@@ -148,18 +148,18 @@ class RoleRepository {
    * @param {string} name - Nom du rôle
    * @returns {Promise<Object|null>} Rôle trouvé ou null
    */
-  async findByName(name) {
+  async findByCode(code) {
     const query = `
-      SELECT id, name, description, status, level, created_by, created_at, updated_at
+      SELECT id, code, label, description, level, is_system, created_by, created_at, updated_at
       FROM roles
-      WHERE name = $1
+      WHERE code = $1
     `;
 
     try {
-      const result = await connection.query(query, [name.trim()]);
+      const result = await connection.query(query, [code.trim()]);
       return result.rows[0] || null;
     } catch (error) {
-      throw new Error(`Erreur lors de la recherche du rôle par nom: ${error.message}`);
+      throw new Error(`Erreur lors de la recherche du rôle par code: ${error.message}`);
     }
   }
 
@@ -172,7 +172,7 @@ class RoleRepository {
    */
   async update(id, updateData, updatedBy = null) {
     const {
-      name,
+      code,
       description,
       status,
       level
@@ -182,9 +182,9 @@ class RoleRepository {
     const values = [];
     let paramIndex = 1;
 
-    if (name !== undefined) {
-      updates.push(`name = $${paramIndex}`);
-      values.push(name.trim());
+    if (code !== undefined) {
+      updates.push(`code = $${paramIndex}`);
+      values.push(code.trim());
       paramIndex++;
     }
 
@@ -220,7 +220,7 @@ class RoleRepository {
       UPDATE roles
       SET ${updates.join(', ')}
       WHERE id = $${paramIndex}
-      RETURNING id, name, description, status, level, created_by, created_at, updated_at, updated_by
+      RETURNING id, code, label, description, level, is_system, created_by, created_at, updated_at, updated_by
     `;
 
     values.push(id);
@@ -248,8 +248,8 @@ class RoleRepository {
   async delete(id, deletedBy = null) {
     const query = `
       UPDATE roles
-      SET status = 'deleted', deleted_by = $2, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND status != 'deleted'
+      SET is_system = true, updated_by = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND is_system = false
     `;
 
     try {
@@ -286,11 +286,11 @@ class RoleRepository {
    */
   async getRolePermissions(roleId) {
     const query = `
-      SELECT p.id, p.name, p.description, p.resource, p.action, p.status
+      SELECT p.id, p.code, p.description, p."group", p.status
       FROM permissions p
       INNER JOIN role_permissions rp ON p.id = rp.permission_id
       WHERE rp.role_id = $1 AND rp.status = 'active' AND p.status = 'active'
-      ORDER BY p.resource, p.action
+      ORDER BY p."group" ASC, p.code ASC
     `;
 
     try {
@@ -423,7 +423,7 @@ class RoleRepository {
       FROM users u
       INNER JOIN accesses a ON u.id = a.user_id
       INNER JOIN roles r ON a.role_id = r.id
-      WHERE u.id = $1 AND r.name = $2 AND a.status = 'active' AND r.status = 'active'
+      WHERE u.id = $1 AND r.code = $2 AND a.status = 'active' AND r.is_system = false
       LIMIT 1
     `;
 
@@ -442,11 +442,11 @@ class RoleRepository {
    */
   async getUserRoles(userId) {
     const query = `
-      SELECT r.id, r.name, r.description, r.level, a.created_at as assigned_at
+      SELECT r.id, r.code, r.label, r.description, r.level, a.created_at as assigned_at
       FROM roles r
       INNER JOIN accesses a ON r.id = a.role_id
-      WHERE a.user_id = $1 AND a.status = 'active' AND r.status = 'active'
-      ORDER BY r.level DESC, r.name ASC
+      WHERE a.user_id = $1 AND a.status = 'active' AND r.is_system = false
+      ORDER BY r.level DESC, r.code ASC
     `;
 
     try {
@@ -465,9 +465,8 @@ class RoleRepository {
     const query = `
       SELECT 
         COUNT(*) as total_roles,
-        COUNT(CASE WHEN status = 'active' THEN 1 END) as active_roles,
-        COUNT(CASE WHEN status = 'inactive' THEN 1 END) as inactive_roles,
-        COUNT(CASE WHEN status = 'deleted' THEN 1 END) as deleted_roles,
+        COUNT(CASE WHEN is_system = false THEN 1 END) as active_roles,
+        COUNT(CASE WHEN is_system = true THEN 1 END) as system_roles,
         AVG(level) as avg_level,
         MAX(level) as max_level,
         MIN(level) as min_level
@@ -489,20 +488,15 @@ class RoleRepository {
    * @param {number} updatedBy - ID de l'utilisateur qui met à jour
    * @returns {Promise<boolean>} True si mis à jour
    */
-  async updateStatus(id, status, updatedBy = null) {
-    const validStatuses = ['active', 'inactive', 'deleted'];
-    if (!validStatuses.includes(status)) {
-      throw new Error('Statut invalide');
-    }
-
+  async updateStatus(id, isActive, updatedBy = null) {
     const query = `
       UPDATE roles
-      SET status = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
+      SET is_system = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
 
     try {
-      const result = await connection.query(query, [id, status, updatedBy]);
+      const result = await connection.query(query, [id, !isActive, updatedBy]);
       return result.rowCount > 0;
     } catch (error) {
       throw new Error(`Erreur lors de la mise à jour du statut: ${error.message}`);

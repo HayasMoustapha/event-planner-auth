@@ -13,25 +13,25 @@ class RoleService {
    */
   async createRole(roleData) {
     const {
-      name,
+      code,
       description,
       level = 0,
       isSystem = false,
-      createdBy
+      createdBy = null
     } = roleData;
 
     // Validation des entrées
-    if (!name || !name.trim()) {
-      throw new Error('Le nom du rôle (code) est requis');
+    if (!code || !code.trim()) {
+      throw new Error('Le code du rôle est requis');
     }
 
-    if (name.trim().length < 2 || name.trim().length > 50) {
-      throw new Error('Le nom du rôle doit contenir entre 2 et 50 caractères');
+    if (code.trim().length < 2 || code.trim().length > 50) {
+      throw new Error('Le code du rôle doit contenir entre 2 et 50 caractères');
     }
 
     // Validation du format du code (alphanumérique avec underscores)
-    if (!/^[a-zA-Z0-9_]+$/.test(name.trim())) {
-      throw new Error('Le nom du rôle ne peut contenir que des lettres, chiffres et underscores');
+    if (!/^[a-zA-Z0-9_]+$/.test(code.trim())) {
+      throw new Error('Le code du rôle ne peut contenir que des lettres, chiffres et underscores');
     }
 
     // Validation du niveau
@@ -46,7 +46,7 @@ class RoleService {
 
     // Préparation des données pour le repository
     const cleanData = {
-      name: name.trim(),
+      code: code.trim(),
       description: description?.trim(),
       level,
       isSystem,
@@ -54,7 +54,7 @@ class RoleService {
     };
 
     // Vérifier si le code existe déjà
-    const existingRole = await roleRepository.findAll({ search: name.trim(), limit: 1 });
+    const existingRole = await roleRepository.findAll({ search: code.trim(), limit: 1 });
     if (existingRole.data.length > 0) {
       throw new Error('Un rôle avec ce code existe déjà');
     }
@@ -91,7 +91,7 @@ class RoleService {
       throw new Error('La limite doit être entre 1 et 100');
     }
 
-    if (sortBy && !['name', 'description', 'status', 'level', 'created_at', 'updated_at'].includes(sortBy)) {
+    if (sortBy && !['code', 'description', 'status', 'level', 'created_at', 'updated_at'].includes(sortBy)) {
       throw new Error('Le champ de tri est invalide');
     }
 
@@ -157,24 +157,24 @@ class RoleService {
 
     // Validation des données de mise à jour
     const {
-      name,
+      code,
       description,
       status,
       level
     } = updateData;
 
-    if (name !== undefined) {
-      if (!name || !name.trim()) {
-        throw new Error('Le nom du rôle est requis');
+    if (code !== undefined) {
+      if (!code || !code.trim()) {
+        throw new Error('Le code du rôle est requis');
       }
-      if (name.trim().length < 2 || name.trim().length > 50) {
-        throw new Error('Le nom du rôle doit contenir entre 2 et 50 caractères');
+      if (code.trim().length < 2 || code.trim().length > 50) {
+        throw new Error('Le code du rôle doit contenir entre 2 et 50 caractères');
       }
 
-      // Vérifier si le nouveau nom est déjà utilisé par un autre rôle
-      const nameExists = await roleRepository.findByName(name.trim());
-      if (nameExists && nameExists.id !== id) {
-        throw new Error('Un rôle avec ce nom existe déjà');
+      // Vérifier si le nouveau code est déjà utilisé par un autre rôle
+      const codeExists = await roleRepository.findByCode(code.trim());
+      if (codeExists && codeExists.id !== id) {
+        throw new Error('Un rôle avec ce code existe déjà');
       }
     }
 
@@ -197,13 +197,13 @@ class RoleService {
 
     // Mettre à jour le rôle
     const updatedRole = await roleRepository.update(id, {
-      name: name?.trim(),
+      code: code?.trim(),
       description: description?.trim(),
       status,
       level
     }, updatedBy);
 
-    console.log(`🔐 Rôle mis à jour: ${updatedRole.name} (ID: ${updatedRole.id}) par l'utilisateur ${updatedBy}`);
+    console.log(`🔐 Rôle mis à jour: ${updatedRole.code} (ID: ${updatedRole.id}) par l'utilisateur ${updatedBy}`);
     
     return updatedRole;
   }
@@ -241,7 +241,7 @@ class RoleService {
     const deleted = await roleRepository.delete(id, deletedBy);
     
     if (deleted) {
-      console.log(`🗑️ Rôle supprimé: ${role.name} (ID: ${role.id}) par l'utilisateur ${deletedBy}`);
+      console.log(`🗑️ Rôle supprimé: ${role.code} (ID: ${role.id}) par l'utilisateur ${deletedBy}`);
     }
     
     return deleted;
@@ -289,7 +289,7 @@ class RoleService {
       createdBy
     );
 
-    console.log(`🔐 ${assignedCount} permissions associées au rôle ${role.name} (ID: ${roleId})`);
+    console.log(`🔐 ${assignedCount} permissions associées au rôle ${role.code} (ID: ${roleId})`);
     
     return {
       assigned: assignedCount,
@@ -316,7 +316,7 @@ class RoleService {
 
     const removedCount = await roleRepository.removeAllPermissions(roleId);
     
-    console.log(`🗑️ ${removedCount} permissions supprimées du rôle ${role.name} (ID: ${roleId})`);
+    console.log(`🗑️ ${removedCount} permissions supprimées du rôle ${role.code} (ID: ${roleId})`);
     
     return {
       removed: removedCount,

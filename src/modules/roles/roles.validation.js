@@ -37,10 +37,10 @@ const handleValidationErrors = (req, res, next) => {
  * Validation pour la création de rôle
  */
 const validateCreateRole = [
-  body('name')
+  body('code')
     .trim()
     .notEmpty()
-    .withMessage('Le nom du rôle est requis')
+    .withMessage('Le code du rôle est requis')
     .isLength({ min: 2, max: 50 })
     .withMessage('Le nom du rôle doit contenir entre 2 et 50 caractères')
     .matches(/^[a-zA-Z0-9_\-\s]+$/)
@@ -73,13 +73,13 @@ const validateUpdateRole = [
     .isInt({ min: 1 })
     .withMessage('L\'ID du rôle doit être un entier positif'),
     
-  body('name')
+  body('code')
     .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
-    .withMessage('Le nom du rôle doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-zA-Z0-9_\-\s]+$/)
-    .withMessage('Le nom du rôle ne peut contenir que des lettres, chiffres, underscores, tirets et espaces'),
+    .withMessage('Le code du rôle doit contenir entre 2 et 50 caractères')
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage('Le code du rôle ne peut contenir que des lettres, chiffres et underscores'),
     
   body('description')
     .optional()
@@ -138,7 +138,7 @@ const validateGetRoles = [
     
   query('sortBy')
     .optional()
-    .isIn(['name', 'description', 'status', 'level', 'created_at', 'updated_at'])
+    .isIn(['code', 'description', 'status', 'level', 'created_at', 'updated_at'])
     .withMessage('Le champ de tri est invalide'),
     
   query('sortOrder')
@@ -204,12 +204,12 @@ const validateCheckUserRole = [
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
     
-  query('roleName')
+  query('roleCode')
     .notEmpty()
-    .withMessage('Le nom du rôle est requis')
+    .withMessage('Le code du rôle est requis')
     .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Le nom du rôle doit contenir entre 2 et 50 caractères'),
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage('Le code du rôle ne peut contenir que des lettres, chiffres et underscores'),
     
   handleValidationErrors
 ];
@@ -222,10 +222,10 @@ const validateDuplicateRole = [
     .isInt({ min: 1 })
     .withMessage('L\'ID du rôle source doit être un entier positif'),
     
-  body('name')
+  body('code')
     .trim()
     .notEmpty()
-    .withMessage('Le nom du nouveau rôle est requis')
+    .withMessage('Le code du nouveau rôle est requis')
     .isLength({ min: 2, max: 50 })
     .withMessage('Le nom du rôle doit contenir entre 2 et 50 caractères')
     .matches(/^[a-zA-Z0-9_\-\s]+$/)
