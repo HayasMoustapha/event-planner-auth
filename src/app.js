@@ -16,6 +16,8 @@ const peopleRoutes = require('./modules/people/people.routes');
 const usersRoutes = require('./modules/users/users.routes');
 const healthRoutes = require('./health/health.routes');
 const metricsRoutes = require('./metrics/metrics.routes');
+const docsRoutes = require('./docs/docs.routes');
+const dashboardRoutes = require('./dashboard/dashboard.routes');
 
 const app = express();
 
@@ -127,6 +129,12 @@ app.use('/api/users', usersRoutes);
 app.use('/', healthRoutes);
 app.use('/metrics', metricsRoutes);
 
+// Routes de documentation API
+app.use('/docs', docsRoutes);
+
+// Routes du dashboard de monitoring
+app.use('/dashboard', dashboardRoutes);
+
 // Documentation API (si disponible)
 app.get('/api/docs', (req, res) => {
   res.json({
@@ -136,7 +144,9 @@ app.get('/api/docs', (req, res) => {
       people: '/api/people',
       users: '/api/users',
       health: '/health',
-      metrics: '/metrics'
+      metrics: '/metrics',
+      docs: '/docs',
+      dashboard: '/dashboard'
     }
   });
 });
