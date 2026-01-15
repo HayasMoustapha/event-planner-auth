@@ -1,8 +1,10 @@
 const express = require('express');
 const authController = require('./auth.controller');
+const registrationController = require('./registration.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
 const rbacMiddleware = require('../../middlewares/rbac.middleware');
 const authValidation = require('./auth.validation');
+const validate = require('../../config/validation');
 
 const router = express.Router();
 
@@ -74,6 +76,46 @@ router.post('/otp/password-reset/generate',
 router.post('/otp/password-reset/verify', 
   authValidation.validateResetPasswordWithOtp,
   authController.resetPasswordWithOtp
+);
+
+/**
+ * Routes d'inscription (publiques)
+ */
+
+// Inscription d'un nouvel utilisateur
+router.post('/register', 
+  authValidation.validateRegister,
+  registrationController.register
+);
+
+// Vérification d'email avec OTP
+router.post('/verify-email', 
+  authValidation.validateVerifyEmail,
+  registrationController.verifyEmail
+);
+
+// Renvoi d'OTP
+router.post('/resend-otp', 
+  authValidation.validateResendOtp,
+  registrationController.resendOTP
+);
+
+// Connexion après vérification
+router.post('/login-after-verification', 
+  authValidation.validateLogin,
+  registrationController.loginAfterVerification
+);
+
+// Vérification disponibilité email
+router.get('/check-email/:email', 
+  authValidation.validateEmailParam,
+  registrationController.checkEmailAvailability
+);
+
+// Vérification disponibilité username
+router.get('/check-username/:username', 
+  authValidation.validateUsernameParam,
+  registrationController.checkUsernameAvailability
 );
 
 /**

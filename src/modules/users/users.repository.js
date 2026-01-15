@@ -15,10 +15,10 @@ class UsersRepository {
     const { page = 1, limit = 10, search, status = null, userAccess = null } = options;
     const offset = (page - 1) * limit;
 
-    // Colonnes selon schéma de référence : id, person_id, user_code, username, phone, email, user_access, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+    // Colonnes selon schéma SQL : id, person_id, user_code, username, phone, email, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     let query = `
-      SELECT u.id, u.username, u.email, u.status, u.user_code, u.user_access, u.created_at, u.updated_at,
-             p.first_name, p.last_name, p.phone
+      SELECT u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at,
+             p.first_name, p.last_name, p.phone as person_phone
       FROM users u
       LEFT JOIN people p ON u.person_id = p.id
       WHERE u.deleted_at IS NULL
@@ -47,14 +47,6 @@ class UsersRepository {
       params.push(status);
     }
 
-    // Ajout du filtre user_access
-    if (userAccess !== null) {
-      const userAccessIndex = params.length + 1;
-      const userAccessCondition = ` AND u.user_access = $${userAccessIndex}`;
-      query += userAccessCondition;
-      countQuery += userAccessCondition;
-      params.push(userAccess);
-    }
 
     // Tri et pagination
     query += ` ORDER BY u.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
@@ -62,7 +54,7 @@ class UsersRepository {
 
     try {
       const [users] = await connection.query(query, params);
-      const [countResult] = await connection.query(countQuery, search || status || userAccess !== null ? params.slice(0, -2) : []);
+      const [countResult] = await connection.query(countQuery, search || status ? params.slice(0, -2) : []);
 
       return {
         data: users.rows,
@@ -85,10 +77,10 @@ class UsersRepository {
    * @returns {Promise<Object>} Données de l'utilisateur
    */
   async findById(id, includePassword = false) {
-    // Colonnes selon schéma de référence : id, person_id, user_code, username, phone, email, user_access, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+    // Colonnes selon schéma SQL : id, person_id, user_code, username, phone, email, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone, p.email as person_email'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone, p.email as person_email';
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email';
     
     const query = `
       SELECT ${fields}
@@ -113,8 +105,8 @@ class UsersRepository {
    */
   async findByEmail(email, includePassword = false) {
     const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.user_access, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone';
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
     
     const query = `
       SELECT ${fields}
@@ -139,8 +131,8 @@ class UsersRepository {
    */
   async findByUsername(username, includePassword = false) {
     const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.user_access, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone';
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
     
     const query = `
       SELECT ${fields}
@@ -167,7 +159,8 @@ class UsersRepository {
       username,
       email,
       password,
-      userAccess = null,
+      userCode = null,
+      phone = null,
       status = 'active',
       personId = null,
       createdBy = null
@@ -177,9 +170,9 @@ class UsersRepository {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const query = `
-      INSERT INTO users (username, email, password, user_access, status, person_id, created_by, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, username, email, user_access, status, person_id, created_at, updated_at
+      INSERT INTO users (username, email, password, user_code, phone, status, person_id, created_by, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING id, username, email, user_code, phone, status, person_id, created_at, updated_at
     `;
 
     try {
@@ -187,7 +180,8 @@ class UsersRepository {
         username,
         email,
         hashedPassword,
-        userAccess,
+        userCode,
+        phone,
         status,
         personId,
         createdBy
@@ -222,7 +216,8 @@ class UsersRepository {
       username,
       email,
       password,
-      userAccess,
+      userCode,
+      phone,
       status,
       updatedBy = null
     } = updateData;
@@ -248,9 +243,13 @@ class UsersRepository {
       // Ajouter à l'historique des mots de passe
       await this.addPasswordHistory(id, hashedPassword);
     }
-    if (userAccess !== undefined) {
-      updates.push(`user_access = $${paramIndex++}`);
-      values.push(userAccess);
+    if (userCode !== undefined) {
+      updates.push(`user_code = $${paramIndex++}`);
+      values.push(userCode);
+    }
+    if (phone !== undefined) {
+      updates.push(`phone = $${paramIndex++}`);
+      values.push(phone);
     }
     if (status !== undefined) {
       updates.push(`status = $${paramIndex++}`);
@@ -269,7 +268,7 @@ class UsersRepository {
       UPDATE users 
       SET ${updates.join(', ')}
       WHERE id = $${paramIndex} AND deleted_at IS NULL
-      RETURNING id, username, email, user_access, status, person_id, created_at, updated_at
+      RETURNING id, username, email, user_code, phone, status, person_id, created_at, updated_at
     `;
     values.push(id);
 
@@ -332,7 +331,7 @@ class UsersRepository {
       UPDATE users 
       SET password = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND deleted_at IS NULL
-      RETURNING id, username, email, user_access, status, updated_at
+      RETURNING id, username, email, user_code, phone, status, updated_at
     `;
 
     try {
@@ -378,18 +377,9 @@ class UsersRepository {
    * @returns {Promise<boolean>} Succès de l'opération
    */
   async updateLastLogin(id) {
-    const query = `
-      UPDATE users 
-      SET last_login_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND deleted_at IS NULL
-    `;
-
-    try {
-      const result = await connection.query(query, [id]);
-      return result.rowCount > 0;
-    } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour de la dernière connexion: ${error.message}`);
-    }
+    // Note: last_login_at n'existe pas dans le schéma SQL actuel
+    // Cette fonction est conservée pour compatibilité mais ne fait rien
+    return true;
   }
 
   /**
@@ -408,7 +398,7 @@ class UsersRepository {
       UPDATE users 
       SET status = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND deleted_at IS NULL
-      RETURNING id, username, email, user_access, status, updated_at
+      RETURNING id, username, email, user_code, phone, status, updated_at
     `;
 
     try {
