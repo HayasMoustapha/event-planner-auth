@@ -53,21 +53,16 @@ class RoleService {
       createdBy
     };
 
-    // Vérifier si le nom existe déjà
-    const existingRole = await roleRepository.findByName(name.trim());
-    if (existingRole) {
-      throw new Error('Un rôle avec ce nom existe déjà');
+    // Vérifier si le code existe déjà
+    const existingRole = await roleRepository.findAll({ search: name.trim(), limit: 1 });
+    if (existingRole.data.length > 0) {
+      throw new Error('Un rôle avec ce code existe déjà');
     }
 
     // Créer le rôle
     const role = await roleRepository.create(cleanData);
-      description: description?.trim() || null,
-      status,
-      level,
-      createdBy
-    });
 
-    console.log(`🔐 Rôle créé: ${role.name} (ID: ${role.id}) par l'utilisateur ${createdBy}`);
+    console.log(`🔐 Rôle créé: ${role.code} (ID: ${role.id}) par l'utilisateur ${createdBy}`);
     
     return role;
   }

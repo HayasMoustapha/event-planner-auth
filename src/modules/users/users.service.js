@@ -211,7 +211,7 @@ class UsersService {
       username,
       email,
       password,
-      role,
+      userAccess,
       status
     } = updateData;
 
@@ -230,11 +230,11 @@ class UsersService {
         throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
       }
     }
-    if (role && !['admin', 'user', 'moderator'].includes(role)) {
-      throw new Error('Rôle invalide. Valeurs autorisées: admin, user, moderator');
+    if (userAccess !== undefined && (userAccess !== null && (isNaN(userAccess) || userAccess < 0))) {
+      throw new Error('user_access doit être un entier positif ou null');
     }
-    if (status && !['active', 'inactive', 'locked'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, locked');
+    if (status && !['active', 'inactive', 'lock'].includes(status)) {
+      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
     }
 
     // Nettoyage des données
@@ -242,7 +242,7 @@ class UsersService {
     if (username !== undefined) cleanData.username = username.trim().toLowerCase();
     if (email !== undefined) cleanData.email = email.toLowerCase().trim();
     if (password !== undefined) cleanData.password = password.trim();
-    if (role !== undefined) cleanData.role = role;
+    if (userAccess !== undefined) cleanData.userAccess = userAccess;
     if (status !== undefined) cleanData.status = status;
     cleanData.updatedBy = updatedBy;
 
@@ -416,12 +416,12 @@ class UsersService {
    * @returns {Promise<Object>} Résultats paginés
    */
   async search(criteria) {
-    const { search, status, role, page = 1, limit = 10 } = criteria;
+    const { search, status, userAccess, page = 1, limit = 10 } = criteria;
     
     return await this.getAll({
       search: search?.trim(),
       status,
-      role,
+      userAccess,
       page,
       limit
     });

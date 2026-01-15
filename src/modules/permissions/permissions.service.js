@@ -33,57 +33,36 @@ class PermissionService {
       throw new Error('Le code doit être en minuscules avec underscores (ex: users.create)');
     }
 
-    // Validation du groupe (optionnel)
     if (group && group.trim().length > 50) {
       throw new Error('Le groupe ne peut pas dépasser 50 caractères');
-    if (!resource || !resource.trim()) {
-      throw new Error('La ressource est requise');
     }
 
-    if (resource.trim().length < 2 || resource.trim().length > 50) {
-      throw new Error('La ressource doit contenir entre 2 et 50 caractères');
-    }
-
-    if (!action || !action.trim()) {
-      throw new Error('L\'action est requise');
-    }
-
-    if (action.trim().length < 2 || action.trim().length > 50) {
-      throw new Error('L\'action doit contenir entre 2 et 50 caractères');
+    if (group && !/^[a-z_]+$/.test(group.trim())) {
+      throw new Error('Le groupe doit être en minuscules avec underscores uniquement');
     }
 
     if (description && description.length > 255) {
       throw new Error('La description ne peut pas dépasser 255 caractères');
     }
 
-    const validStatuses = ['active', 'inactive'];
-    if (!validStatuses.includes(status)) {
-      throw new Error('Le statut doit être "active" ou "inactive"');
-    }
-
-    // Validation du format du nom (resource.action)
-    const expectedName = `${resource.trim()}.${action.trim()}`;
-    if (name.trim() !== expectedName) {
-      throw new Error(`Le nom de la permission doit suivre le format: ${expectedName}`);
-    }
+    // Préparation des données pour le repository
+    const cleanData = {
+      name: name.trim(),
+      description: description?.trim(),
+      group: group?.trim(),
+      createdBy
+    };
 
     // Vérifier si la permission existe déjà
-    const existingPermission = await permissionRepository.findByName(name.trim());
-    if (existingPermission) {
-      throw new Error('Une permission avec ce nom existe déjà');
+    const existingPermission = await permissionRepository.findAll({ search: name.trim(), limit: 1 });
+    if (existingPermission.data.length > 0) {
+      throw new Error('Une permission avec ce code existe déjà');
     }
 
     // Créer la permission
-    const permission = await permissionRepository.create({
-      name: name.trim(),
-      description: description?.trim() || null,
-      resource: resource.trim(),
-      action: action.trim(),
-      status,
-      createdBy
-    });
+    const permission = await permissionRepository.create(cleanData);
 
-    console.log(`🔐 Permission créée: ${permission.name} (ID: ${permission.id}) par l'utilisateur ${createdBy}`);
+    console.log(`🔐 Permission créée: ${permission.code} (ID: ${permission.id}) par l'utilisateur ${createdBy}`);
     
     return permission;
   }
