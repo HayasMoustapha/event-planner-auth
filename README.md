@@ -20,7 +20,6 @@ Service d'authentification et d'autorisation enterprise-ready pour Event Planner
 
 ### Documentation & Développement
 - **Swagger/OpenAPI 3.0** : Documentation interactive complète
-- **Postman collection** : Export automatique pour tests
 - **Exemples d'utilisation** : Code samples et best practices
 - **Dashboard développeur** : Outils de debugging et monitoring
 - **📚 Documentation**
@@ -143,9 +142,6 @@ Voir [`.env.example`](./.env.example) pour toutes les options disponibles.
 ### Dashboard Monitoring
 - **Dashboard** : http://localhost:3000/dashboard (requiert authentification admin)
 - **Métriques temps réel** : http://localhost:3000/dashboard/api/realtime
-
-### Postman Collection
-Export automatique disponible à : http://localhost:3000/docs/postman
 
 ## Endpoints Principaux
 
