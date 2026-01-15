@@ -21,22 +21,22 @@ class OtpService {
   }
 
   /**
-   * Génère et sauvegarde un OTP pour un utilisateur
-   * @param {number} userId - ID de l'utilisateur
-   * @param {string} type - Type d'OTP ('email' ou 'phone')
+   * Génère et sauvegarde un OTP pour une personne
+   * @param {number} personId - ID de la personne
+   * @param {string} purpose - Purpose de l'OTP ('email' ou 'phone')
    * @param {string} identifier - Email ou numéro de téléphone
    * @param {number} expiresInMinutes - Durée de validité en minutes (défaut: 15)
    * @param {number} createdBy - ID de l'utilisateur qui crée l'OTP
    * @returns {Promise<Object>} OTP créé
    */
-  async generateOtp(userId, type, identifier, expiresInMinutes = 15, createdBy = null) {
+  async generateOtp(personId, purpose, identifier, expiresInMinutes = 15, createdBy = null) {
     // Validation des paramètres
-    if (!userId || userId <= 0) {
-      throw new Error('ID utilisateur invalide');
+    if (!personId || personId <= 0) {
+      throw new Error('ID personne invalide');
     }
     
-    if (!type || !['email', 'phone'].includes(type)) {
-      throw new Error('Type d\'OTP invalide. Valeurs autorisées: email, phone');
+    if (!purpose || !['email', 'phone'].includes(purpose)) {
+      throw new Error('Purpose d\'OTP invalide. Valeurs autorisées: email, phone');
     }
     
     if (!identifier || !identifier.trim()) {
@@ -47,24 +47,23 @@ class OtpService {
       throw new Error('La durée de validité doit être entre 1 et 60 minutes');
     }
 
-    // Vérifier s'il n'y a pas déjà un OTP actif pour cet utilisateur et type
-    const activeOtpCount = await otpRepository.countActiveOtp(userId, type);
+    // Vérifier s'il n'y a pas déjà un OTP actif pour cette personne et purpose
+    const activeOtpCount = await otpRepository.countActiveOtp(personId, purpose);
     if (activeOtpCount >= 3) {
-      throw new Error('Trop de codes OTP actifs pour cet utilisateur. Veuillez patienter avant de générer un nouveau code.');
+      throw new Error('Trop de codes OTP actifs pour cette personne. Veuillez patienter avant de générer un nouveau code.');
     }
 
     // Générer le code
-    const code = this.generateCode();
+    const otpCode = this.generateCode();
     
     // Calculer la date d'expiration
     const expiresAt = new Date(Date.now() + (expiresInMinutes * 60 * 1000));
 
     // Créer l'OTP
     const otpData = {
-      userId,
-      type,
-      identifier: identifier.toLowerCase().trim(),
-      code,
+      personId,
+      purpose,
+      otpCode,
       expiresAt,
       createdBy
     };
@@ -74,13 +73,13 @@ class OtpService {
 
   /**
    * Génère un OTP pour l'email
-   * @param {number} userId - ID de l'utilisateur
-   * @param {string} email - Email de l'utilisateur
+   * @param {number} personId - ID de la personne
+   * @param {string} email - Email de la personne
    * @param {number} expiresInMinutes - Durée de validité
    * @param {number} createdBy - ID de l'utilisateur qui crée l'OTP
    * @returns {Promise<Object>} OTP créé
    */
-  async generateEmailOtp(userId, email, expiresInMinutes = 15, createdBy = null) {
+  async generateEmailOtp(personId, email, expiresInMinutes = 15, createdBy = null) {
     if (!email || !email.trim()) {
       throw new Error('Email requis');
     }
@@ -91,18 +90,18 @@ class OtpService {
       throw new Error('Format d\'email invalide');
     }
 
-    return await this.generateOtp(userId, 'email', email, expiresInMinutes, createdBy);
+    return await this.generateOtp(personId, 'email', email, expiresInMinutes, createdBy);
   }
 
   /**
    * Génère un OTP pour le téléphone
-   * @param {number} userId - ID de l'utilisateur
+   * @param {number} personId - ID de la personne
    * @param {string} phone - Numéro de téléphone
    * @param {number} expiresInMinutes - Durée de validité
    * @param {number} createdBy - ID de l'utilisateur qui crée l'OTP
    * @returns {Promise<Object>} OTP créé
    */
-  async generatePhoneOtp(userId, phone, expiresInMinutes = 15, createdBy = null) {
+  async generatePhoneOtp(personId, phone, expiresInMinutes = 15, createdBy = null) {
     if (!phone || !phone.trim()) {
       throw new Error('Numéro de téléphone requis');
     }
@@ -115,20 +114,20 @@ class OtpService {
       throw new Error('Numéro de téléphone invalide');
     }
 
-    return await this.generateOtp(userId, 'phone', phone, expiresInMinutes, createdBy);
+    return await this.generateOtp(personId, 'phone', phone, expiresInMinutes, createdBy);
   }
 
   /**
    * Vérifie un code OTP
-   * @param {string} code - Code OTP à vérifier
+   * @param {string} otpCode - Code OTP à vérifier
    * @param {string} identifier - Email ou téléphone
-   * @param {string} type - Type d'OTP ('email' ou 'phone')
-   * @param {number} userId - ID de l'utilisateur (optionnel, pour validation)
+   * @param {string} purpose - Purpose de l'OTP ('email' ou 'phone')
+   * @param {number} personId - ID de la personne (optionnel, pour validation)
    * @returns {Promise<Object>} OTP validé et marqué comme utilisé
    */
-  async verifyOtp(code, identifier, type, userId = null) {
+  async verifyOtp(otpCode, identifier, purpose, personId = null) {
     // Validation des paramètres
-    if (!code || !code.trim()) {
+    if (!otpCode || !otpCode.trim()) {
       throw new Error('Code OTP requis');
     }
     
@@ -136,11 +135,11 @@ class OtpService {
       throw new Error('Identifiant requis');
     }
     
-    if (!type || !['email', 'phone'].includes(type)) {
-      throw new Error('Type d\'OTP invalide');
+    if (!purpose || !['email', 'phone'].includes(purpose)) {
+      throw new Error('Purpose d\'OTP invalide');
     }
 
-    if (code.length < 4 || code.length > 10) {
+    if (otpCode.length < 4 || otpCode.length > 10) {
       throw new Error('Code OTP invalide');
     }
 
@@ -148,15 +147,15 @@ class OtpService {
     const normalizedIdentifier = identifier.toLowerCase().trim();
 
     // Vérifier et marquer comme utilisé
-    const otp = await otpRepository.validateOtp(code, normalizedIdentifier, type);
+    const otp = await otpRepository.validateOtp(otpCode, personId, purpose);
     
     if (!otp) {
       throw new Error('Code OTP invalide ou expiré');
     }
 
-    // Validation optionnelle de l'utilisateur
-    if (userId && otp.user_id !== userId) {
-      throw new Error('Ce code OTP n\'est pas associé à cet utilisateur');
+    // Validation optionnelle de la personne
+    if (personId && otp.person_id !== personId) {
+      throw new Error('Ce code OTP n\'est pas associé à cette personne');
     }
 
     // Vérifier si l'OTP n'est pas expiré
@@ -166,8 +165,8 @@ class OtpService {
 
     return {
       id: otp.id,
-      type: otp.type,
-      identifier: otp.identifier,
+      purpose: otp.purpose,
+      identifier: normalizedIdentifier,
       expiresAt: otp.expires_at,
       createdAt: otp.created_at
     };
@@ -175,52 +174,52 @@ class OtpService {
 
   /**
    * Vérifie un code OTP pour l'email
-   * @param {string} code - Code OTP
-   * @param {string} email - Email de l'utilisateur
-   * @param {number} userId - ID de l'utilisateur (optionnel)
+   * @param {string} otpCode - Code OTP
+   * @param {string} email - Email de la personne
+   * @param {number} personId - ID de la personne (optionnel)
    * @returns {Promise<Object>} OTP validé
    */
-  async verifyEmailOtp(code, email, userId = null) {
-    return await this.verifyOtp(code, email, 'email', userId);
+  async verifyEmailOtp(otpCode, email, personId = null) {
+    return await this.verifyOtp(otpCode, email, 'email', personId);
   }
 
   /**
    * Vérifie un code OTP pour le téléphone
-   * @param {string} code - Code OTP
+   * @param {string} otpCode - Code OTP
    * @param {string} phone - Numéro de téléphone
-   * @param {number} userId - ID de l'utilisateur (optionnel)
+   * @param {number} personId - ID de la personne (optionnel)
    * @returns {Promise<Object>} OTP validé
    */
-  async verifyPhoneOtp(code, phone, userId = null) {
-    return await this.verifyOtp(code, phone, 'phone', userId);
+  async verifyPhoneOtp(otpCode, phone, personId = null) {
+    return await this.verifyOtp(otpCode, phone, 'phone', personId);
   }
 
   /**
-   * Récupère tous les OTP d'un utilisateur
-   * @param {number} userId - ID de l'utilisateur
-   * @param {string} type - Type d'OTP (optionnel)
+   * Récupère tous les OTP d'une personne
+   * @param {number} personId - ID de la personne
+   * @param {string} purpose - Purpose de l'OTP (optionnel)
    * @returns {Promise<Array>} Liste des OTP
    */
-  async getUserOtps(userId, type = null) {
-    if (!userId || userId <= 0) {
-      throw new Error('ID utilisateur invalide');
+  async getPersonOtps(personId, purpose = null) {
+    if (!personId || personId <= 0) {
+      throw new Error('ID personne invalide');
     }
 
-    return await otpRepository.findByUserId(userId, type);
+    return await otpRepository.findByPersonId(personId, purpose);
   }
 
   /**
-   * Invalide tous les OTP d'un utilisateur
-   * @param {number} userId - ID de l'utilisateur
-   * @param {string} type - Type d'OTP (optionnel)
+   * Invalide tous les OTP d'une personne
+   * @param {number} personId - ID de la personne
+   * @param {string} purpose - Purpose de l'OTP (optionnel)
    * @returns {Promise<number>} Nombre d'OTP invalidés
    */
-  async invalidateUserOtps(userId, type = null) {
-    if (!userId || userId <= 0) {
-      throw new Error('ID utilisateur invalide');
+  async invalidatePersonOtps(personId, purpose = null) {
+    if (!personId || personId <= 0) {
+      throw new Error('ID personne invalide');
     }
 
-    const otps = await this.getUserOtps(userId, type);
+    const otps = await this.getPersonOtps(personId, purpose);
     let invalidatedCount = 0;
 
     for (const otp of otps) {
@@ -234,13 +233,13 @@ class OtpService {
   }
 
   /**
-   * Vérifie si un utilisateur a des OTP actifs
-   * @param {number} userId - ID de l'utilisateur
-   * @param {string} type - Type d'OTP (optionnel)
-   * @returns {Promise<boolean>} True si l'utilisateur a des OTP actifs
+   * Vérifie si une personne a des OTP actifs
+   * @param {number} personId - ID de la personne
+   * @param {string} purpose - Purpose de l'OTP (optionnel)
+   * @returns {Promise<boolean>} True si la personne a des OTP actifs
    */
-  async hasActiveOtp(userId, type = null) {
-    const count = await otpRepository.countActiveOtp(userId, type);
+  async hasActiveOtp(personId, purpose = null) {
+    const count = await otpRepository.countActiveOtp(personId, purpose);
     return count > 0;
   }
 
@@ -253,16 +252,16 @@ class OtpService {
   }
 
   /**
-   * Nettoie tous les OTP d'un utilisateur
-   * @param {number} userId - ID de l'utilisateur
+   * Nettoie tous les OTP d'une personne
+   * @param {number} personId - ID de la personne
    * @returns {Promise<number>} Nombre d'OTP supprimés
    */
-  async cleanupUserOtps(userId) {
-    if (!userId || userId <= 0) {
-      throw new Error('ID utilisateur invalide');
+  async cleanupPersonOtps(personId) {
+    if (!personId || personId <= 0) {
+      throw new Error('ID personne invalide');
     }
 
-    return await otpRepository.deleteByUserId(userId);
+    return await otpRepository.deleteByPersonId(personId);
   }
 
   /**
@@ -279,28 +278,28 @@ class OtpService {
 
   /**
    * Génère un OTP pour la réinitialisation de mot de passe
-   * @param {number} userId - ID de l'utilisateur
-   * @param {string} email - Email de l'utilisateur
+   * @param {number} personId - ID de la personne
+   * @param {string} email - Email de la personne
    * @returns {Promise<Object>} OTP de réinitialisation
    */
-  async generatePasswordResetOtp(userId, email) {
+  async generatePasswordResetOtp(personId, email) {
     // Générer un OTP avec une durée plus longue pour la réinitialisation
-    return await this.generateEmailOtp(userId, email, 30, userId);
+    return await this.generateEmailOtp(personId, email, 30, personId);
   }
 
   /**
    * Vérifie un OTP pour la réinitialisation de mot de passe
-   * @param {string} code - Code OTP
-   * @param {string} email - Email de l'utilisateur
-   * @param {number} userId - ID de l'utilisateur
+   * @param {string} otpCode - Code OTP
+   * @param {string} email - Email de la personne
+   * @param {number} personId - ID de la personne
    * @returns {Promise<Object>} OTP validé pour réinitialisation
    */
-  async verifyPasswordResetOtp(code, email, userId) {
-    const otp = await this.verifyEmailOtp(code, email, userId);
+  async verifyPasswordResetOtp(otpCode, email, personId) {
+    const otp = await this.verifyEmailOtp(otpCode, email, personId);
     
     if (otp) {
       // Ajouter une log pour la réinitialisation
-      console.log(`🔐 Réinitialisation mot de passe pour l'utilisateur ${userId} via email ${email}`);
+      console.log(`🔐 Réinitialisation mot de passe pour la personne ${personId} via email ${email}`);
     }
 
     return otp;

@@ -12,16 +12,15 @@ class OtpRepository {
    */
   async create(otpData) {
     const {
-      userId,
-      type,
-      identifier, // email ou téléphone
-      code,
+      personId,
+      purpose,
+      otpCode,
       expiresAt,
       isUsed = false,
       createdBy = null
     } = otpData;
 
-    // Colonnes selon schéma de référence : id, person_id, otp_code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+    // Colonnes selon schéma : id, person_id, otp_code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     const query = `
       INSERT INTO otps (person_id, otp_code, expires_at, is_used, purpose, created_at, created_by)
       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
@@ -30,11 +29,11 @@ class OtpRepository {
 
     try {
       const result = await connection.query(query, [
-        identifier, // identifier sera utilisé comme person_id (colonne 'person_id' du schéma)
-        code, // code sera utilisé comme otp_code (colonne 'otp_code' du schéma)
+        personId, // person_id (colonne 'person_id' du schéma)
+        otpCode, // otp_code (colonne 'otp_code' du schéma)
         expiresAt,
         isUsed,
-        type, // type sera utilisé comme purpose (colonne 'purpose' du schéma)
+        purpose, // purpose (colonne 'purpose' du schéma)
         createdBy
       ]);
 
@@ -46,13 +45,13 @@ class OtpRepository {
 
   /**
    * Récupère un OTP par son code et identifiant
-   * @param {string} code - Code OTP
-   * @param {string} identifier - Email ou téléphone
-   * @param {string} type - Type d'OTP (email/phone)
+   * @param {string} otpCode - Code OTP
+   * @param {number} personId - ID de la personne
+   * @param {string} purpose - Purpose de l'OTP
    * @returns {Promise<Object|null>} OTP trouvé ou null
    */
-  // Colonnes selon schéma de référence : id, person_id, otp_code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
-  async findByCodeAndIdentifier(code, identifier, type) {
+  // Colonnes selon schéma : id, person_id, otp_code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+  async findByCodeAndPersonId(otpCode, personId, purpose) {
     const query = `
       SELECT * FROM otps 
       WHERE otp_code = $1 AND person_id = $2 AND purpose = $3 
@@ -63,7 +62,7 @@ class OtpRepository {
     `;
 
     try {
-      const result = await connection.query(query, [code, identifier, type]);
+      const result = await connection.query(query, [otpCode, personId, purpose]);
       return result.rows[0] || null;
     } catch (error) {
       throw new Error(`Erreur lors de la recherche de l'OTP: ${error.message}`);
@@ -71,21 +70,21 @@ class OtpRepository {
   }
 
   /**
-   * Récupère tous les OTP pour un utilisateur
-   * @param {number} userId - ID de l'utilisateur
-   * @param {string} type - Type d'OTP (optionnel)
+   * Récupère tous les OTP pour une personne
+   * @param {number} personId - ID de la personne
+   * @param {string} purpose - Purpose de l'OTP (optionnel)
    * @returns {Promise<Array>} Liste des OTP
    */
-  async findByUserId(userId, type = null) {
+  async findByPersonId(personId, purpose = null) {
     let query = `
       SELECT * FROM otps 
       WHERE person_id = $1
     `;
-    const params = [userId];
+    const params = [personId];
 
-    if (type) {
+    if (purpose) {
       query += ' AND purpose = $2';
-      params.push(type);
+      params.push(purpose);
     }
 
     query += ' ORDER BY created_at DESC';
@@ -138,33 +137,33 @@ class OtpRepository {
   }
 
   /**
-   * Supprime tous les OTP pour un utilisateur
-   * @param {number} userId - ID de l'utilisateur
+   * Supprime tous les OTP pour une personne
+   * @param {number} personId - ID de la personne
    * @returns {Promise<number>} Nombre d'OTP supprimés
    */
-  async deleteByUserId(userId) {
+  async deleteByPersonId(personId) {
     const query = `
-      DELETE FROM otp_codes 
-      WHERE user_id = $1
+      DELETE FROM otps 
+      WHERE person_id = $1
     `;
 
     try {
-      const result = await connection.query(query, [userId]);
+      const result = await connection.query(query, [personId]);
       return result.rowCount;
     } catch (error) {
-      throw new Error(`Erreur lors de la suppression des OTP utilisateur: ${error.message}`);
+      throw new Error(`Erreur lors de la suppression des OTP personne: ${error.message}`);
     }
   }
 
   /**
    * Vérifie si un code OTP est valide
-   * @param {string} code - Code OTP à vérifier
-   * @param {string} identifier - Email ou téléphone
-   * @param {string} type - Type d'OTP
+   * @param {string} otpCode - Code OTP à vérifier
+   * @param {number} personId - ID de la personne
+   * @param {string} purpose - Purpose de l'OTP
    * @returns {Promise<Object|null>} OTP valide ou null
    */
-  async validateOtp(code, identifier, type) {
-    const otp = await this.findByCodeAndIdentifier(code, identifier, type);
+  async validateOtp(otpCode, personId, purpose) {
+    const otp = await this.findByCodeAndPersonId(otpCode, personId, purpose);
     
     if (!otp) {
       return null;
@@ -177,22 +176,22 @@ class OtpRepository {
   }
 
   /**
-   * Compte le nombre d'OTP actifs pour un utilisateur
-   * @param {number} userId - ID de l'utilisateur
-   *param {string} type - Type d'OTP (optionnel)
+   * Compte le nombre d'OTP actifs pour une personne
+   * @param {number} personId - ID de la personne
+   * @param {string} purpose - Purpose de l'OTP (optionnel)
    * @returns {Promise<number>} Nombre d'OTP actifs
    */
-  async countActiveOtp(userId, type = null) {
+  async countActiveOtp(personId, purpose = null) {
     let query = `
-      SELECT COUNT(*) as count FROM otp_codes 
-      WHERE user_id = $1 AND is_used = FALSE 
+      SELECT COUNT(*) as count FROM otps 
+      WHERE person_id = $1 AND is_used = FALSE 
         AND expires_at > CURRENT_TIMESTAMP
     `;
-    const params = [userId];
+    const params = [personId];
 
-    if (type) {
-      query += ' AND type = $2';
-      params.push(type);
+    if (purpose) {
+      query += ' AND purpose = $2';
+      params.push(purpose);
     }
 
     try {
@@ -222,10 +221,10 @@ class OtpRepository {
    */
   async getStats() {
     try {
-      const [total] = await connection.query('SELECT COUNT(*) as count FROM otp_codes');
-      const [active] = await connection.query('SELECT COUNT(*) as count FROM otp_codes WHERE is_used = FALSE AND expires_at > CURRENT_TIMESTAMP');
-      const [used] = await connection.query('SELECT COUNT(*) as count FROM otp_codes WHERE is_used = TRUE');
-      const [expired] = await connection.query('SELECT COUNT(*) as count FROM otp_codes WHERE expires_at < CURRENT_TIMESTAMP');
+      const [total] = await connection.query('SELECT COUNT(*) as count FROM otps');
+      const [active] = await connection.query('SELECT COUNT(*) as count FROM otps WHERE is_used = FALSE AND expires_at > CURRENT_TIMESTAMP');
+      const [used] = await connection.query('SELECT COUNT(*) as count FROM otps WHERE is_used = TRUE');
+      const [expired] = await connection.query('SELECT COUNT(*) as count FROM otps WHERE expires_at < CURRENT_TIMESTAMP');
 
       return {
         total: parseInt(total.rows[0].count),
