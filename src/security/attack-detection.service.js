@@ -9,11 +9,12 @@ const metricsService = require('../metrics/metrics.service');
 class AttackDetectionService {
   constructor() {
     this.attackPatterns = {
-      // Patterns d'injection SQL
+      // Patterns d'injection SQL (plus précis pour éviter les faux positifs)
       sqlInjection: [
-        new RegExp('(\\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\\b)', 'gi'),
-        new RegExp('(--|#|\\/\\*|\\*\\/|;|\'|"|`)', 'gi'),
-        new RegExp('(\\bOR\\s+\\d+\\s*=\\s*\\d+|\\bAND\\s+\\d+\\s*=\\s*\\d+)', 'gi')
+        new RegExp('(\\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\\b.*\\b(FROM|INTO|WHERE|SET|VALUES)\\b)', 'gi'),
+        new RegExp('(\\b(OR|AND)\\s+\\d+\\s*=\\s*\\d+|\\b(OR|AND)\\s+\'[^\']*\'\\s*=\\s*\'[^\']*\'|\\b(OR|AND)\\s+\"[^\"]*\"\\s*=\\s*\"[^\"]*\")', 'gi'),
+        new RegExp('(\\b(UNION|UNION\\s+ALL|UNION\\s+DISTINCT)\\s+SELECT)', 'gi'),
+        new RegExp('(\\b(EXEC|EXECUTE)\\s*\\(|\\b(SP_EXECUTESQL)\\b)', 'gi')
       ],
       
       // Patterns XSS
@@ -26,15 +27,17 @@ class AttackDetectionService {
         new RegExp('<embed[^>]*>', 'gi')
       ],
       
-      // Patterns de command injection
+      // Patterns de command injection (plus précis)
       commandInjection: [
-        new RegExp('[;&|`|\\$\\(|\\$\\{|\\|\\||\\$]', 'g'),
-        new RegExp('(rm\\s+-rf|del\\s+\\/|format\\s+c:|shutdown\\s+-s)', 'gi')
+        new RegExp('[;&|`]\s*(rm|del|format|shutdown|reboot|cat|ls|dir|whoami|id|pwd)', 'gi'),
+        new RegExp('\\$\\([^)]*\\)', 'g'),
+        new RegExp('\\${[^}]*}', 'g'),
+        new RegExp('\\|\\|', 'g')
       ],
       
       // Patterns de path traversal
       pathTraversal: [
-        new RegExp('(\\.\\.[\\/\\\\])+', 'g'),
+        new RegExp('(\\.\\.[\\/\\\\]){2,}', 'g'),
         new RegExp('(\\.\\.[\\/\\\\])', 'g'),
         new RegExp('(\\/[a-zA-Z]:[\\/\\\\])', 'g'),
         new RegExp('(%2e%2f%2e%5c|%c0%af)', 'gi')
@@ -214,11 +217,14 @@ class AttackDetectionService {
         };
       }
 
-      // Vérifier les champs suspects
+      // Vérifier les champs suspects (exclure les champs légitimes)
       if (typeof body === 'object' && body !== null) {
-        const suspiciousFields = ['admin', 'sudo', 'root', 'password', 'token', 'secret'];
+        const suspiciousFields = ['admin', 'sudo', 'root', 'secret', 'api_key', 'private_key'];
+        const legitimateFields = ['password', 'token', 'email', 'username', 'firstName', 'lastName', 'phone', 'user_code'];
+        
         const foundFields = Object.keys(body).filter(key => 
-          suspiciousFields.some(field => key.toLowerCase().includes(field))
+          suspiciousFields.some(field => key.toLowerCase().includes(field)) &&
+          !legitimateFields.some(legit => key.toLowerCase().includes(legit))
         );
 
         if (foundFields.length > 0) {

@@ -80,13 +80,46 @@ if (env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Middleware de sécurité global (analyse toutes les requêtes)
-app.use(securityMiddleware.security({
-  enabled: true,
-  logLevel: 'warn',
-  blockOnHighRisk: true,
-  sanitizeInput: true
-}));
+// Middleware de sécurité global (analyse toutes les requêtes SAUF les routes publiques)
+app.use((req, res, next) => {
+  // Routes publiques qui ne nécessitent pas de sécurité stricte
+  const publicRoutes = [
+    '/api/auth/register',
+    '/api/auth/verify-email',
+    '/api/auth/resend-otp',
+    '/api/auth/otp/email/generate',
+    '/api/auth/otp/phone/generate',
+    '/api/auth/otp/email/verify',
+    '/api/auth/otp/phone/verify',
+    '/api/auth/otp/password-reset/generate',
+    '/api/auth/otp/password-reset/verify',
+    '/api/auth/check-email',
+    '/api/auth/check-username',
+    '/api/auth/login',
+    '/api/auth/login-after-verification',
+    '/api/health',
+    '/',
+    '/api/docs'
+  ];
+  
+  // Si c'est une route publique, appliquer une sécurité plus légère
+  if (publicRoutes.some(route => req.path.startsWith(route))) {
+    return securityMiddleware.security({
+      enabled: true,
+      logLevel: 'info',  // Moins verbeux
+      blockOnHighRisk: false,  // Ne pas bloquer les routes publiques
+      sanitizeInput: true
+    })(req, res, next);
+  }
+  
+  // Pour les autres routes, appliquer la sécurité complète
+  return securityMiddleware.security({
+    enabled: true,
+    logLevel: 'warn',
+    blockOnHighRisk: true,
+    sanitizeInput: true
+  })(req, res, next);
+});
 
 // Middleware de métriques (après parsing pour avoir accès aux données)
 app.use(metricsMiddleware);

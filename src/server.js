@@ -2,7 +2,7 @@ require('dotenv').config();
 const app = require('./app');
 const env = require('./config/env');
 const { connection } = require('./config/database');
-const { DatabaseBootstrap } = require('./services/database-bootstrap.service');
+const DatabaseBootstrap = require('./services/database-bootstrap.service');
 
 // Bootstrap automatique de la base de données
 const runDatabaseBootstrap = async () => {
