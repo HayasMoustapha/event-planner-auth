@@ -1,6 +1,11 @@
-const otpService = require('./otp.service');
+const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
 const authService = require('./auth.service');
+const otpService = require('./otp.service');
+const usersService = require('../users/users.service');
 const { createResponse } = require('../../utils/response');
+const logger = require('../../utils/logger');
+const emailService = require('../../services/email.service');
 
 /**
  * Controller HTTP pour la gestion de l'authentification et des OTP
@@ -113,8 +118,18 @@ class AuthController {
 
       const otp = await otpService.generateEmailOtp(targetUserId, email, expiresInMinutes, req.user?.id);
       
-      // TODO: Envoyer l'OTP par email (service d'envoi)
-      console.log(`📧 OTP généré pour ${email}: ${otp.code}`);
+      // Envoyer l'OTP par email
+      await emailService.sendOTP(email, otp.code, 'login', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      
+      logger.auth('OTP email generated', {
+        email,
+        userId: targetUserId,
+        expiresInMinutes,
+        ip: req.ip
+      });
       
       res.status(201).json(createResponse(
         true,
@@ -165,7 +180,12 @@ class AuthController {
       const otp = await otpService.generatePhoneOtp(targetUserId, phone, expiresInMinutes, req.user?.id);
       
       // TODO: Envoyer l'OTP par SMS (service SMS)
-      console.log(`📱 OTP généré pour ${phone}: ${otp.code}`);
+      logger.auth('OTP phone generated', {
+        phone,
+        userId: targetUserId,
+        expiresInMinutes,
+        ip: req.ip
+      });
       
       res.status(201).json(createResponse(
         true,
@@ -345,8 +365,17 @@ class AuthController {
 
       const otp = await otpService.generatePasswordResetOtp(user.id, email);
       
-      // TODO: Envoyer l'OTP par email
-      console.log(`🔐 OTP de réinitialisation généré pour ${email}: ${otp.code}`);
+      // Envoyer l'OTP par email
+      await emailService.sendPasswordResetEmail(email, otp.code, {
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      
+      logger.security('Password reset OTP generated', {
+        email,
+        userId: user.id,
+        ip: req.ip
+      });
       
       res.status(201).json(createResponse(
         true,

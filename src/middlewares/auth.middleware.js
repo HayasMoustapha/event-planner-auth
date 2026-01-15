@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const sessionService = require('../modules/sessions/sessions.service');
 const { createResponse } = require('../utils/response');
+const logger = require('../utils/logger');
 
 /**
  * Middleware d'authentification JWT
@@ -53,7 +54,12 @@ const authenticate = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Erreur d\'authentification:', error);
+    logger.error('Authentication error', {
+      error: error.message,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      path: req.originalUrl
+    });
     
     return res.status(401).json(createResponse(
       false,

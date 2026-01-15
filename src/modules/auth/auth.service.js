@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const usersRepository = require('../users/users.repository');
 const { createResponse } = require('../../utils/response');
+const logger = require('../../utils/logger');
+const emailService = require('../../services/email.service');
 
 /**
  * Service métier pour l'authentification et le login
