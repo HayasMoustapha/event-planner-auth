@@ -2,6 +2,32 @@ require('dotenv').config();
 const app = require('./app');
 const env = require('./config/env');
 const { connection } = require('./config/database');
+const { DatabaseBootstrap } = require('./services/database-bootstrap.service');
+
+// Bootstrap automatique de la base de données
+const runDatabaseBootstrap = async () => {
+  try {
+    const bootstrap = new DatabaseBootstrap();
+    const result = await bootstrap.initialize();
+    
+    if (result.success && result.actions.length > 0) {
+      console.log('\n📊 Bootstrap de la base de données:');
+      console.log(`⏱️  Durée: ${result.duration}ms`);
+      console.log(`🔄 Migrations: ${result.migrationsApplied}`);
+      console.log(`🌱 Seeds: ${result.seedsExecuted}`);
+      console.log(`✅ Actions: ${result.actions.join(', ')}\n`);
+    }
+  } catch (error) {
+    console.error('❌ Erreur critique lors du bootstrap:', error.message);
+    // En production, on peut choisir de continuer ou d'arrêter
+    if (env.NODE_ENV === 'production') {
+      console.error('🚨 Arrêt du serveur en production suite à l\'échec du bootstrap');
+      process.exit(1);
+    } else {
+      console.warn('⚠️  Le serveur continue en mode développement malgré l\'échec du bootstrap');
+    }
+  }
+};
 
 // Test de connexion à la base de données
 const testDatabaseConnection = async () => {
@@ -18,6 +44,10 @@ const testDatabaseConnection = async () => {
 
 // Démarrage du serveur
 const startServer = async () => {
+  // 1. Bootstrap automatique de la base de données (si activé)
+  await runDatabaseBootstrap();
+  
+  // 2. Test de connexion standard
   await testDatabaseConnection();
   
   const server = app.listen(env.PORT, () => {
