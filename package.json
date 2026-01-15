@@ -14,7 +14,7 @@
     "backend",
     "api"
   ],
-  "author": "Moust",
+  "author": "Hassidd Belkassim",
   "license": "MIT",
   "dependencies": {
     "bcrypt": "^5.1.1",
