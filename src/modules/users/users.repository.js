@@ -177,7 +177,7 @@ class UsersRepository {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const query = `
-      INSERT INTO users (username, email, password_hash, user_access, status, person_id, created_by, created_at, updated_at)
+      INSERT INTO users (username, email, password, user_access, status, person_id, created_by, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING id, username, email, user_access, status, person_id, created_at, updated_at
     `;
@@ -242,7 +242,7 @@ class UsersRepository {
     }
     if (password !== undefined) {
       const hashedPassword = await bcrypt.hash(password, 12);
-      updates.push(`password_hash = $${paramIndex++}`);
+      updates.push(`password = $${paramIndex++}`);
       values.push(hashedPassword);
       
       // Ajouter à l'historique des mots de passe
@@ -330,7 +330,7 @@ class UsersRepository {
 
     const query = `
       UPDATE users 
-      SET password_hash = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
+      SET password = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND deleted_at IS NULL
       RETURNING id, username, email, user_access, status, updated_at
     `;
@@ -361,14 +361,14 @@ class UsersRepository {
       return null;
     }
 
-    const isValid = await bcrypt.compare(password, user.password_hash);
+    const isValid = await bcrypt.compare(password, user.password);
     
     if (!isValid) {
       return null;
     }
 
     // Retourner l'utilisateur sans le mot de passe
-    delete user.password_hash;
+    delete user.password;
     return user;
   }
 
@@ -432,7 +432,7 @@ class UsersRepository {
    */
   async addPasswordHistory(userId, passwordHash) {
     const query = `
-      INSERT INTO password_histories (user_id, password_hash, created_at)
+      INSERT INTO password_histories (user_id, password, created_at)
       VALUES ($1, $2, CURRENT_TIMESTAMP)
     `;
 
@@ -452,7 +452,7 @@ class UsersRepository {
    */
   async isPasswordAlreadyUsed(userId, password) {
     const query = `
-      SELECT password_hash 
+      SELECT password 
       FROM password_histories 
       WHERE user_id = $1 
       ORDER BY created_at DESC 
@@ -463,7 +463,7 @@ class UsersRepository {
       const result = await connection.query(query, [userId]);
       
       for (const row of result.rows) {
-        const isSame = await bcrypt.compare(password, row.password_hash);
+        const isSame = await bcrypt.compare(password, row.password);
         if (isSame) {
           return true;
         }

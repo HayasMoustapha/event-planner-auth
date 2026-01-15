@@ -57,7 +57,7 @@ class AuthService {
 
     // Retourner l'utilisateur sans le mot de passe
     const userResponse = { ...user };
-    delete userResponse.password_hash;
+    delete userResponse.password;
 
     return {
       success: true,
@@ -255,7 +255,7 @@ class AuthService {
     }
 
     // Vérifier le mot de passe actuel
-    const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
     
     if (!isValidPassword) {
       throw new Error('Mot de passe actuel incorrect');

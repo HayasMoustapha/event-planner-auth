@@ -49,8 +49,8 @@ class UsersController {
       const user = await usersService.getById(parseInt(id));
       
       // Retirer le mot de passe s'il est présent
-      if (user.password_hash) {
-        delete user.password_hash;
+      if (user.password) {
+        delete user.password;
       }
       
       res.status(200).json(createResponse(
@@ -76,8 +76,8 @@ class UsersController {
       const user = await usersService.getByEmail(email);
       
       // Retirer le mot de passe s'il est présent
-      if (user.password_hash) {
-        delete user.password_hash;
+      if (user.password) {
+        delete user.password;
       }
       
       res.status(200).json(createResponse(
@@ -103,8 +103,8 @@ class UsersController {
       const user = await usersService.getByUsername(username);
       
       // Retirer le mot de passe s'il est présent
-      if (user.password_hash) {
-        delete user.password_hash;
+      if (user.password) {
+        delete user.password;
       }
       
       res.status(200).json(createResponse(
