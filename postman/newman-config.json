@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "run": {
+    "delayRequest": 100,
+    "timeout": 5000
+  },
+  "reporters": {
+    "cli": {
+      "silent": false,
+      "noSummary": false,
+      "noSuccessAssertions": false
+    },
+    "html": {
+      "export": "postman/reports/test-report.html",
+      "template": "postman/templates/html-report.hbs"
+    },
+    "junit": {
+      "export": "postman/reports/test-results.xml"
+    }
+  },
+  "bail": true,
+  "suppressExitCode": false
+}

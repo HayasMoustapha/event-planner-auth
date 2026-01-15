@@ -1,0 +1,26 @@
+{
+  "name": "event-planner-postman-tests",
+  "version": "1.0.0",
+  "description": "Tests Postman automatisés pour Event Planner API",
+  "scripts": {
+    "test": "./run-tests.sh",
+    "test:local": "./run-tests.sh http://localhost:3000",
+    "test:staging": "./run-tests.sh https://api-staging.eventplanner.com",
+    "test:prod": "./run-tests.sh https://api.eventplanner.com",
+    "install:newman": "npm install -g newman",
+    "report": "open postman/reports/test-report.html"
+  },
+  "devDependencies": {
+    "newman": "^5.3.2",
+    "newman-reporter-html": "^1.0.5"
+  },
+  "keywords": [
+    "postman",
+    "newman",
+    "api-testing",
+    "event-planner",
+    "automation"
+  ],
+  "author": "Event Planner Team",
+  "license": "MIT"
+}

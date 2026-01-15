@@ -1,0 +1,1364 @@
+{
+  "info": {
+    "name": "Event Planner Complete API",
+    "description": "Collection complète pour tous les modules de l'API Event Planner - Auth, Users, People, Roles, Permissions, Menus",
+    "version": "2.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otpCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "createdUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "createdPersonId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "createdRoleId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "createdPermissionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "createdMenuId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🏠 Health & System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check Détaillé",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/detailed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "detailed"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Readiness Probe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ready"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Liveness Probe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/live",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "live"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Métriques",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+,
+    {
+      "name": "🔐 Authentification",
+      "item": [
+        {
+          "name": "1. Inscription (Register)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder l'email et l'ID utilisateur",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('userEmail', responseJson.data.person.email);",
+                  "    pm.collectionVariables.set('createdUserId', responseJson.data.user.id);",
+                  "    pm.collectionVariables.set('createdPersonId', responseJson.data.person.id);",
+                  "    console.log('Utilisateur créé:', responseJson.data.person.email);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jean\",\n  \"lastName\": \"Dupont\",\n  \"email\": \"jean.dupont{{$randomInt}}@example.com\",\n  \"phone\": \"+33612345678\",\n  \"password\": \"Password123\",\n  \"username\": \"jeandupont{{$randomInt}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Vérifier Email avec OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"otpCode\": \"{{otpCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verify-email"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Login (après vérification)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder le token d'authentification",
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', responseJson.data.token);",
+                  "    console.log('Token sauvegardé:', responseJson.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login-after-verification",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login-after-verification"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder le token admin",
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', responseJson.data.token);",
+                  "    console.log('Token admin sauvegardé');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Obtenir Profil",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Changer Mot de Passe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Valider Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{authToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/validate-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "validate-token"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+,
+    {
+      "name": "🔢 OTP Management",
+      "item": [
+        {
+          "name": "1. Générer OTP Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/email/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "email", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Générer OTP Téléphone",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+33612345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/phone/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "phone", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Vérifier OTP Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"code\": \"{{otpCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/email/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "email", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Vérifier OTP Téléphone",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+33612345678\",\n  \"code\": \"{{otpCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/phone/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "phone", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Générer OTP Réinitialisation MDP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/password-reset/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "password-reset", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Réinitialiser MDP avec OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"code\": \"{{otpCode}}\",\n  \"newPassword\": \"ResetPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/password-reset/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "password-reset", "verify"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+,
+    {
+      "name": "👥 Users Management",
+      "item": [
+        {
+          "name": "1. Lister tous les utilisateurs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Rechercher utilisateurs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?search=jean&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "jean"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Obtenir utilisateur par ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{createdUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{createdUserId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Créer utilisateur",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder l'ID du nouvel utilisateur",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('createdUserId', responseJson.data.id);",
+                  "    console.log('Utilisateur créé avec ID:', responseJson.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"person_id\": 1,\n  \"username\": \"newuser{{$randomInt}}\",\n  \"email\": \"newuser{{$randomInt}}@example.com\",\n  \"password\": \"Password123\",\n  \"user_code\": \"USER{{$randomInt}}\",\n  \"phone\": \"+33612345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Mettre à jour utilisateur",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"updateduser{{$randomInt}}\",\n  \"email\": \"updateduser{{$randomInt}}@example.com\",\n  \"phone\": \"+33687654321\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{createdUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{createdUserId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Désactiver utilisateur",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"inactive\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{createdUserId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{createdUserId}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Activer utilisateur",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{createdUserId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{createdUserId}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Supprimer utilisateur",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{createdUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{createdUserId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+,
+    {
+      "name": "👥 People Management",
+      "item": [
+        {
+          "name": "1. Lister toutes les personnes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/people?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "people"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Rechercher personnes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/people?search=dupont&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "people"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "dupont"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Obtenir personne par ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/people/{{createdPersonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "people", "{{createdPersonId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Créer personne",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder l'ID de la nouvelle personne",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('createdPersonId', responseJson.data.id);",
+                  "    console.log('Personne créée avec ID:', responseJson.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Marie\",\n  \"last_name\": \"Curie\",\n  \"email\": \"marie.curie{{$randomInt}}@example.com\",\n  \"phone\": \"+33612345678\",\n  \"address\": \"1 Rue de la Paix, Paris\",\n  \"birth_date\": \"1990-01-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/people",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "people"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Mettre à jour personne",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Marie\",\n  \"last_name\": \"Curie-Updated\",\n  \"email\": \"marie.updated{{$randomInt}}@example.com\",\n  \"phone\": \"+33687654321\",\n  \"address\": \"2 Rue de la Liberté, Paris\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/people/{{createdPersonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "people", "{{createdPersonId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Supprimer personne",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/people/{{createdPersonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "people", "{{createdPersonId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+,
+    {
+      "name": "🔐 Roles Management",
+      "item": [
+        {
+          "name": "1. Lister tous les rôles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Obtenir rôle par ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{createdRoleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "{{createdRoleId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Créer rôle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder l'ID du nouveau rôle",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('createdRoleId', responseJson.data.id);",
+                  "    console.log('Rôle créé avec ID:', responseJson.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"MANAGER{{$randomInt}}\",\n  \"label\": {\"fr\": \"Manager\", \"en\": \"Manager\"},\n  \"description\": {\"fr\": \"Rôle de manager\", \"en\": \"Manager role\"},\n  \"level\": 2,\n  \"is_system\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Mettre à jour rôle",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": {\"fr\": \"Manager Senior\", \"en\": \"Senior Manager\"},\n  \"description\": {\"fr\": \"Rôle de manager senior\", \"en\": \"Senior manager role\"},\n  \"level\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{createdRoleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "{{createdRoleId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Supprimer rôle",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{createdRoleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "{{createdRoleId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+,
+    {
+      "name": "🔑 Permissions Management",
+      "item": [
+        {
+          "name": "1. Lister toutes les permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Obtenir permission par ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/{{createdPermissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "{{createdPermissionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Créer permission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder l'ID de la nouvelle permission",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('createdPermissionId', responseJson.data.id);",
+                  "    console.log('Permission créée avec ID:', responseJson.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"EDIT_USERS{{$randomInt}}\",\n  \"label\": {\"fr\": \"Éditer les utilisateurs\", \"en\": \"Edit users\"},\n  \"group\": \"users\",\n  \"description\": {\"fr\": \"Permission de modifier les utilisateurs\", \"en\": \"Permission to edit users\"}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Mettre à jour permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": {\"fr\": \"Éditer les utilisateurs (avancé)\", \"en\": \"Edit users (advanced)\"},\n  \"description\": {\"fr\": \"Permission avancée de modifier les utilisateurs\", \"en\": \"Advanced permission to edit users\"}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/{{createdPermissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "{{createdPermissionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Supprimer permission",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/{{createdPermissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "{{createdPermissionId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+,
+    {
+      "name": "📋 Menus Management",
+      "item": [
+        {
+          "name": "1. Lister tous les menus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/menus?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menus"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Obtenir menu par ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/menus/{{createdMenuId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menus", "{{createdMenuId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Créer menu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder l'ID du nouveau menu",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('createdMenuId', responseJson.data.id);",
+                  "    console.log('Menu créé avec ID:', responseJson.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"REPORTS{{$randomInt}}\",\n  \"label\": {\"fr\": \"Rapports\", \"en\": \"Reports\"},\n  \"icon\": \"fas fa-chart-bar\",\n  \"url\": \"/reports\",\n  \"order_index\": 10,\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/menus",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menus"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Créer sous-menu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder l'ID du sous-menu",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('createdMenuId', responseJson.data.id);",
+                  "    console.log('Sous-menu créé avec ID:', responseJson.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"USER_REPORTS{{$randomInt}}\",\n  \"label\": {\"fr\": \"Rapports Utilisateurs\", \"en\": \"User Reports\"},\n  \"icon\": \"fas fa-users\",\n  \"url\": \"/reports/users\",\n  \"order_index\": 1,\n  \"parent_id\": {{createdMenuId}},\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/menus",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menus"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Mettre à jour menu",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": {\"fr\": \"Rapports Avancés\", \"en\": \"Advanced Reports\"},\n  \"icon\": \"fas fa-chart-line\",\n  \"order_index\": 11\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/menus/{{createdMenuId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menus", "{{createdMenuId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Activer/Désactiver menu",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/menus/{{createdMenuId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menus", "{{createdMenuId}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Supprimer menu",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/menus/{{createdMenuId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menus", "{{createdMenuId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+,
+    {
+      "name": "🛡️ RBAC Management",
+      "item": [
+        {
+          "name": "1. Assigner rôle à utilisateur",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{createdUserId}},\n  \"role_id\": {{createdRoleId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "authorizations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Lister autorisations utilisateur",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/user/{{createdUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "authorizations", "user", "{{createdUserId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Lister permissions par rôle",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/role/{{createdRoleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "authorizations", "role", "{{createdRoleId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Révoquer autorisation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/{{createdUserId}}/{{createdRoleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "authorizations", "{{createdUserId}}", "{{createdRoleId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧪 Tests & Validation",
+      "item": [
+        {
+          "name": "1. Test validation email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/check-email/test@example.com",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "check-email", "test@example.com"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Test validation username",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/check-username/testuser123",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "check-username", "testuser123"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Test inscription invalide",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"\",\n  \"email\": \"invalid-email\",\n  \"password\": \"123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Test accès non autorisé",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

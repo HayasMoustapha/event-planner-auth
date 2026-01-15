@@ -1,140 +1,158 @@
-# 📮 Postman Collection - Event Planner Auth API
+# 📮 Postman Collections - Event Planner Auth API
 
-## 🚀 Installation et Configuration
+## 📁 Structure du Dossier
 
-### 1. Importer la Collection
+```
+postman/
+├── collections/                    # Collections Postman
+│   ├── Event-Planner-Auth-API.postman_collection.json
+│   └── Event-Planner-Complete-API.postman_collection.json
+├── environments/                  # Environnements Postman
+│   └── Event-Planner-Complete-Environment.postman_environment.json
+├── tests/                        # Tests automatisés
+│   └── automated-tests.postman_collection.json
+└── docs/                         # Documentation
+    └── README.md                  # Guide d'utilisation détaillé
+```
+
+## 🚀 Collections Disponibles
+
+### 1. Event-Planner-Auth-API
+Collection **originale** avec les fonctionnalités de base :
+- 🏠 Health & Status
+- 📝 Inscription
+- 🔐 Authentification  
+- 👤 Profil Utilisateur
+- 🔢 OTP Management
+- 👥 Gestion Utilisateurs
+- 👥 Gestion People
+
+### 2. Event-Planner-Complete-API ⭐
+Collection **complète** avec TOUS les modules :
+- 🏠 Health & System
+- 🔐 Authentification (complet)
+- 🔢 OTP Management (complet)
+- 👥 Users Management (CRUD complet)
+- 👥 People Management (CRUD complet)
+- 🔐 Roles Management (CRUD complet)
+- 🔑 Permissions Management (CRUD complet)
+- 📋 Menus Management (CRUD complet)
+- 🛡️ RBAC Management (autorisations)
+- 🧪 Tests & Validation
+
+### 3. Automated Tests
+Collection de **tests automatisés** pour :
+- Validation des health checks
+- Tests d'inscription et connexion
+- Validation des réponses
+- Tests d'erreurs
+
+## 🌍 Environnements
+
+### Event-Planner-Complete-Environment
+Variables configurées pour tous les scénarios :
+- `baseUrl` : URL de l'API
+- `authToken` : Token JWT (auto-sauvegardé)
+- `userEmail` : Email utilisateur (auto-sauvegardé)
+- `otpCode` : Code OTP (à saisir)
+- `createdUserId` : ID utilisateur créé (auto)
+- `createdPersonId` : ID personne créée (auto)
+- `createdRoleId` : ID rôle créé (auto)
+- `createdPermissionId` : ID permission créée (auto)
+- `createdMenuId` : ID menu créé (auto)
+- `timestamp` : Timestamp unique
+- `randomInt` : Nombre aléatoire
+- `guid` : Identifiant unique
+
+## 📋 Guide d'Installation
+
+### 1. Importer les Collections
 
 1. Ouvrir Postman
-2. Cliquer sur **Import** dans le coin supérieur gauche
-3. Sélectionner le fichier `Event-Planner-Auth-API.postman_collection.json`
-4. Valider l'import
+2. Cliquer sur **Import**
+3. Importer les fichiers depuis `collections/` :
+   - `Event-Planner-Complete-API.postman_collection.json` (recommandé)
+   - `Event-Planner-Auth-API.postman_collection.json` (optionnel)
 
 ### 2. Importer l'Environnement
 
 1. Dans Postman, cliquer sur **Import**
-2. Sélectionner le fichier `Event-Planner-Auth-Environment.postman_environment.json`
-3. Dans le sélecteur d'environnement (en haut à droite), choisir **Event Planner Auth - Environment**
+2. Importer `environments/Event-Planner-Complete-Environment.postman_environment.json`
+3. Sélectionner l'environnement dans le menu déroulant
 
-### 3. Variables d'Environnement
+### 3. Importer les Tests Automatisés (Optionnel)
 
-L'environnement contient les variables suivantes :
+1. Importer `tests/automated-tests.postman_collection.json`
+2. Exécuter via **Runner** de Postman
 
-- `baseUrl`: URL de base de l'API (http://localhost:3000)
-- `authToken`: Token JWT d'authentification (rempli automatiquement)
-- `userEmail`: Email de l'utilisateur (rempli automatiquement)
-- `otpCode`: Code OTP pour la vérification (à saisir manuellement)
-- `timestamp`: Timestamp unique pour éviter les doublons
+## 🧪 Scénarios de Test
 
-## 📋 Flux d'Utilisation Complet
+### Scénario 1 : Inscription Complète
+1. **1. Inscription (Register)** → Crée un utilisateur
+2. **Récupérer OTP** → Dans les logs du serveur
+3. **2. Vérifier Email avec OTP** → Valide l'email
+4. **3. Login (après vérification)** → Obtient le token
 
-### 🏃‍♂️ Test Rapide (Compte Admin)
+### Scénario 2 : Gestion Utilisateurs
+1. **4. Login Admin** → Token administrateur
+2. **1. Lister tous les utilisateurs** → Vérifie la liste
+3. **4. Créer utilisateur** → Ajoute un utilisateur
+4. **5. Mettre à jour utilisateur** → Modifie l'utilisateur
+5. **6. Désactiver utilisateur** → Change le statut
+6. **7. Activer utilisateur** → Réactive l'utilisateur
+7. **8. Supprimer utilisateur** → Nettoie
 
-1. **Login Standard** dans le dossier `🔐 Authentification`
-   - Email: `admin@example.com`
-   - Password: `Admin123!`
-   - Le token sera automatiquement sauvegardé
+### Scénario 3 : RBAC Complet
+1. **4. Login Admin** → Token administrateur
+2. **3. Créer rôle** → Nouveau rôle
+3. **3. Créer permission** → Nouvelle permission
+4. **1. Assigner rôle à utilisateur** → Lie utilisateur-rôle
+5. **2. Lister autorisations utilisateur** → Vérifie les droits
 
-### 📝 Flux d'Inscription Complet
+### Scénario 4 : Tests Automatisés
+1. Importer la collection `automated-tests`
+2. Lancer **Postman Runner**
+3. Sélectionner tous les tests
+4. Exécuter et voir les résultats
 
-1. **Vérifier disponibilité Email**
-   - Remplacer `{{userEmail}}` par l'email désiré
-   - Ex: `test@example.com`
+## 🔧 Personnalisation
 
-2. **Vérifier disponibilité Username**
-   - Remplacer `testuser123` par le username désiré
+### Modifier les Données de Test
+Les requêtes utilisent des variables dynamiques :
+- `{{$randomInt}}` : Nombre aléatoire
+- `{{$timestamp}}` : Timestamp actuel
+- `{{$guid}}` : Identifiant unique
 
-3. **Inscription (Register)**
-   - Les données utilisent `{{timestamp}}` pour éviter les doublons
-   - L'email sera automatiquement sauvegardé dans `{{userEmail}}`
-
-4. **Récupérer le code OTP**
-   - Le code est affiché dans la console du serveur
-   - Saisir ce code dans la variable `otpCode` de l'environnement
-
-5. **Vérifier Email avec OTP**
-   - Utiliser l'email sauvegardé et le code OTP saisi
-
-6. **Login (après vérification)**
-   - Le token JWT sera automatiquement sauvegardé
-
-## 🔧 Variables Automatiques
-
-### Scripts Postman
-
-Les requêtes suivantes mettent à jour automatiquement les variables :
-
-- **Inscription**: Sauvegarde `userEmail` et `userId`
-- **Login**: Sauvegarde `authToken`
-
-### Variables à Saisir Manuellement
-
-- `otpCode`: Code OTP reçu par email (visible dans les logs du serveur)
-
-## 📁 Structure des Dossiers
-
-### 🏠 Health & Status
-- Vérification de l'état de l'API
-
-### 📝 Inscription
-- Flux complet d'inscription avec vérification OTP
-
-### 🔐 Authentification
-- Login, validation de token, rafraîchissement, logout
-
-### 👤 Profil Utilisateur
-- Accès au profil et changement de mot de passe
-
-### 🔢 OTP Management
-- Gestion complète des OTP (email, téléphone, réinitialisation)
-
-### 👥 Gestion Utilisateurs
-- CRUD sur les utilisateurs (nécessite authentification)
-
-### 👥 Gestion People
-- CRUD sur les personnes (nécessite authentification)
-
-## 🛠️ Personnalisation
-
-### Modifier l'URL de base
-
-1. Aller dans l'environnement **Event Planner Auth - Environment**
-2. Modifier la valeur de `baseUrl`
-3. Cliquer sur **Save**
-
-### Ajouter de nouvelles requêtes
-
+### Ajouter de Nouveaux Tests
 1. Dupliquer une requête existante
 2. Modifier l'URL et les paramètres
-3. Utiliser les variables d'environnement avec la syntaxe `{{variableName}}`
+3. Ajouter des scripts de test si nécessaire
 
 ## 🐛 Débogage
 
-### Vérifier les variables
+### Vérifier les Variables
+1. Cliquer sur l'icône 🧮 (Variables rapides)
+2. Vérifier les valeurs actuelles
 
-1. Cliquer sur l'icône 🧮 (Variables rapides) en bas
-2. Vérifier les valeurs actuelles des variables
-
-### Logs du serveur
-
-Les codes OTP sont affichés dans les logs du serveur :
+### Logs du Serveur
 ```bash
 npm run dev
 ```
+Les codes OTP apparaissent dans les logs.
 
-### Erreurs communes
+### Erreurs Communes
+- **401 Unauthorized** : Token invalide ou manquant
+- **403 Forbidden** : Permissions insuffisantes  
+- **422 Validation Error** : Données invalides
+- **404 Not Found** : Ressource inexistante
 
-- **401 Unauthorized**: Token invalide ou expiré
-- **403 Forbidden**: Permissions insuffisantes
-- **422 Validation Error**: Données invalides
-- **404 Not Found**: Ressource inexistante
+## 📚 Documentation Complète
 
-## 📞 Support
-
-Pour toute question sur l'utilisation de cette collection :
-1. Vérifier les logs du serveur
-2. Consulter la documentation API
-3. Vérifier les variables d'environnement
+Pour plus de détails :
+- [Guide d'utilisation détaillé](./docs/README.md)
+- [Documentation API](../docs/)
+- [Guide Bootstrap](../BOOTSTRAP_GUIDE.md)
 
 ---
 
-**Note**: Cette collection est conçue pour fonctionner avec l'API Event Planner Auth en local sur le port 3000.
+💡 **Conseil** : Utiliser la collection **Event-Planner-Complete-API** pour couvrir tous les modules de l'API !
