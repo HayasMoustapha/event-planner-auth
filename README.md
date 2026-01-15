@@ -6,10 +6,12 @@ Service d'authentification et d'autorisation enterprise-ready pour Event Planner
 
 ### Authentification & Sécurité
 - **Multi-méthodes** : Email/password, OTP, tokens JWT
+- **Inscription complète** : Création compte people + users avec validation OTP
 - **Sécurité avancée** : Détection automatique d'attaques (SQL injection, XSS, path traversal, command injection)
 - **Protection brute force** : Rate limiting et blocage automatique
 - **Sanitisation** : Nettoyage automatique des entrées utilisateur
 - **IP blacklist** : Protection contre les IPs malveillantes
+- **OTP Management** : Génération et validation OTP par email/téléphone
 
 ### Monitoring & Observabilité
 - **Health checks** : Monitoring détaillé de tous les composants
@@ -20,10 +22,12 @@ Service d'authentification et d'autorisation enterprise-ready pour Event Planner
 
 ### Documentation & Développement
 - **Swagger/OpenAPI 3.0** : Documentation interactive complète
+- **Collection Postman** : Tests API complets avec environnement
 - **Exemples d'utilisation** : Code samples et best practices
 - **Dashboard développeur** : Outils de debugging et monitoring
 - **📚 Documentation**
   - [🚀 Guide du Bootstrap Automatique](./BOOTSTRAP_GUIDE.md) - Initialisation de la base de données
+  - [📮 Collection Postman](./postman/README.md) - Tests API complets
   - [📖 Documentation API](./docs/) - Documentation complète de l'API
   - [🔐 Flux d'Authentification](./docs/AUTH_FLOWS.md) - Processus d'authentification
   - [🛡️ RBAC](./docs/RBAC.md) - Système de contrôle d'accès
@@ -77,6 +81,23 @@ npm start
 ```
 
 > 📖 **Pour plus de détails sur le bootstrap automatique**, voir [Guide du Bootstrap](./BOOTSTRAP_GUIDE.md)
+
+### Test rapide avec Postman
+
+1. **Importer la collection Postman** :
+   ```bash
+   # Importer les fichiers dans Postman
+   postman/Event-Planner-Auth-API.postman_collection.json
+   postman/Event-Planner-Auth-Environment.postman_environment.json
+   ```
+
+2. **Tester l'inscription** :
+   - Exécuter la requête "3. Inscription (Register)"
+   - Récupérer le code OTP dans les logs du serveur
+   - Exécuter "5. Vérifier Email avec OTP"
+   - Se connecter avec "1. Login (après vérification)"
+
+> 📮 **Guide complet Postman** : [Documentation Postman](./postman/README.md)
 
 ### Configuration Docker
 ```bash
@@ -149,10 +170,27 @@ Voir [`.env.example`](./.env.example) pour toutes les options disponibles.
 ```http
 POST /api/auth/login
 POST /api/auth/register
+POST /api/auth/login-after-verification
+POST /api/auth/verify-email
+POST /api/auth/resend-otp
 POST /api/auth/refresh
 POST /api/auth/logout
 POST /api/auth/forgot-password
 POST /api/auth/reset-password
+POST /api/auth/change-password
+GET /api/auth/check-email/:email
+GET /api/auth/check-username/:username
+GET /api/auth/profile
+```
+
+### OTP Management
+```http
+POST /api/auth/otp/email/generate
+POST /api/auth/otp/phone/generate
+POST /api/auth/otp/email/verify
+POST /api/auth/otp/phone/verify
+POST /api/auth/otp/password-reset/generate
+POST /api/auth/otp/password-reset/verify
 ```
 
 ### Utilisateurs
