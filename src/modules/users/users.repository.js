@@ -16,7 +16,7 @@ class UsersRepository {
     const offset = (page - 1) * limit;
 
     let query = `
-      SELECT u.id, u.username, u.email, u.status, u.role, u.last_login_at, u.created_at, u.updated_at,
+      SELECT u.id, u.username, u.email, u.status, u.user_code, u.created_at, u.updated_at,
              p.first_name, p.last_name, p.phone
       FROM users u
       LEFT JOIN people p ON u.person_id = p.id
@@ -46,14 +46,7 @@ class UsersRepository {
       params.push(status);
     }
 
-    // Ajout du filtre de rôle
-    if (role) {
-      const roleIndex = params.length + 1;
-      const roleCondition = ` AND u.role = $${roleIndex}`;
-      query += roleCondition;
-      countQuery += roleCondition;
-      params.push(role);
-    }
+    // Le filtre par rôle sera géré via la table accesses quand le repository sera implémenté
 
     // Tri et pagination
     query += ` ORDER BY u.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
@@ -61,7 +54,7 @@ class UsersRepository {
 
     try {
       const [users] = await connection.query(query, params);
-      const [countResult] = await connection.query(countQuery, search || status || role ? params.slice(0, -2) : []);
+      const [countResult] = await connection.query(countQuery, search || status ? params.slice(0, -2) : []);
 
       return {
         data: users.rows,
@@ -86,7 +79,7 @@ class UsersRepository {
   async findById(id, includePassword = false) {
     const fields = includePassword 
       ? 'u.*, p.first_name, p.last_name, p.phone, p.email as person_email'
-      : 'u.id, u.username, u.email, u.status, u.role, u.last_login_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone, p.email as person_email';
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone, p.email as person_email';
     
     const query = `
       SELECT ${fields}

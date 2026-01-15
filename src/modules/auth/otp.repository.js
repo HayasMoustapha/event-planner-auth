@@ -22,19 +22,18 @@ class OtpRepository {
     } = otpData;
 
     const query = `
-      INSERT INTO otp_codes (user_id, type, identifier, code, expires_at, is_used, created_at, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, $7)
-      RETURNING id, type, identifier, code, expires_at, is_used, created_at
+      INSERT INTO otps (person_id, otp_code, expires_at, is_used, purpose, created_at, created_by)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
+      RETURNING id, person_id, otp_code, expires_at, is_used, purpose, created_at
     `;
 
     try {
       const result = await connection.query(query, [
-        userId,
-        type,
-        identifier,
+        identifier, // identifier sera utilisé comme person_id (adapter selon logique métier)
         code,
         expiresAt,
         isUsed,
+        type, // type sera utilisé comme purpose
         createdBy
       ]);
 
@@ -53,8 +52,8 @@ class OtpRepository {
    */
   async findByCodeAndIdentifier(code, identifier, type) {
     const query = `
-      SELECT * FROM otp_codes 
-      WHERE code = $1 AND identifier = $2 AND type = $3 
+      SELECT * FROM otps 
+      WHERE otp_code = $1 AND person_id = $2 AND purpose = $3 
         AND is_used = FALSE 
         AND expires_at > CURRENT_TIMESTAMP
       ORDER BY created_at DESC
@@ -77,13 +76,13 @@ class OtpRepository {
    */
   async findByUserId(userId, type = null) {
     let query = `
-      SELECT * FROM otp_codes 
-      WHERE user_id = $1
+      SELECT * FROM otps 
+      WHERE person_id = $1
     `;
     const params = [userId];
 
     if (type) {
-      query += ' AND type = $2';
+      query += ' AND purpose = $2';
       params.push(type);
     }
 
@@ -105,8 +104,8 @@ class OtpRepository {
    */
   async markAsUsed(id, usedBy = null) {
     const query = `
-      UPDATE otp_codes 
-      SET is_used = TRUE, used_at = CURRENT_TIMESTAMP, used_by = $2
+      UPDATE otps 
+      SET is_used = TRUE, updated_by = $2, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND is_used = FALSE
     `;
 
@@ -124,7 +123,7 @@ class OtpRepository {
    */
   async deleteExpired() {
     const query = `
-      DELETE FROM otp_codes 
+      DELETE FROM otps 
       WHERE expires_at < CURRENT_TIMESTAMP
     `;
 

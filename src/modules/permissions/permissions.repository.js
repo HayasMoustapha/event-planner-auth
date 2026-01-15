@@ -22,17 +22,16 @@ class PermissionRepository {
 
     const query = `
       INSERT INTO permissions (
-        name, description, resource, action, status, created_by, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, name, description, resource, action, status, created_by, created_at, updated_at
+        code, label, "group", description, created_by, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING id, code, label, "group", description, created_by, created_at, updated_at
     `;
 
     const values = [
-      name?.trim(),
-      description?.trim(),
-      resource?.trim(),
-      action?.trim(),
-      status,
+      name?.trim(), // name sera utilisé comme code
+      JSON.stringify({en: name?.trim(), fr: name?.trim()}), // label en JSONB
+      resource?.trim() || null, // resource sera utilisé comme group
+      description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB
       createdBy
     ];
 
@@ -72,43 +71,31 @@ class PermissionRepository {
 
     // Filtre de recherche
     if (search) {
-      whereClause += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR resource ILIKE $${paramIndex} OR action ILIKE $${paramIndex})`;
-      countClause += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR resource ILIKE $${paramIndex} OR action ILIKE $${paramIndex})`;
+      whereClause += ` AND (code ILIKE $${paramIndex} OR label::text ILIKE $${paramIndex} OR "group" ILIKE $${paramIndex} OR description::text ILIKE $${paramIndex})`;
+      countClause += ` AND (code ILIKE $${paramIndex} OR label::text ILIKE $${paramIndex} OR "group" ILIKE $${paramIndex} OR description::text ILIKE $${paramIndex})`;
       params.push(`%${search}%`);
       paramIndex++;
     }
 
-    // Filtre de statut
-    if (status) {
-      whereClause += ` AND status = $${paramIndex}`;
-      countClause += ` AND status = $${paramIndex}`;
-      params.push(status);
-      paramIndex++;
-    }
+    // Pas de filtre de statut dans la table permissions
 
-    // Filtre de ressource
+    // Filtre de groupe (anciennement resource)
     if (resource) {
-      whereClause += ` AND resource = $${paramIndex}`;
-      countClause += ` AND resource = $${paramIndex}`;
+      whereClause += ` AND "group" = $${paramIndex}`;
+      countClause += ` AND "group" = $${paramIndex}`;
       params.push(resource);
       paramIndex++;
     }
 
-    // Filtre d'action
-    if (action) {
-      whereClause += ` AND action = $${paramIndex}`;
-      countClause += ` AND action = $${paramIndex}`;
-      params.push(action);
-      paramIndex++;
-    }
+    // Le filtre d'action n'existe plus dans la nouvelle structure
 
     // Validation du tri
-    const validSortFields = ['name', 'description', 'resource', 'action', 'status', 'created_at', 'updated_at'];
+    const validSortFields = ['code', 'label', 'group', 'description', 'created_at', 'updated_at'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
     const sortDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     const dataQuery = `
-      SELECT id, name, description, resource, action, status, created_by, created_at, updated_at
+      SELECT id, code, label, "group", description, created_by, created_at, updated_at
       FROM permissions
       ${whereClause}
       ORDER BY ${sortField} ${sortDirection}

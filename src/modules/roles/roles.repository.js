@@ -21,16 +21,17 @@ class RoleRepository {
 
     const query = `
       INSERT INTO roles (
-        name, description, status, level, created_by, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, name, description, status, level, created_by, created_at, updated_at
+        code, label, description, level, is_system, created_by, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING id, code, label, description, level, is_system, created_by, created_at, updated_at
     `;
 
     const values = [
-      name?.trim(),
-      description?.trim(),
-      status,
+      name?.trim(), // name sera utilisé comme code
+      JSON.stringify({en: name?.trim(), fr: name?.trim()}), // label en JSONB
+      description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB
       level,
+      false, // is_system par défaut
       createdBy
     ];
 
@@ -68,27 +69,21 @@ class RoleRepository {
 
     // Filtre de recherche
     if (search) {
-      whereClause += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex})`;
-      countClause += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex})`;
+      whereClause += ` AND (code ILIKE $${paramIndex} OR label::text ILIKE $${paramIndex})`;
+      countClause += ` AND (code ILIKE $${paramIndex} OR label::text ILIKE $${paramIndex})`;
       params.push(`%${search}%`);
       paramIndex++;
     }
 
-    // Filtre de statut
-    if (status) {
-      whereClause += ` AND status = $${paramIndex}`;
-      countClause += ` AND status = $${paramIndex}`;
-      params.push(status);
-      paramIndex++;
-    }
+    // Pas de filtre de statut dans la table roles (utilise is_system pour les rôles système)
 
     // Validation du tri
-    const validSortFields = ['name', 'description', 'status', 'level', 'created_at', 'updated_at'];
+    const validSortFields = ['code', 'label', 'description', 'level', 'is_system', 'created_at', 'updated_at'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
     const sortDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     const dataQuery = `
-      SELECT id, name, description, status, level, created_by, created_at, updated_at
+      SELECT id, code, label, description, level, is_system, created_by, created_at, updated_at
       FROM roles
       ${whereClause}
       ORDER BY ${sortField} ${sortDirection}
