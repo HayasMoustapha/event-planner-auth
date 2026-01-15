@@ -30,7 +30,7 @@ class AuthorizationService {
       const cachedAuthorizations = await cacheService.getUserAuthorizations(userId);
       if (cachedAuthorizations) {
         const hasPermission = cachedAuthorizations.some(auth => 
-          auth.permission_code === permissionName.trim() && auth.granted
+          auth.permission_code === permissionName.trim()
         );
         
         logger.debug('Permission checked from cache', {

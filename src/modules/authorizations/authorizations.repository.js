@@ -14,24 +14,22 @@ class AuthorizationsRepository {
     const {
       roleId,
       permissionId,
-      menuId = null,
-      granted = true,
+      menuId,
       createdBy = null
     } = authorizationData;
 
-    // Colonnes selon schéma de référence : id, role_id, permission_id, menu_id, granted, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+    // Colonnes selon schéma : id, role_id, permission_id, menu_id, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     const query = `
       INSERT INTO authorizations (
-        role_id, permission_id, menu_id, granted, created_by, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, role_id, permission_id, menu_id, granted, created_by, created_at, updated_at
+        role_id, permission_id, menu_id, created_by, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING id, role_id, permission_id, menu_id, created_by, created_at, updated_at
     `;
 
     const values = [
       roleId,
       permissionId,
       menuId,
-      granted,
       createdBy
     ];
 
@@ -56,7 +54,6 @@ class AuthorizationsRepository {
       page = 1,
       limit = 10,
       search = null,
-      granted = null,
       roleId = null,
       permissionId = null,
       menuId = null,
@@ -75,14 +72,6 @@ class AuthorizationsRepository {
       whereClause += ` AND (r.code ILIKE $${paramIndex} OR p.code ILIKE $${paramIndex} OR m.label::text ILIKE $${paramIndex})`;
       countClause += ` AND (r.code ILIKE $${paramIndex} OR p.code ILIKE $${paramIndex} OR m.label::text ILIKE $${paramIndex})`;
       params.push(`%${search}%`);
-      paramIndex++;
-    }
-
-    // Filtre granted
-    if (granted !== null) {
-      whereClause += ` AND a.granted = $${paramIndex}`;
-      countClause += ` AND a.granted = $${paramIndex}`;
-      params.push(granted);
       paramIndex++;
     }
 
@@ -111,13 +100,13 @@ class AuthorizationsRepository {
     }
 
     // Validation du tri
-    const validSortFields = ['created_at', 'updated_at', 'granted', 'role_id', 'permission_id', 'menu_id'];
+    const validSortFields = ['created_at', 'updated_at', 'role_id', 'permission_id', 'menu_id'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
     const sortDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-    // Colonnes selon schéma de référence : id, role_id, permission_id, menu_id, granted, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+    // Colonnes selon schéma : id, role_id, permission_id, menu_id, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     const dataQuery = `
-      SELECT a.id, a.role_id, a.permission_id, a.menu_id, a.granted, a.created_at, a.updated_at,
+      SELECT a.id, a.role_id, a.permission_id, a.menu_id, a.created_at, a.updated_at,
              r.code as role_code, r.label as role_label,
              p.code as permission_code, p.label as permission_label, p."group" as permission_group,
              m.label as menu_label, m.route as menu_route
@@ -166,7 +155,7 @@ class AuthorizationsRepository {
    */
   async findById(id) {
     const query = `
-      SELECT a.id, a.role_id, a.permission_id, a.menu_id, a.granted, a.created_at, a.updated_at,
+      SELECT a.id, a.role_id, a.permission_id, a.menu_id, a.created_at, a.updated_at,
              r.code as role_code, r.label as role_label,
              p.code as permission_code, p.label as permission_label, p."group" as permission_group,
              m.label as menu_label, m.route as menu_route
@@ -188,13 +177,12 @@ class AuthorizationsRepository {
   /**
    * Récupère les permissions d'un rôle
    * @param {number} roleId - ID du rôle
-   * @param {boolean} onlyGranted - Uniquement les permissions accordées
    * @param {boolean} includeMenus - Inclure les informations des menus
    * @returns {Promise<Array>} Liste des permissions du rôle
    */
-  async findByRoleId(roleId, onlyGranted = true, includeMenus = false) {
+  async findByRoleId(roleId, includeMenus = false) {
     let query = `
-      SELECT a.id, a.role_id, a.permission_id, a.menu_id, a.granted, a.created_at, a.updated_at,
+      SELECT a.id, a.role_id, a.permission_id, a.menu_id, a.created_at, a.updated_at,
              p.code, p.label, p."group", p.description
     `;
     if (includeMenus) {
@@ -207,10 +195,6 @@ class AuthorizationsRepository {
       WHERE a.role_id = $1
     `;
     const params = [roleId];
-
-    if (onlyGranted) {
-      query += ' AND a.granted = true';
-    }
 
     query += ' ORDER BY p."group" ASC, p.code ASC';
 
@@ -225,22 +209,17 @@ class AuthorizationsRepository {
   /**
    * Récupère les rôles ayant une permission spécifique
    * @param {number} permissionId - ID de la permission
-   * @param {boolean} onlyGranted - Uniquement les rôles avec permission accordée
    * @returns {Promise<Array>} Liste des rôles
    */
-  async findByPermissionId(permissionId, onlyGranted = true) {
+  async findByPermissionId(permissionId) {
     let query = `
-      SELECT a.id, a.role_id, a.permission_id, a.menu_id, a.granted, a.created_at, a.updated_at,
+      SELECT a.id, a.role_id, a.permission_id, a.menu_id, a.created_at, a.updated_at,
              r.code, r.label, r.description, r.level, r.is_system
       FROM authorizations a
       LEFT JOIN roles r ON a.role_id = r.id
       WHERE a.permission_id = $1
     `;
     const params = [permissionId];
-
-    if (onlyGranted) {
-      query += ' AND a.granted = true';
-    }
 
     query += ' ORDER BY r.level ASC, r.code ASC';
 
@@ -253,24 +232,54 @@ class AuthorizationsRepository {
   }
 
   /**
-   * Met à jour le statut granted d'une autorisation
+   * Met à jour une autorisation
    * @param {number} id - ID de l'autorisation
-   * @param {boolean} granted - Nouveau statut granted
+   * @param {Object} updateData - Données de mise à jour
    * @param {number} updatedBy - ID de l'utilisateur qui met à jour
    * @returns {Promise<boolean>} Succès de l'opération
    */
-  async updateGranted(id, granted, updatedBy = null) {
+  async update(id, updateData, updatedBy = null) {
+    const {
+      roleId,
+      permissionId,
+      menuId
+    } = updateData;
+
+    const updates = [];
+    const values = [id];
+    let paramIndex = 2;
+
+    if (roleId !== undefined) {
+      updates.push(`role_id = $${paramIndex++}`);
+      values.push(roleId);
+    }
+    if (permissionId !== undefined) {
+      updates.push(`permission_id = $${paramIndex++}`);
+      values.push(permissionId);
+    }
+    if (menuId !== undefined) {
+      updates.push(`menu_id = $${paramIndex++}`);
+      values.push(menuId);
+    }
+
+    if (updates.length === 0) {
+      return false;
+    }
+
+    updates.push(`updated_by = $${paramIndex++}`, `updated_at = CURRENT_TIMESTAMP`);
+    values.push(updatedBy);
+
     const query = `
       UPDATE authorizations 
-      SET granted = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
+      SET ${updates.join(', ')}
       WHERE id = $1
     `;
 
     try {
-      const result = await connection.query(query, [id, granted, updatedBy]);
+      const result = await connection.query(query, values);
       return result.rowCount > 0;
     } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour de l\'autorisation: ${error.message}`);
+      throw new Error(`Erreur lors de la mise à jour de l'autorisation: ${error.message}`);
     }
   }
 
@@ -315,20 +324,15 @@ class AuthorizationsRepository {
    * Vérifie si un rôle a une permission spécifique
    * @param {number} roleId - ID du rôle
    * @param {number} permissionId - ID de la permission
-   * @param {boolean} onlyGranted - Vérifier uniquement les autorisations accordées
    * @returns {Promise<boolean>} True si le rôle a la permission
    */
-  async roleHasPermission(roleId, permissionId, onlyGranted = true) {
-    let query = `
+  async roleHasPermission(roleId, permissionId) {
+    const query = `
       SELECT COUNT(*) as count
       FROM authorizations
       WHERE role_id = $1 AND permission_id = $2
     `;
     const params = [roleId, permissionId];
-
-    if (onlyGranted) {
-      query += ' AND granted = true';
-    }
 
     try {
       const result = await connection.query(query, params);
@@ -341,30 +345,24 @@ class AuthorizationsRepository {
   /**
    * Récupère toutes les permissions d'un utilisateur (via ses rôles)
    * @param {number} userId - ID de l'utilisateur
-   * @param {boolean} onlyGranted - Uniquement les permissions accordées
    * @returns {Promise<Array>} Liste des permissions
    */
-  async findUserPermissions(userId, onlyGranted = true) {
-    let query = `
+  async findUserPermissions(userId) {
+    const query = `
       SELECT DISTINCT p.id, p.code, p.label, p."group", p.description
       FROM authorizations a
       INNER JOIN accesses acc ON a.role_id = acc.role_id
       INNER JOIN permissions p ON a.permission_id = p.id
       WHERE acc.user_id = $1 AND acc.status = 'active'
+      ORDER BY p."group" ASC, p.code ASC
     `;
     const params = [userId];
-
-    if (onlyGranted) {
-      query += ' AND a.granted = true';
-    }
-
-    query += ' ORDER BY p."group" ASC, p.code ASC';
 
     try {
       const result = await connection.query(query, params);
       return result.rows;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération des permissions de l\'utilisateur ${userId}: ${error.message}`);
+      throw new Error(`Erreur lors de la récupération des permissions de l'utilisateur ${userId}: ${error.message}`);
     }
   }
 
@@ -372,11 +370,10 @@ class AuthorizationsRepository {
    * Vérifie si un utilisateur a une permission spécifique (via ses rôles)
    * @param {number} userId - ID de l'utilisateur
    * @param {string} permissionCode - Code de la permission
-   * @param {boolean} onlyGranted - Vérifier uniquement les autorisations accordées
    * @returns {Promise<boolean>} True si l'utilisateur a la permission
    */
-  async userHasPermission(userId, permissionCode, onlyGranted = true) {
-    let query = `
+  async userHasPermission(userId, permissionCode) {
+    const query = `
       SELECT COUNT(*) as count
       FROM authorizations a
       INNER JOIN accesses acc ON a.role_id = acc.role_id
@@ -384,10 +381,6 @@ class AuthorizationsRepository {
       WHERE acc.user_id = $1 AND p.code = $2 AND acc.status = 'active'
     `;
     const params = [userId, permissionCode];
-
-    if (onlyGranted) {
-      query += ' AND a.granted = true';
-    }
 
     try {
       const result = await connection.query(query, params);
