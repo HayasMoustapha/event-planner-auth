@@ -2,6 +2,8 @@ const roleRepository = require('../roles/roles.repository');
 const permissionRepository = require('../permissions/permissions.repository');
 const menuRepository = require('../menus/menus.repository');
 const authorizationRepository = require('./authorizations.repository');
+const cacheService = require('../../services/cache.service');
+const logger = require('../../utils/logger');
 
 /**
  * Service métier pour la gestion des autorisations
@@ -24,10 +26,38 @@ class AuthorizationService {
     }
 
     try {
-      // Utilisation du nouveau repository authorizations pour la vérification
-      return await authorizationRepository.userHasPermission(userId, permissionName.trim());
+      // Essayer le cache d'abord
+      const cachedAuthorizations = await cacheService.getUserAuthorizations(userId);
+      if (cachedAuthorizations) {
+        const hasPermission = cachedAuthorizations.some(auth => 
+          auth.permission_code === permissionName.trim() && auth.granted
+        );
+        
+        logger.debug('Permission checked from cache', {
+          userId,
+          permission: permissionName,
+          result: hasPermission
+        });
+        
+        return hasPermission;
+      }
+
+      // Récupérer depuis la base de données si pas en cache
+      const hasPermission = await authorizationRepository.userHasPermission(userId, permissionName.trim());
+      
+      logger.debug('Permission checked from database', {
+        userId,
+        permission: permissionName,
+        result: hasPermission
+      });
+      
+      return hasPermission;
     } catch (error) {
-      console.error('Erreur lors de la vérification de permission:', error);
+      logger.error('Permission check error', {
+        userId,
+        permission: permissionName,
+        error: error.message
+      });
       return false;
     }
   }

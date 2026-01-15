@@ -7,11 +7,14 @@ const rateLimit = require('express-rate-limit');
 
 const env = require('./config/env');
 const { errorHandler, notFoundHandler } = require('./middlewares/error.middleware');
+const metricsMiddleware = require('./middlewares/metrics.middleware');
 
 // Import des routes
 const authRoutes = require('./modules/auth/auth.routes');
 const peopleRoutes = require('./modules/people/people.routes');
 const usersRoutes = require('./modules/users/users.routes');
+const healthRoutes = require('./health/health.routes');
+const metricsRoutes = require('./metrics/metrics.routes');
 
 const app = express();
 
@@ -74,6 +77,9 @@ if (env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Middleware de métriques (après parsing pour avoir accès aux données)
+app.use(metricsMiddleware);
+
 // Routes de santé
 app.get('/', (req, res) => {
   res.json({
@@ -99,6 +105,10 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/people', peopleRoutes);
 app.use('/api/users', usersRoutes);
 
+// Routes de monitoring et santé
+app.use('/', healthRoutes);
+app.use('/metrics', metricsRoutes);
+
 // Documentation API (si disponible)
 app.get('/api/docs', (req, res) => {
   res.json({
@@ -107,7 +117,8 @@ app.get('/api/docs', (req, res) => {
       auth: '/api/auth',
       people: '/api/people',
       users: '/api/users',
-      health: '/api/health'
+      health: '/health',
+      metrics: '/metrics'
     }
   });
 });

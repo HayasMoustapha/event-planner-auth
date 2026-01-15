@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { createTransport } = require('nodemailer');
 const logger = require('../utils/logger');
 const configValidation = require('../config/validation');
 
@@ -28,7 +29,7 @@ class EmailService {
       }
 
       // Créer le transporteur
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = createTransport({
         host: config.SMTP_HOST,
         port: config.SMTP_PORT,
         secure: config.SMTP_SECURE,
