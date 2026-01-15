@@ -13,24 +13,24 @@ class MenuService {
    */
   async createMenu(menuData) {
     const {
-      name,
+      label,
       description,
       icon,
       route,
-      parentMenuId,
+      parentMenuId = null,
       sortOrder = 0,
       isVisible = true,
       status = 'active',
-      createdBy
+      createdBy = null
     } = menuData;
 
     // Validation des entrées
-    if (!name || !name.trim()) {
-      throw new Error('Le nom du menu est requis');
+    if (!label || !label.trim()) {
+      throw new Error('Le label du menu est requis');
     }
 
-    if (name.trim().length < 2 || name.trim().length > 100) {
-      throw new Error('Le nom du menu doit contenir entre 2 et 100 caractères');
+    if (label.trim().length < 2 || label.trim().length > 100) {
+      throw new Error('Le label du menu doit contenir entre 2 et 100 caractères');
     }
 
     if (description && description.length > 255) {
@@ -76,7 +76,7 @@ class MenuService {
       }
     }
 
-    // Vérifier si le nom existe déjà au même niveau
+    // Vérifier si le label existe déjà au même niveau
     const existingMenus = await menuRepository.findAll({
       page: 1,
       limit: 100,
@@ -84,17 +84,17 @@ class MenuService {
       status: 'active'
     });
     
-    const duplicateName = existingMenus.menus.find(menu => 
-      menu.name.toLowerCase() === name.trim().toLowerCase()
+    const duplicateLabel = existingMenus.menus.find(menu => 
+      menu.label.toLowerCase() === label.trim().toLowerCase()
     );
     
-    if (duplicateName) {
-      throw new Error('Un menu avec ce nom existe déjà au même niveau');
+    if (duplicateLabel) {
+      throw new Error('Un menu avec ce label existe déjà au même niveau');
     }
 
     // Créer le menu
     const menu = await menuRepository.create({
-      name: name.trim(),
+      label: label.trim(),
       description: description?.trim() || null,
       icon: icon?.trim() || null,
       route: route?.trim() || null,
@@ -105,7 +105,7 @@ class MenuService {
       createdBy
     });
 
-    console.log(`📋 Menu créé: ${menu.name} (ID: ${menu.id}) par l'utilisateur ${createdBy}`);
+    console.log(`📋 Menu créé: ${menu.label} (ID: ${menu.id}) par l'utilisateur ${createdBy}`);
     
     return menu;
   }
@@ -136,7 +136,7 @@ class MenuService {
       throw new Error('La limite doit être entre 1 et 100');
     }
 
-    if (sortBy && !['name', 'description', 'route', 'sort_order', 'status', 'created_at', 'updated_at'].includes(sortBy)) {
+    if (sortBy && !['label', 'description', 'route', 'sort_order', 'status', 'created_at', 'updated_at'].includes(sortBy)) {
       throw new Error('Le champ de tri est invalide');
     }
 
@@ -220,7 +220,7 @@ class MenuService {
 
     // Validation des données de mise à jour
     const {
-      name,
+      label,
       description,
       icon,
       route,
@@ -230,15 +230,15 @@ class MenuService {
       status
     } = updateData;
 
-    if (name !== undefined) {
-      if (!name || !name.trim()) {
-        throw new Error('Le nom du menu est requis');
+    if (label !== undefined) {
+      if (!label || !label.trim()) {
+        throw new Error('Le label du menu est requis');
       }
-      if (name.trim().length < 2 || name.trim().length > 100) {
-        throw new Error('Le nom du menu doit contenir entre 2 et 100 caractères');
+      if (label.trim().length < 2 || label.trim().length > 100) {
+        throw new Error('Le label du menu doit contenir entre 2 et 100 caractères');
       }
 
-      // Vérifier si le nouveau nom est déjà utilisé au même niveau
+      // Vérifier si le nouveau label est déjà utilisé au même niveau
       const finalParentId = parentMenuId !== undefined ? parentMenuId : existingMenu.parent_menu_id;
       const existingMenus = await menuRepository.findAll({
         page: 1,
@@ -247,12 +247,12 @@ class MenuService {
         status: 'active'
       });
       
-      const duplicateName = existingMenus.menus.find(menu => 
-        menu.name.toLowerCase() === name.trim().toLowerCase() && menu.id !== id
+      const duplicateLabel = existingMenus.menus.find(menu => 
+        menu.label.toLowerCase() === label.trim().toLowerCase() && menu.id !== id
       );
       
-      if (duplicateName) {
-        throw new Error('Un menu avec ce nom existe déjà au même niveau');
+      if (duplicateLabel) {
+        throw new Error('Un menu avec ce label existe déjà au même niveau');
       }
     }
 
@@ -307,7 +307,7 @@ class MenuService {
 
     // Mettre à jour le menu
     const updatedMenu = await menuRepository.update(id, {
-      name: name?.trim(),
+      label: label?.trim(),
       description: description?.trim(),
       icon: icon?.trim(),
       route: route?.trim(),
@@ -317,7 +317,7 @@ class MenuService {
       status
     }, updatedBy);
 
-    console.log(`📋 Menu mis à jour: ${updatedMenu.name} (ID: ${updatedMenu.id}) par l'utilisateur ${updatedBy}`);
+    console.log(`📋 Menu mis à jour: ${updatedMenu.label} (ID: ${updatedMenu.id}) par l'utilisateur ${updatedBy}`);
     
     return updatedMenu;
   }
@@ -355,7 +355,7 @@ class MenuService {
     const deleted = await menuRepository.delete(id, deletedBy);
     
     if (deleted) {
-      console.log(`🗑️ Menu supprimé: ${menu.name} (ID: ${menu.id}) par l'utilisateur ${deletedBy}`);
+      console.log(`🗑️ Menu supprimé: ${menu.label} (ID: ${menu.id}) par l'utilisateur ${deletedBy}`);
     }
     
     return deleted;
@@ -386,7 +386,7 @@ class MenuService {
     const updated = await menuRepository.updateStatus(id, status, updatedBy);
     
     if (updated) {
-      console.log(`🔄 Menu ${status === 'active' ? 'activé' : 'désactivé'}: ${menu.name} (ID: ${id})`);
+      console.log(`🔄 Menu ${status === 'active' ? 'activé' : 'désactivé'}: ${menu.label} (ID: ${id})`);
     }
     
     return {
@@ -470,7 +470,7 @@ class MenuService {
       createdBy
     );
 
-    console.log(`🔐 ${assignedCount} permissions associées au menu ${menu.name} (ID: ${menuId})`);
+    console.log(`🔐 ${assignedCount} permissions associées au menu ${menu.label} (ID: ${menuId})`);
     
     return {
       assigned: assignedCount,
@@ -497,7 +497,7 @@ class MenuService {
 
     const removedCount = await menuRepository.removeAllPermissions(menuId);
     
-    console.log(`🗑️ ${removedCount} permissions supprimées du menu ${menu.name} (ID: ${menuId})`);
+    console.log(`🗑️ ${removedCount} permissions supprimées du menu ${menu.label} (ID: ${menuId})`);
     
     return {
       removed: removedCount,
@@ -563,7 +563,7 @@ class MenuService {
       throw new Error('ID du menu source invalide');
     }
 
-    const { name, description } = newMenuData;
+    const { label, description } = newMenuData;
 
     // Vérifier si le menu source existe
     const sourceMenu = await menuRepository.findById(sourceMenuId);

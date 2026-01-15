@@ -12,7 +12,7 @@ class MenuRepository {
    */
   async create(menuData) {
     const {
-      name,
+      label,
       description,
       icon,
       route,
@@ -25,15 +25,15 @@ class MenuRepository {
 
     const query = `
       INSERT INTO menus (
-        name, description, icon, route, parent_menu_id, sort_order, 
+        label, description, icon, route, parent_menu_id, sort_order, 
         is_visible, status, created_by, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, name, description, icon, route, parent_menu_id, sort_order, 
+      RETURNING id, label, description, icon, route, parent_menu_id, sort_order, 
                 is_visible, status, created_by, created_at, updated_at
     `;
 
     const values = [
-      name?.trim(),
+      label?.trim(),
       description?.trim(),
       icon?.trim(),
       route?.trim(),
@@ -80,8 +80,8 @@ class MenuRepository {
 
     // Filtre de recherche
     if (search) {
-      whereClause += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR route ILIKE $${paramIndex})`;
-      countClause += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR route ILIKE $${paramIndex})`;
+      whereClause += ` AND (label ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR route ILIKE $${paramIndex})`;
+      countClause += ` AND (label ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR route ILIKE $${paramIndex})`;
       params.push(`%${search}%`);
       paramIndex++;
     }
@@ -111,12 +111,12 @@ class MenuRepository {
     }
 
     // Validation du tri
-    const validSortFields = ['name', 'description', 'route', 'sort_order', 'status', 'created_at', 'updated_at'];
+    const validSortFields = ['label', 'description', 'route', 'sort_order', 'status', 'created_at', 'updated_at'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'sort_order';
     const sortDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     const dataQuery = `
-      SELECT id, name, description, icon, route, parent_menu_id, sort_order, 
+      SELECT id, label, description, icon, route, parent_menu_id, sort_order, 
              is_visible, status, created_by, created_at, updated_at
       FROM menus
       ${whereClause}
@@ -162,7 +162,7 @@ class MenuRepository {
    */
   async findById(id) {
     const query = `
-      SELECT id, name, description, icon, route, parent_menu_id, sort_order, 
+      SELECT id, label, description, icon, route, parent_menu_id, sort_order, 
              is_visible, status, created_by, created_at, updated_at
       FROM menus
       WHERE id = $1
@@ -177,6 +177,27 @@ class MenuRepository {
   }
 
   /**
+   * Récupère un menu par son label
+   * @param {string} label - Label du menu
+   * @returns {Promise<Object|null>} Menu trouvé ou null
+   */
+  async findByLabel(label) {
+    const query = `
+      SELECT id, label, description, icon, route, parent_menu_id, sort_order, 
+             is_visible, status, created_by, created_at, updated_at
+      FROM menus
+      WHERE label = $1
+    `;
+
+    try {
+      const result = await connection.query(query, [label.trim()]);
+      return result.rows[0] || null;
+    } catch (error) {
+      throw new Error(`Erreur lors de la recherche du menu par label: ${error.message}`);
+    }
+  }
+
+  /**
    * Récupère l'arborescence complète des menus
    * @param {Object} options - Options de filtre
    * @returns {Promise<Array>} Arborescence des menus
@@ -185,11 +206,11 @@ class MenuRepository {
     const { status = 'active', isVisible = true } = options;
 
     const query = `
-      SELECT id, name, description, icon, route, parent_menu_id, sort_order, 
+      SELECT id, label, description, icon, route, parent_menu_id, sort_order, 
              is_visible, status, created_by, created_at, updated_at
       FROM menus
       WHERE status = $1 AND is_visible = $2
-      ORDER BY sort_order ASC, name ASC
+      ORDER BY sort_order ASC, label ASC
     `;
 
     try {
@@ -234,11 +255,11 @@ class MenuRepository {
     const { status = 'active', isVisible = true } = options;
 
     const query = `
-      SELECT id, name, description, icon, route, parent_menu_id, sort_order, 
+      SELECT id, label, description, icon, route, parent_menu_id, sort_order, 
              is_visible, status, created_by, created_at, updated_at
       FROM menus
       WHERE parent_menu_id IS NULL AND status = $1 AND is_visible = $2
-      ORDER BY sort_order ASC, name ASC
+      ORDER BY sort_order ASC, label ASC
     `;
 
     try {
@@ -259,11 +280,11 @@ class MenuRepository {
     const { status = 'active', isVisible = true } = options;
 
     const query = `
-      SELECT id, name, description, icon, route, parent_menu_id, sort_order, 
+      SELECT id, label, description, icon, route, parent_menu_id, sort_order, 
              is_visible, status, created_by, created_at, updated_at
       FROM menus
       WHERE parent_menu_id = $1 AND status = $2 AND is_visible = $3
-      ORDER BY sort_order ASC, name ASC
+      ORDER BY sort_order ASC, label ASC
     `;
 
     try {
@@ -283,7 +304,7 @@ class MenuRepository {
    */
   async update(id, updateData, updatedBy = null) {
     const {
-      name,
+      label,
       description,
       icon,
       route,
@@ -297,9 +318,9 @@ class MenuRepository {
     const values = [];
     let paramIndex = 1;
 
-    if (name !== undefined) {
-      updates.push(`name = $${paramIndex}`);
-      values.push(name.trim());
+    if (label !== undefined) {
+      updates.push(`label = $${paramIndex}`);
+      values.push(label.trim());
       paramIndex++;
     }
 
@@ -359,7 +380,7 @@ class MenuRepository {
       UPDATE menus
       SET ${updates.join(', ')}
       WHERE id = $${paramIndex}
-      RETURNING id, name, description, icon, route, parent_menu_id, sort_order, 
+      RETURNING id, label, description, icon, route, parent_menu_id, sort_order, 
                 is_visible, status, created_by, created_at, updated_at, updated_by
     `;
 
@@ -426,8 +447,8 @@ class MenuRepository {
    */
   async getUserMenus(userId) {
     const query = `
-      SELECT DISTINCT m.id, m.name, m.description, m.icon, m.route, 
-             m.parent_menu_id, m.sort_order, m.is_visible, m.status
+      SELECT DISTINCT m.id, m.label, m.description, m.icon, m.route, 
+             m.parent_menu_id, m.sort_order, m.is_visible, m.status, m.created_at, m.updated_at
       FROM menus m
       INNER JOIN menu_permissions mp ON m.id = mp.menu_id
       INNER JOIN permissions p ON mp.permission_id = p.id

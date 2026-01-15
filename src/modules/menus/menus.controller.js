@@ -15,7 +15,7 @@ class MenuController {
   async createMenu(req, res, next) {
     try {
       const { 
-        name, 
+        label, 
         description, 
         icon, 
         route, 
@@ -27,7 +27,7 @@ class MenuController {
       const createdBy = req.user?.id;
 
       const menu = await menuService.createMenu({
-        name,
+        label,
         description,
         icon,
         route,
@@ -176,7 +176,7 @@ class MenuController {
     try {
       const { id } = req.params;
       const { 
-        name, 
+        label, 
         description, 
         icon, 
         route, 
@@ -189,7 +189,7 @@ class MenuController {
 
       const menu = await menuService.updateMenu(
         parseInt(id),
-        { name, description, icon, route, parentMenuId, sortOrder, isVisible, status },
+        { label, description, icon, route, parentMenuId, sortOrder, isVisible, status },
         updatedBy
       );
 
@@ -427,7 +427,7 @@ class MenuController {
   async duplicateMenu(req, res, next) {
     try {
       const { id } = req.params;
-      const { name, description } = req.body;
+      const { label, description } = req.body;
       const createdBy = req.user?.id;
 
       const newMenu = await menuService.duplicateMenu(
