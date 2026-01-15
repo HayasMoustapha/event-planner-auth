@@ -261,9 +261,9 @@ const validatePermissionOperation = (req, res, next) => {
 const sanitizePermissionData = (req, res, next) => {
   // Nettoyer les données d'entrée
   if (req.body) {
-    // Normaliser le nom de la permission
-    if (req.body.name) {
-      req.body.name = req.body.name.trim().toLowerCase();
+    // Normaliser le code de la permission
+    if (req.body.code) {
+      req.body.code = req.body.code.trim().toLowerCase();
     }
     
     // Normaliser la ressource

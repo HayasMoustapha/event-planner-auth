@@ -13,23 +13,23 @@ class PermissionService {
    */
   async createPermission(permissionData) {
     const {
-      name,
+      code,
       description,
       group,
       createdBy
     } = permissionData;
 
     // Validation des entrées
-    if (!name || !name.trim()) {
+    if (!code || !code.trim()) {
       throw new Error('Le code de la permission est requis');
     }
 
-    if (name.trim().length < 3 || name.trim().length > 100) {
+    if (code.trim().length < 3 || code.trim().length > 100) {
       throw new Error('Le code de la permission doit contenir entre 3 et 100 caractères');
     }
 
     // Validation du format du code (format: resource.action)
-    if (!/^[a-z_]+[a-z_]*$/.test(name.trim())) {
+    if (!/^[a-z_]+[a-z_]*$/.test(code.trim())) {
       throw new Error('Le code doit être en minuscules avec underscores (ex: users.create)');
     }
 
@@ -47,14 +47,14 @@ class PermissionService {
 
     // Préparation des données pour le repository
     const cleanData = {
-      name: name.trim(),
+      code: code.trim(),
       description: description?.trim(),
       group: group?.trim(),
       createdBy
     };
 
     // Vérifier si la permission existe déjà
-    const existingPermission = await permissionRepository.findAll({ search: name.trim(), limit: 1 });
+    const existingPermission = await permissionRepository.findAll({ search: code.trim(), limit: 1 });
     if (existingPermission.data.length > 0) {
       throw new Error('Une permission avec ce code existe déjà');
     }
@@ -93,7 +93,7 @@ class PermissionService {
       throw new Error('La limite doit être entre 1 et 100');
     }
 
-    if (sortBy && !['name', 'description', 'resource', 'action', 'status', 'created_at', 'updated_at'].includes(sortBy)) {
+    if (sortBy && !['code', 'description', 'group', 'status', 'created_at', 'updated_at'].includes(sortBy)) {
       throw new Error('Le champ de tri est invalide');
     }
 
@@ -155,25 +155,24 @@ class PermissionService {
 
     // Validation des données de mise à jour
     const {
-      name,
+      code,
       description,
-      resource,
-      action,
+      group,
       status
     } = updateData;
 
-    if (name !== undefined) {
-      if (!name || !name.trim()) {
-        throw new Error('Le nom de la permission est requis');
+    if (code !== undefined) {
+      if (!code || !code.trim()) {
+        throw new Error('Le code de la permission est requis');
       }
-      if (name.trim().length < 3 || name.trim().length > 100) {
-        throw new Error('Le nom de la permission doit contenir entre 3 et 100 caractères');
+      if (code.trim().length < 3 || code.trim().length > 100) {
+        throw new Error('Le code de la permission doit contenir entre 3 et 100 caractères');
       }
 
-      // Vérifier si le nouveau nom est déjà utilisé par une autre permission
-      const nameExists = await permissionRepository.findByName(name.trim());
-      if (nameExists && nameExists.id !== id) {
-        throw new Error('Une permission avec ce nom existe déjà');
+      // Vérifier si le nouveau code est déjà utilisé par une autre permission
+      const codeExists = await permissionRepository.findByCode(code.trim());
+      if (codeExists && codeExists.id !== id) {
+        throw new Error('Une permission avec ce code existe déjà');
       }
     }
 
@@ -206,27 +205,25 @@ class PermissionService {
       }
     }
 
-    // Validation du format du nom si resource ou action sont modifiés
-    if (name !== undefined && (resource !== undefined || action !== undefined)) {
-      const finalResource = resource?.trim() || existingPermission.resource;
-      const finalAction = action?.trim() || existingPermission.action;
-      const expectedName = `${finalResource}.${finalAction}`;
+    // Validation du format du code si group est modifié
+    if (code !== undefined && (group !== undefined)) {
+      const finalGroup = group?.trim() || existingPermission.group;
+      const expectedCode = `${finalGroup}`;
       
-      if (name.trim() !== expectedName) {
-        throw new Error(`Le nom de la permission doit suivre le format: ${expectedName}`);
+      if (code.trim() !== expectedCode) {
+        throw new Error(`Le code de la permission doit suivre le format: ${expectedCode}`);
       }
     }
 
     // Mettre à jour la permission
     const updatedPermission = await permissionRepository.update(id, {
-      name: name?.trim(),
+      code: code?.trim(),
       description: description?.trim(),
-      resource: resource?.trim(),
-      action: action?.trim(),
+      group: group?.trim(),
       status
     }, updatedBy);
 
-    console.log(`🔐 Permission mise à jour: ${updatedPermission.name} (ID: ${updatedPermission.id}) par l'utilisateur ${updatedBy}`);
+    console.log(`🔐 Permission mise à jour: ${updatedPermission.code} (ID: ${updatedPermission.id}) par l'utilisateur ${updatedBy}`);
     
     return updatedPermission;
   }
@@ -260,7 +257,7 @@ class PermissionService {
       'roles.delete'
     ];
 
-    if (criticalPermissions.includes(permission.name)) {
+    if (criticalPermissions.includes(permission.code)) {
       throw new Error('Impossible de supprimer une permission système critique');
     }
 
@@ -268,7 +265,7 @@ class PermissionService {
     const deleted = await permissionRepository.delete(id, deletedBy);
     
     if (deleted) {
-      console.log(`🗑️ Permission supprimée: ${permission.name} (ID: ${permission.id}) par l'utilisateur ${deletedBy}`);
+      console.log(`🗑️ Permission supprimée: ${permission.code} (ID: ${permission.id}) par l'utilisateur ${deletedBy}`);
     }
     
     return deleted;
@@ -299,7 +296,7 @@ class PermissionService {
     const updated = await permissionRepository.updateStatus(id, status, updatedBy);
     
     if (updated) {
-      console.log(`🔄 Permission ${status === 'active' ? 'activée' : 'désactivée'}: ${permission.name} (ID: ${id})`);
+      console.log(`🔄 Permission ${status === 'active' ? 'activée' : 'désactivée'}: ${permission.code} (ID: ${id})`);
     }
     
     return {
@@ -329,16 +326,16 @@ class PermissionService {
    * @param {string} permissionName - Nom de la permission
    * @returns {Promise<boolean>} True si l'utilisateur a la permission
    */
-  async checkUserPermission(userId, permissionName) {
+  async checkUserPermission(userId, permissionCode) {
     if (!userId || userId <= 0) {
       return false;
     }
 
-    if (!permissionName || !permissionName.trim()) {
+    if (!permissionCode || !permissionCode.trim()) {
       return false;
     }
 
-    return await permissionRepository.userHasPermission(userId, permissionName.trim());
+    return await permissionRepository.userHasPermission(userId, permissionCode.trim());
   }
 
   /**
@@ -406,22 +403,22 @@ class PermissionService {
       throw new Error(`Actions invalides: ${invalidActions.join(', ')}`);
     }
 
-    const createdPermissions = [];
-    
-    for (const action of actions) {
-      try {
-        const permissionName = `${resource.trim()}.${action}`;
-        const permission = await this.createPermission({
-          name: permissionName,
-          description: `Permission ${action} pour la ressource ${resource}`,
-          resource: resource.trim(),
-          action,
-          createdBy
-        });
-        createdPermissions.push(permission);
-      } catch (error) {
-        // Ignorer les erreurs de duplication pour les permissions existantes
-        if (!error.message.includes('existe déjà')) {
+const createdPermissions = [];
+  
+for (const action of actions) {
+  try {
+    const permissionName = `${resource.trim()}`;
+    const permission = await this.createPermission({
+      code: permissionName,
+      description: `Permission pour la ressource ${resource}`,
+      group: resource.trim(),
+      createdBy
+    });
+    createdPermissions.push(permission);
+  } catch (error) {
+    // Ignorer les erreurs de duplication pour les permissions existantes
+    if (!error.message.includes('existe déjà')) {
+      throw error;
           throw error;
         }
       }

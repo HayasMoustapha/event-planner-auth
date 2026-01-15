@@ -37,14 +37,14 @@ const handleValidationErrors = (req, res, next) => {
  * Validation pour la création de permission
  */
 const validateCreatePermission = [
-  body('name')
+  body('code')
     .trim()
     .notEmpty()
-    .withMessage('Le nom de la permission est requis')
+    .withMessage('Le code de la permission est requis')
     .isLength({ min: 3, max: 100 })
-    .withMessage('Le nom de la permission doit contenir entre 3 et 100 caractères')
-    .matches(/^[a-z]+\.[a-z]+$/)
-    .withMessage('Le nom de la permission doit suivre le format: resource.action'),
+    .withMessage('Le code de la permission doit contenir entre 3 et 100 caractères')
+    .matches(/^[a-z_]+[a-z_]*$/)
+    .withMessage('Le code doit être en minuscules avec underscores (ex: users.create)'),
     
   body('description')
     .optional()
@@ -86,13 +86,13 @@ const validateUpdatePermission = [
     .isInt({ min: 1 })
     .withMessage('L\'ID de la permission doit être un entier positif'),
     
-  body('name')
+  body('code')
     .optional()
     .trim()
     .isLength({ min: 3, max: 100 })
-    .withMessage('Le nom de la permission doit contenir entre 3 et 100 caractères')
-    .matches(/^[a-z]+\.[a-z]+$/)
-    .withMessage('Le nom de la permission doit suivre le format: resource.action'),
+    .withMessage('Le code de la permission doit contenir entre 3 et 100 caractères')
+    .matches(/^[a-z_]+[a-z_]*$/)
+    .withMessage('Le code doit être en minuscules avec underscores (ex: users.create)'),
     
   body('description')
     .optional()
@@ -174,7 +174,7 @@ const validateGetPermissions = [
     
   query('sortBy')
     .optional()
-    .isIn(['name', 'description', 'resource', 'action', 'status', 'created_at', 'updated_at'])
+    .isIn(['code', 'description', 'group', 'status', 'created_at', 'updated_at'])
     .withMessage('Le champ de tri est invalide'),
     
   query('sortOrder')
@@ -221,12 +221,12 @@ const validateCheckUserPermission = [
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
     
-  query('permissionName')
+  query('permissionCode')
     .notEmpty()
-    .withMessage('Le nom de la permission est requis')
+    .withMessage('Le code de la permission est requis')
     .trim()
-    .isLength({ min: 3, max: 100 })
-    .withMessage('Le nom de la permission doit contenir entre 3 et 100 caractères'),
+    .matches(/^[a-z_]+[a-z_]*$/)
+    .withMessage('Le code doit être en minuscules avec underscores (ex: users.create)'),
     
   handleValidationErrors
 ];

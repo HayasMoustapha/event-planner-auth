@@ -12,7 +12,7 @@ class PermissionRepository {
    */
   async create(permissionData) {
     const {
-      name,
+      code,
       description,
       resource,
       action,
@@ -29,8 +29,8 @@ class PermissionRepository {
     `;
 
     const values = [
-      name?.trim(), // name sera utilisé comme code (colonne 'code' du schéma)
-      JSON.stringify({en: name?.trim(), fr: name?.trim()}), // label en JSONB (colonne 'label' du schéma)
+      code?.trim(), // code sera utilisé comme code (colonne 'code' du schéma)
+      JSON.stringify({en: code?.trim(), fr: code?.trim()}), // label en JSONB (colonne 'label' du schéma)
       resource?.trim() || null, // resource sera utilisé comme group (colonne 'group' du schéma)
       description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB (colonne 'description' du schéma)
       createdBy
@@ -142,7 +142,7 @@ class PermissionRepository {
    */
   async findById(id) {
     const query = `
-      SELECT id, name, description, resource, action, status, created_by, created_at, updated_at
+      SELECT id, code, label, "group", description, created_by, created_at, updated_at
       FROM permissions
       WHERE id = $1
     `;
@@ -160,18 +160,18 @@ class PermissionRepository {
    * @param {string} name - Nom de la permission
    * @returns {Promise<Object|null>} Permission trouvée ou null
    */
-  async findByName(name) {
+  async findByCode(code) {
     const query = `
-      SELECT id, name, description, resource, action, status, created_by, created_at, updated_at
+      SELECT id, code, label, "group", description, created_by, created_at, updated_at
       FROM permissions
-      WHERE name = $1
+      WHERE code = $1
     `;
 
     try {
-      const result = await connection.query(query, [name.trim()]);
+      const result = await connection.query(query, [code.trim()]);
       return result.rows[0] || null;
     } catch (error) {
-      throw new Error(`Erreur lors de la recherche de la permission par nom: ${error.message}`);
+      throw new Error(`Erreur lors de la recherche de la permission par code: ${error.message}`);
     }
   }
 
@@ -182,10 +182,10 @@ class PermissionRepository {
    */
   async findByResource(resource) {
     const query = `
-      SELECT id, name, description, resource, action, status, created_by, created_at, updated_at
+      SELECT id, code, label, "group", description, created_by, created_at, updated_at
       FROM permissions
-      WHERE resource = $1 AND status = 'active'
-      ORDER BY action ASC
+      WHERE "group" = $1 AND status = 'active'
+      ORDER BY code ASC
     `;
 
     try {
@@ -205,7 +205,7 @@ class PermissionRepository {
    */
   async update(id, updateData, updatedBy = null) {
     const {
-      name,
+      code,
       description,
       resource,
       action,
@@ -216,9 +216,9 @@ class PermissionRepository {
     const values = [];
     let paramIndex = 1;
 
-    if (name !== undefined) {
-      updates.push(`name = $${paramIndex}`);
-      values.push(name.trim());
+    if (code !== undefined) {
+      updates.push(`code = $${paramIndex}`);
+      values.push(code.trim());
       paramIndex++;
     }
 
@@ -229,7 +229,7 @@ class PermissionRepository {
     }
 
     if (resource !== undefined) {
-      updates.push(`resource = $${paramIndex}`);
+      updates.push(`"group" = $${paramIndex}`);
       values.push(resource.trim());
       paramIndex++;
     }
@@ -260,7 +260,7 @@ class PermissionRepository {
       UPDATE permissions
       SET ${updates.join(', ')}
       WHERE id = $${paramIndex}
-      RETURNING id, name, description, resource, action, status, created_by, created_at, updated_at, updated_by
+      RETURNING id, code, label, "group", description, created_by, created_at, updated_at, updated_by
     `;
 
     values.push(id);
@@ -326,11 +326,11 @@ class PermissionRepository {
    */
   async getRolePermissions(roleId) {
     const query = `
-      SELECT p.id, p.name, p.description, p.resource, p.action, p.status
+      SELECT p.id, p.code, p.label, p."group", p.description, p.status
       FROM permissions p
       INNER JOIN role_permissions rp ON p.id = rp.permission_id
       WHERE rp.role_id = $1 AND rp.status = 'active' AND p.status = 'active'
-      ORDER BY p.resource, p.action
+      ORDER BY p."group" ASC, p.code ASC
     `;
 
     try {
@@ -348,7 +348,7 @@ class PermissionRepository {
    */
   async getUserPermissions(userId) {
     const query = `
-      SELECT DISTINCT p.id, p.name, p.description, p.resource, p.action, p.status
+      SELECT DISTINCT p.id, p.code, p.label, p."group", p.description, p.status
       FROM permissions p
       INNER JOIN role_permissions rp ON p.id = rp.permission_id
       INNER JOIN accesses a ON rp.role_id = a.role_id
@@ -356,7 +356,7 @@ class PermissionRepository {
         AND a.status = 'active' 
         AND rp.status = 'active' 
         AND p.status = 'active'
-      ORDER BY p.resource, p.action
+      ORDER BY p."group" ASC, p.code ASC
     `;
 
     try {
@@ -380,7 +380,7 @@ class PermissionRepository {
       INNER JOIN role_permissions rp ON p.id = rp.permission_id
       INNER JOIN accesses a ON rp.role_id = a.role_id
       WHERE a.user_id = $1 
-        AND p.name = $2
+        AND p.code = $2
         AND a.status = 'active' 
         AND rp.status = 'active' 
         AND p.status = 'active'
@@ -401,15 +401,15 @@ class PermissionRepository {
    */
   async getResources() {
     const query = `
-      SELECT DISTINCT resource
+      SELECT DISTINCT "group"
       FROM permissions
       WHERE status = 'active'
-      ORDER BY resource ASC
+      ORDER BY "group" ASC
     `;
 
     try {
       const result = await connection.query(query);
-      return result.rows.map(row => row.resource);
+      return result.rows.map(row => row.group);
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des ressources: ${error.message}`);
     }
@@ -422,15 +422,15 @@ class PermissionRepository {
    */
   async getActionsByResource(resource) {
     const query = `
-      SELECT DISTINCT action
+      SELECT DISTINCT code
       FROM permissions
-      WHERE resource = $1 AND status = 'active'
-      ORDER BY action ASC
+      WHERE "group" = $1 AND status = 'active'
+      ORDER BY code ASC
     `;
 
     try {
       const result = await connection.query(query, [resource]);
-      return result.rows.map(row => row.action);
+      return result.rows.map(row => row.code);
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des actions: ${error.message}`);
     }
@@ -447,8 +447,8 @@ class PermissionRepository {
         COUNT(CASE WHEN status = 'active' THEN 1 END) as active_permissions,
         COUNT(CASE WHEN status = 'inactive' THEN 1 END) as inactive_permissions,
         COUNT(CASE WHEN status = 'deleted' THEN 1 END) as deleted_permissions,
-        COUNT(DISTINCT resource) as total_resources,
-        COUNT(DISTINCT action) as total_actions
+        COUNT(DISTINCT "group") as total_resources,
+        COUNT(DISTINCT code) as total_actions
       FROM permissions
     `;
 
@@ -498,10 +498,10 @@ class PermissionRepository {
     }
 
     const query = `
-      SELECT id, name, description, resource, action, status, created_by, created_at, updated_at
+      SELECT id, code, label, "group", description, created_by, created_at, updated_at
       FROM permissions
       WHERE id = ANY($1) AND status = 'active'
-      ORDER BY resource, action
+      ORDER BY "group" ASC, code ASC
     `;
 
     try {

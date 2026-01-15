@@ -14,14 +14,13 @@ class PermissionController {
    */
   async createPermission(req, res, next) {
     try {
-      const { name, description, resource, action, status } = req.body;
+      const { code, description, group, status } = req.body;
       const createdBy = req.user?.id;
 
       const permission = await permissionService.createPermission({
-        name,
+        code,
         description,
-        resource,
-        action,
+        group,
         status,
         createdBy
       });
@@ -109,12 +108,12 @@ class PermissionController {
   async updatePermission(req, res, next) {
     try {
       const { id } = req.params;
-      const { name, description, resource, action, status } = req.body;
+      const { code, description, group, status } = req.body;
       const updatedBy = req.user?.id;
 
       const permission = await permissionService.updatePermission(
         parseInt(id),
-        { name, description, resource, action, status },
+        { code, description, group, status },
         updatedBy
       );
 
@@ -224,24 +223,24 @@ class PermissionController {
    */
   async checkUserPermission(req, res, next) {
     try {
-      const { userId, permissionName } = req.query;
+      const { userId, permissionCode } = req.query;
       const targetUserId = userId ? parseInt(userId) : req.user?.id;
 
-      if (!targetUserId || !permissionName) {
+      if (!targetUserId || !permissionCode) {
         return res.status(400).json(createResponse(
           false,
-          'ID utilisateur et nom de la permission requis'
+          'ID utilisateur et code de la permission requis'
         ));
       }
 
-      const hasPermission = await permissionService.checkUserPermission(targetUserId, permissionName);
+      const hasPermission = await permissionService.checkUserPermission(targetUserId, permissionCode);
 
       res.status(200).json(createResponse(
         true,
         'Vérification de permission effectuée',
         {
           userId: targetUserId,
-          permissionName,
+          permissionCode,
           hasPermission
         }
       ));
