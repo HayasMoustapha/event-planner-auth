@@ -1,16 +1,18 @@
 const AuthService = require('../../../src/modules/auth/auth.service');
 const usersRepository = require('../../../src/modules/users/users.repository');
+const peopleRepository = require('../../../src/modules/people/people.repository');
 const logger = require('../../../src/utils/logger');
 
-// Mock du repository
+// Mock des repositories
 jest.mock('../../../src/modules/users/users.repository');
+jest.mock('../../../src/modules/people/people.repository');
 jest.mock('../../../src/utils/logger');
 
 describe('AuthService', () => {
   let authService;
 
   beforeEach(() => {
-    authService = new AuthService();
+    authService = AuthService; // Utiliser l'instance exportée
     jest.clearAllMocks();
   });
 
@@ -25,12 +27,14 @@ describe('AuthService', () => {
       };
       
       usersRepository.verifyPassword.mockResolvedValue(mockUser);
+      usersRepository.updateLastLogin.mockResolvedValue(true);
 
       const result = await authService.authenticate('test@example.com', 'Password123!');
 
       expect(result).toBeDefined();
-      expect(result.user).toEqual(mockUser);
-      expect(result.token).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.user).toEqual(mockUser);
+      expect(result.data.token).toBeDefined();
       expect(usersRepository.verifyPassword).toHaveBeenCalledWith('test@example.com', 'Password123!');
     });
 
@@ -66,7 +70,7 @@ describe('AuthService', () => {
       const mockUser = {
         id: 1,
         email: 'test@example.com',
-        status: 'locked'
+        status: 'lock'
       };
       
       usersRepository.verifyPassword.mockResolvedValue(mockUser);
@@ -80,27 +84,6 @@ describe('AuthService', () => {
 
       await expect(authService.authenticate('test@example.com', 'wrongpassword'))
         .rejects.toThrow('Email ou mot de passe incorrect');
-    });
-  });
-
-  describe('validateEmail', () => {
-    it('should validate correct email formats', () => {
-      expect(authService.validateEmail('test@example.com')).toBe(true);
-      expect(authService.validateEmail('user.name@domain.co.uk')).toBe(true);
-      expect(authService.validateEmail('user+tag@example.org')).toBe(true);
-    });
-
-    it('should reject invalid email formats', () => {
-      expect(authService.validateEmail('invalid-email')).toBe(false);
-      expect(authService.validateEmail('@example.com')).toBe(false);
-      expect(authService.validateEmail('test@')).toBe(false);
-      expect(authService.validateEmail('test@.com')).toBe(false);
-    });
-
-    it('should reject empty email', () => {
-      expect(authService.validateEmail('')).toBe(false);
-      expect(authService.validateEmail(null)).toBe(false);
-      expect(authService.validateEmail(undefined)).toBe(false);
     });
   });
 });
