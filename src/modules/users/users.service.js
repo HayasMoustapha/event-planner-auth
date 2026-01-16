@@ -372,7 +372,7 @@ class UsersService {
 
     // Vérifier si le compte est actif
     if (user.status !== 'active') {
-      if (user.status === 'locked') {
+      if (user.status === 'lock') {
         throw new Error('Ce compte est verrouillé. Veuillez contacter l\'administrateur.');
       }
       if (user.status === 'inactive') {
@@ -398,12 +398,12 @@ class UsersService {
       throw new Error('ID d\'utilisateur invalide');
     }
 
-    if (!['active', 'inactive', 'locked'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, locked');
+    if (!['active', 'inactive', 'lock'].includes(status)) {
+      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
     }
 
     // Empêcher de verrouiller son propre compte
-    if (updatedBy && updatedBy === id && status === 'locked') {
+    if (updatedBy && updatedBy === id && status === 'lock') {
       throw new Error('Impossible de verrouiller votre propre compte');
     }
 

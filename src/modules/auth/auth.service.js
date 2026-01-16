@@ -369,10 +369,10 @@ class AuthService {
   /**
    * Verrouille un compte utilisateur
    * @param {number} userId - ID de l'utilisateur
-   * @param {number} lockedBy - ID de l'utilisateur qui verrouille
+   * @param {number} lockBy - ID de l'utilisateur qui verrouille
    * @returns {Promise<Object>} Utilisateur verrouillé
    */
-  async lockUser(userId, lockedBy = null) {
+  async lockUser(userId, lockBy = null) {
     const user = await usersRepository.findById(userId);
     
     if (!user) {
@@ -383,16 +383,16 @@ class AuthService {
       throw new Error('Le compte est déjà verrouillé');
     }
 
-    return await usersRepository.updateStatus(userId, 'lock', lockedBy);
+    return await usersRepository.updateStatus(userId, 'lock', lockBy);
   }
 
   /**
    * Déverrouille un compte utilisateur
    * @param {number} userId - ID de l'utilisateur
-   * @param {number} unlockedBy - ID de l'utilisateur qui déverrouille
+   * @param {number} unlockBy - ID de l'utilisateur qui déverrouille
    * @returns {Promise<Object>} Utilisateur déverrouillé
    */
-  async unlockUser(userId, unlockedBy = null) {
+  async unlockUser(userId, unlockBy = null) {
     const user = await usersRepository.findById(userId);
     
     if (!user) {
@@ -403,7 +403,7 @@ class AuthService {
       throw new Error('Le compte n\'est pas verrouillé');
     }
 
-    return await usersRepository.updateStatus(userId, 'active', unlockedBy);
+    return await usersRepository.updateStatus(userId, 'active', unlockBy);
   }
 
   /**

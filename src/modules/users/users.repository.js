@@ -490,7 +490,7 @@ class UsersRepository {
     try {
       const [active] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['active']);
       const [inactive] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['inactive']);
-      const [locked] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['locked']);
+      const [locked] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['lock']);
       const [all] = await connection.query('SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL');
 
       return {

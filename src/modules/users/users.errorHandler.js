@@ -114,7 +114,7 @@ const usersErrorHandler = (error, req, res, next) => {
     return res.status(403).json({
       success: false,
       message: error.message,
-      code: 'ACCOUNT_LOCKED',
+      code: 'ACCOUNT_LOCK',
       timestamp: new Date().toISOString()
     });
   }

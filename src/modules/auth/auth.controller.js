@@ -298,7 +298,7 @@ class AuthController {
 
       // Vérifier si le compte est actif
       if (user.status !== 'active') {
-        if (user.status === 'locked') {
+        if (user.status === 'lock') {
           return res.status(403).json(createResponse(
             false,
             'Ce compte est verrouillé'

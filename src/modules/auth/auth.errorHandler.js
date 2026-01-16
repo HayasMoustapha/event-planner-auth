@@ -63,7 +63,7 @@ const authErrorHandler = (error, req, res, next) => {
     return res.status(403).json({
       success: false,
       message: 'Ce compte est verrouillé. Veuillez contacter l\'administrateur.',
-      code: 'ACCOUNT_LOCKED',
+      code: 'ACCOUNT_LOCK',
       timestamp: new Date().toISOString()
     });
   }
