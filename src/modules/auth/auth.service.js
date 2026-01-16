@@ -81,7 +81,8 @@ class AuthService {
       email: user.email,
       username: user.username,
       role: user.role,
-      status: user.status
+      status: user.status,
+      type: 'access' // Ajouter le type de token
     };
 
     const options = {

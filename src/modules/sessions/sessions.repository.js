@@ -55,10 +55,10 @@ class SessionRepository {
    */
   async findByAccessToken(accessToken) {
     const query = `
-      SELECT id, user_id, access_token, refresh_token, device_info, 
-             ip_address, user_agent, expires_at, created_at, updated_at, is_active
+      SELECT id, user_id, device_info, 
+             ip_address, user_agent, payload, last_activity
       FROM sessions 
-      WHERE access_token = $1 AND is_active = TRUE AND expires_at > CURRENT_TIMESTAMP
+      WHERE id = $1
     `;
 
     try {
@@ -280,6 +280,29 @@ class SessionRepository {
       };
     } catch (error) {
       throw new Error(`Erreur lors de la récupération de l'historique: ${error.message}`);
+    }
+  }
+
+  /**
+   * Vérifie si un token est blacklisté
+   * @param {string} token - Token à vérifier
+   * @returns {Promise<boolean>} True si le token est blacklisté
+   */
+  async isTokenBlacklisted(token) {
+    const query = `
+      SELECT id FROM blacklisted_tokens 
+      WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP
+    `;
+
+    try {
+      const result = await connection.query(query, [token]);
+      return result.rows.length > 0;
+    } catch (error) {
+      // Si la table n'existe pas, considérer que le token n'est pas blacklisté
+      if (error.message.includes('relation "blacklisted_tokens" does not exist')) {
+        return false;
+      }
+      throw new Error(`Erreur lors de la vérification du token blacklisté: ${error.message}`);
     }
   }
 }

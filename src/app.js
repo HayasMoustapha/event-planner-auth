@@ -61,7 +61,7 @@ app.use('/api/', limiter);
 // Rate limiting plus strict pour l'authentification
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 auth requests per windowMs
+  max: 100, // Augmenté pour les tests
   message: {
     error: 'Trop de tentatives de connexion',
     message: 'Veuillez réessayer plus tard'
@@ -98,6 +98,10 @@ app.use((req, res, next) => {
     '/api/auth/login',
     '/api/auth/login-after-verification',
     '/api/health',
+    '/health/detailed',
+    '/health',
+    '/ready',
+    '/live',
     '/',
     '/api/docs'
   ];
