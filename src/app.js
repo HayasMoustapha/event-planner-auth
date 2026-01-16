@@ -12,14 +12,14 @@ const securityMiddleware = require('./middlewares/security.middleware');
 
 // Import des routes
 const authRoutes = require('./modules/auth/auth.routes');
-const registrationRoutes = require('./modules/auth/registration.routes');
+// const registrationRoutes = require('./modules/auth/registration.routes');
 const peopleRoutes = require('./modules/people/people.routes');
 const usersRoutes = require('./modules/users/users.routes');
 const authorizationRoutes = require('./modules/authorizations/authorizations.routes');
 const menuRoutes = require('./modules/menus/menus.routes');
 const permissionRoutes = require('./modules/permissions/permissions.routes');
 const roleRoutes = require('./modules/roles/roles.routes');
-const sessionRoutes = require('./modules/sessions/sessions.routes');
+// const sessionRoutes = require('./modules/sessions/sessions.routes');
 const healthRoutes = require('./health/health.routes');
 const metricsRoutes = require('./metrics/metrics.routes');
 const docsRoutes = require('./docs/docs.routes');
@@ -165,29 +165,13 @@ app.use('/api/auth',
   authLimiter, 
   authRoutes
 );
-
-// Routes d'inscription (sous /api/auth)
-app.use('/api/auth', registrationRoutes);
-
-// Routes de gestion des utilisateurs
-app.use('/api/users', usersRoutes);
-
-// Routes de gestion des personnes
+// app.use('/api/auth', registrationRoutes);
 app.use('/api/people', peopleRoutes);
-
-// Routes de gestion des autorisations
+app.use('/api/users', usersRoutes);
 app.use('/api/authorizations', authorizationRoutes);
-
-// Routes de gestion des menus
 app.use('/api/menus', menuRoutes);
-
-// Routes de gestion des permissions
 app.use('/api/permissions', permissionRoutes);
-
-// Routes de gestion des rôles
 app.use('/api/roles', roleRoutes);
-
-// Routes de gestion des sessions (temporairement désactivé)
 // app.use('/api/sessions', sessionRoutes);
 
 // Routes de monitoring et santé
@@ -206,14 +190,8 @@ app.get('/api/docs', (req, res) => {
     message: 'Documentation API',
     endpoints: {
       auth: '/api/auth',
-      registration: '/api/auth',
       people: '/api/people',
       users: '/api/users',
-      authorizations: '/api/authorizations',
-      menus: '/api/menus',
-      permissions: '/api/permissions',
-      roles: '/api/roles',
-      sessions: '/api/sessions (temporairement désactivé)',
       health: '/health',
       metrics: '/metrics',
       docs: '/docs',
