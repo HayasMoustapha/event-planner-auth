@@ -139,21 +139,21 @@ router.post('/change-password',
  * Routes d'administration - permissions spécifiques requises
  */
 
-// Récupérer les OTP d'un utilisateur
-router.get('/otp/user/:userId', 
+// Récupérer les OTP d'une personne
+router.get('/otp/person/:personId', 
   rbacMiddleware.requirePermission('otp.read'),
   authController.getUserOtps
 );
 
-// Invalider les OTP d'un utilisateur
-router.post('/otp/user/:userId/invalidate', 
+// Invalider les OTP d'une personne
+router.post('/otp/person/:personId/invalidate', 
   rbacMiddleware.requirePermission('otp.manage'),
   authValidation.validateInvalidateUserOtps,
   authController.invalidateUserOtps
 );
 
-// Vérifier si un utilisateur a des OTP actifs
-router.get('/otp/user/:userId/active', 
+// Vérifier si une personne a des OTP actifs
+router.get('/otp/person/:personId/active', 
   rbacMiddleware.requirePermission('otp.read'),
   authController.hasActiveOtp
 );

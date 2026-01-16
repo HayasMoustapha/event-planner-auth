@@ -92,31 +92,31 @@ class AuthController {
    */
   async generateEmailOtp(req, res, next) {
     try {
-      const { email, userId, expiresInMinutes = 15 } = req.body;
+      const { email, personId, expiresInMinutes = 15 } = req.body;
       
-      if (!email && !userId) {
+      if (!email && !personId) {
         return res.status(400).json(createResponse(
           false,
-          'Email ou ID utilisateur requis'
+          'Email ou ID personne requis'
         ));
       }
 
-      let targetUserId = userId;
+      let targetPersonId = personId;
       
-      // Si seul l'email est fourni, récupérer l'utilisateur
-      if (!userId && email) {
-        const usersRepository = require('../users/users.repository');
-        const user = await usersRepository.findByEmail(email);
-        if (!user) {
+      // Si seul l'email est fourni, récupérer la personne
+      if (!personId && email) {
+        const peopleRepository = require('../people/people.repository');
+        const person = await peopleRepository.findByEmail(email);
+        if (!person) {
           return res.status(404).json(createResponse(
             false,
-            'Utilisateur non trouvé pour cet email'
+            'Personne non trouvée pour cet email'
           ));
         }
-        targetUserId = user.id;
+        targetPersonId = person.id;
       }
 
-      const otp = await otpService.generateEmailOtp(targetUserId, email, expiresInMinutes, req.user?.id);
+      const otp = await otpService.generateEmailOtp(targetPersonId, email, expiresInMinutes, req.user?.id);
       
       // Envoyer l'OTP par email
       await emailService.sendOTP(email, otp.code, 'login', {
@@ -126,7 +126,7 @@ class AuthController {
       
       logger.auth('OTP email generated', {
         email,
-        userId: targetUserId,
+        personId: targetPersonId,
         expiresInMinutes,
         ip: req.ip
       });
@@ -153,36 +153,36 @@ class AuthController {
    */
   async generatePhoneOtp(req, res, next) {
     try {
-      const { phone, userId, expiresInMinutes = 15 } = req.body;
+      const { phone, personId, expiresInMinutes = 15 } = req.body;
       
-      if (!phone && !userId) {
+      if (!phone && !personId) {
         return res.status(400).json(createResponse(
           false,
-          'Téléphone ou ID utilisateur requis'
+          'Téléphone ou ID personne requis'
         ));
       }
 
-      let targetUserId = userId;
+      let targetPersonId = personId;
       
-      // Si seul le téléphone est fourni, récupérer l'utilisateur
-      if (!userId && phone) {
-        const usersRepository = require('../users/users.repository');
-        const user = await usersRepository.findByPhone(phone);
-        if (!user) {
+      // Si seul le téléphone est fourni, récupérer la personne
+      if (!personId && phone) {
+        const peopleRepository = require('../people/people.repository');
+        const person = await peopleRepository.findByPhone(phone);
+        if (!person) {
           return res.status(404).json(createResponse(
             false,
-            'Utilisateur non trouvé pour ce numéro de téléphone'
+            'Personne non trouvée pour ce numéro de téléphone'
           ));
         }
-        targetUserId = user.id;
+        targetPersonId = person.id;
       }
 
-      const otp = await otpService.generatePhoneOtp(targetUserId, phone, expiresInMinutes, req.user?.id);
+      const otp = await otpService.generatePhoneOtp(targetPersonId, phone, expiresInMinutes, req.user?.id);
       
       // TODO: Envoyer l'OTP par SMS (service SMS)
       logger.auth('OTP phone generated', {
         phone,
-        userId: targetUserId,
+        personId: targetPersonId,
         expiresInMinutes,
         ip: req.ip
       });
@@ -209,7 +209,7 @@ class AuthController {
    */
   async verifyEmailOtp(req, res, next) {
     try {
-      const { email, code, userId } = req.body;
+      const { email, code, personId } = req.body;
       
       if (!email || !code) {
         return res.status(400).json(createResponse(
@@ -218,7 +218,7 @@ class AuthController {
         ));
       }
 
-      const result = await otpService.verifyEmailOtp(code, email, userId);
+      const result = await otpService.verifyEmailOtp(code, email, personId);
       
       res.status(200).json(createResponse(
         true,
@@ -238,7 +238,7 @@ class AuthController {
    */
   async verifyPhoneOtp(req, res, next) {
     try {
-      const { phone, code, userId } = req.body;
+      const { phone, code, personId } = req.body;
       
       if (!phone || !code) {
         return res.status(400).json(createResponse(
@@ -247,7 +247,7 @@ class AuthController {
         ));
       }
 
-      const result = await otpService.verifyPhoneOtp(code, phone, userId);
+      const result = await otpService.verifyPhoneOtp(code, phone, personId);
       
       res.status(200).json(createResponse(
         true,
@@ -353,17 +353,17 @@ class AuthController {
         ));
       }
 
-      const usersRepository = require('../users/users.repository');
-      const user = await usersRepository.findByEmail(email);
+      const peopleRepository = require('../people/people.repository');
+      const person = await peopleRepository.findByEmail(email);
       
-      if (!user) {
+      if (!person) {
         return res.status(404).json(createResponse(
           false,
-          'Utilisateur non trouvé pour cet email'
+          'Personne non trouvée pour cet email'
         ));
       }
 
-      const otp = await otpService.generatePasswordResetOtp(user.id, email);
+      const otp = await otpService.generatePasswordResetOtp(person.id, email);
       
       // Envoyer l'OTP par email
       await emailService.sendPasswordResetEmail(email, otp.code, {
@@ -373,7 +373,7 @@ class AuthController {
       
       logger.security('Password reset OTP generated', {
         email,
-        userId: user.id,
+        personId: person.id,
         ip: req.ip
       });
       
@@ -407,10 +407,21 @@ class AuthController {
         ));
       }
 
-      // Vérifier l'OTP de réinitialisation
-      const otpResult = await otpService.verifyPasswordResetOtp(code, email);
+      // Récupérer la personne
+      const peopleRepository = require('../people/people.repository');
+      const person = await peopleRepository.findByEmail(email);
       
-      // Récupérer l'utilisateur
+      if (!person) {
+        return res.status(404).json(createResponse(
+          false,
+          'Personne non trouvée'
+        ));
+      }
+
+      // Vérifier l'OTP de réinitialisation
+      const otpResult = await otpService.verifyPasswordResetOtp(code, email, person.id);
+      
+      // Récupérer l'utilisateur associé
       const usersRepository = require('../users/users.repository');
       const user = await usersRepository.findByEmail(email);
       
@@ -449,17 +460,17 @@ class AuthController {
    */
   async getUserOtps(req, res, next) {
     try {
-      const { userId } = req.params;
+      const { personId } = req.params;
       const { type } = req.query;
       
-      if (!userId) {
+      if (!personId) {
         return res.status(400).json(createResponse(
           false,
-          'ID utilisateur requis'
+          'ID personne requis'
         ));
       }
 
-      const otps = await otpService.getUserOtps(parseInt(userId), type);
+      const otps = await otpService.getPersonOtps(parseInt(personId), type);
       
       res.status(200).json(createResponse(
         true,
@@ -479,17 +490,17 @@ class AuthController {
    */
   async invalidateUserOtps(req, res, next) {
     try {
-      const { userId } = req.params;
+      const { personId } = req.params;
       const { type } = req.body;
       
-      if (!userId) {
+      if (!personId) {
         return res.status(400).json(createResponse(
           false,
-          'ID utilisateur requis'
+          'ID personne requis'
         ));
       }
 
-      const invalidatedCount = await otpService.invalidateUserOtps(parseInt(userId), type);
+      const invalidatedCount = await otpService.invalidatePersonOtps(parseInt(personId), type);
       
       res.status(200).json(createResponse(
         true,
