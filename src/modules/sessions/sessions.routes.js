@@ -1,11 +1,10 @@
 const express = require('express');
-const SessionController = require('./sessions.controller');
+const sessionController = require('./sessions.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
 const rbacMiddleware = require('../../middlewares/rbac.middleware');
 const sessionValidation = require('./sessions.validation');
 
 const router = express.Router();
-const sessionController = new SessionController();
 
 /**
  * Routes publiques pour la gestion des sessions
@@ -67,7 +66,7 @@ router.get('/history/:userId?',
 
 // Récupérer les statistiques des sessions
 router.get('/stats', 
-  sessionValidation.validateGetSessionStats,
+  sessionController.validateGetSessionStats,
   sessionController.getSessionStats
 );
 
