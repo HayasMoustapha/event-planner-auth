@@ -6,12 +6,18 @@ Le système RBAC (Role-Based Access Control) d'Event Planner permet une gestion 
 
 ## Concepts Clés
 
-### 1. Utilisateurs (Users)
-- Entité qui se connecte au système
-- Possède un profil (personne associée)
-- Peut avoir plusieurs rôles
+### 1. Personnes (People)
+- Entité de base pour les informations personnelles
+- Contient : nom, prénom, email, téléphone, photo
+- Liée aux utilisateurs via `person_id`
+- Une personne peut avoir zéro ou plusieurs utilisateurs
 
-### 2. Rôles (Roles)
+### 2. Utilisateurs (Users)
+- Entité qui se connecte au système
+- Liée à une personne via `person_id`
+- Possède un compte avec email, mot de passe, username
+- Peut avoir plusieurs rôles via la table `accesses`
+- Statuts : active, inactive, lock(Roles)
 - Définissent un ensemble de permissions
 - Peuvent être assignés à plusieurs utilisateurs
 - Hiérarchie implicite par les permissions
@@ -21,9 +27,15 @@ Le système RBAC (Role-Based Access Control) d'Event Planner permet une gestion 
 - Format : `resource.action`
 - Exemples : `users.create`, `roles.read`
 
-### 4. Ressources (Resources)
-- Entités du système : users, roles, permissions, menus, people, sessions, auth
-- Actions possibles : create, read, update, delete, list, assign, revoke
+### 4. OTP (One-Time Password)
+- Codes temporaires pour vérification
+- Liés aux personnes via `person_id`
+- Utilisés pour : vérification email, réinitialisation mot de passe
+- Durée de vie configurable (défaut: 15 minutes)
+
+### 5. Ressources (Resources)
+- Entités du système : people, users, roles, permissions, menus, sessions, auth
+- Actions possibles : create, read, update, delete, list, assign, revoke, manage
 
 ## Rôles Prédéfinis
 
@@ -121,6 +133,11 @@ Le système RBAC (Role-Based Access Control) d'Event Planner permet une gestion 
 - `people.delete` : Supprimer une personne
 - `people.list` : Lister les personnes
 
+#### OTP
+- `otp.generate` : Générer un code OTP
+- `otp.verify` : Vérifier un code OTP
+- `otp.manage` : Gérer les codes OTP
+
 #### Sessions
 - `sessions.create` : Créer une session
 - `sessions.read` : Lire les informations session
@@ -206,6 +223,10 @@ const roleAuthorizations = await authorizationsRepository.getRoleAuthorizations(
 const hasMenuPermission = roleAuthorizations.some(auth => 
   auth.permission.code === 'users.read' && auth.menu.id === menuId
 );
+
+// Vérification OTP (nouveau)
+const personOtps = await otpRepository.findByPersonId(personId, 'email');
+const hasActiveOtp = personOtps.some(otp => !otp.is_used && otp.expires_at > new Date());
 ```
 
 ## Gestion des Menus
@@ -305,6 +326,59 @@ Les menus sont filtrés dynamiquement selon les rôles de l'utilisateur :
 1. Vérification authentification ✓
 2. Vérification statut access = 'inactive' ✗
 3. Accès refusé (403)
+```
+
+## Flux OTP (One-Time Password)
+
+### Vue d'ensemble
+Les OTP sont utilisés pour sécuriser les opérations sensibles comme :
+- Vérification d'email lors de l'inscription
+- Réinitialisation de mot de passe
+- Authentification à deux facteurs
+
+### Structure OTP
+```sql
+CREATE TABLE otps (
+    id BIGSERIAL PRIMARY KEY,
+    person_id BIGINT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+    otp_code VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    is_used BOOLEAN NOT NULL DEFAULT FALSE,
+    purpose VARCHAR(255),
+    created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    updated_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    deleted_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    uid UUID NOT NULL DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP
+);
+```
+
+### Flux d'inscription avec OTP
+1. **Inscription** : Création personne + utilisateur (statut: inactive)
+2. **Génération OTP** : Code généré et envoyé à l'email
+3. **Vérification** : Validation du code et activation du compte
+4. **Connexion** : Accès autorisé après vérification
+
+### Sécurité OTP
+- **Durée de vie** : 15 minutes par défaut (configurable)
+- **Limite de génération** : Maximum 3 OTP actifs par personne/purpose
+- **Usage unique** : Chaque OTP ne peut être utilisé qu'une seule fois
+- **Nettoyage automatique** : Suppression des OTP expirés
+
+### Exemples d'utilisation
+```javascript
+// Générer OTP pour vérification email
+const otp = await otpService.generateEmailOtp(personId, email);
+
+// Vérifier l'OTP
+const verification = await otpService.verifyEmailOtp(code, email, personId);
+
+// Réinitialiser mot de passe
+const resetOtp = await otpService.generatePasswordResetOtp(personId, email);
+const newPassword = 'NewSecurePassword123!';
+await authService.resetPasswordWithOtp(email, resetOtp.otp_code, newPassword);
 ```
 
 ## Migration et Évolution
