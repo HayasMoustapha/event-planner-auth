@@ -11,7 +11,7 @@ BEGIN;
 DO $$
 BEGIN
     RAISE NOTICE '🚀 Démarrage du processus de seed du système RBAC...';
-    RAISE NOTICE '📋 Étapes prévues: Rôles → Permissions → Menus → Administrateur';
+    RAISE NOTICE '📋 Étapes prévues: Rôles → Permissions → Menus → Autorizations → Admin';
     RAISE NOTICE '⏰ Heure de début: %', NOW();
 END $$;
 
@@ -21,7 +21,7 @@ END $$;
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '📋 ÉTAPE 1/4: Création des rôles système...';
+    RAISE NOTICE '📋 ÉTAPE 1/5: Création des rôles système...';
 END $$;
 
 -- Exécuter le seed des rôles
@@ -32,7 +32,7 @@ DO $$
 DECLARE
     roles_count INT;
 BEGIN
-    SELECT COUNT(*) INTO roles_count FROM roles WHERE is_active = true;
+    SELECT COUNT(*) INTO roles_count FROM roles;
     RAISE NOTICE '✅ Rôles créés: % rôles actifs', roles_count;
     
     IF roles_count = 0 THEN
@@ -46,7 +46,7 @@ END $$;
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '🔑 ÉTAPE 2/4: Création des permissions système...';
+    RAISE NOTICE '🔑 ÉTAPE 2/5: Création des permissions système...';
 END $$;
 
 -- Exécuter le seed des permissions
@@ -56,12 +56,12 @@ END $$;
 DO $$
 DECLARE
     permissions_count INT;
-    categories_count INT;
+    groups_count INT;
 BEGIN
-    SELECT COUNT(*) INTO permissions_count FROM permissions WHERE is_active = true;
-    SELECT COUNT(DISTINCT category) INTO categories_count FROM permissions WHERE is_active = true;
+    SELECT COUNT(*) INTO permissions_count FROM permissions;
+    SELECT COUNT(DISTINCT "group") INTO groups_count FROM permissions;
     
-    RAISE NOTICE '✅ Permissions créées: % permissions dans % catégories', permissions_count, categories_count;
+    RAISE NOTICE '✅ Permissions créées: % permissions dans % groupes', permissions_count, groups_count;
     
     IF permissions_count = 0 THEN
         RAISE EXCEPTION '❌ Erreur: Aucune permission n''a été créée';
@@ -74,7 +74,7 @@ END $$;
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '📋 ÉTAPE 3/4: Création des menus système...';
+    RAISE NOTICE '📋 ÉTAPE 3/5: Création des menus système...';
 END $$;
 
 -- Exécuter le seed des menus
@@ -85,14 +85,12 @@ DO $$
 DECLARE
     menus_count INT;
     parent_menus_count INT;
-    menu_permissions_count INT;
 BEGIN
-    SELECT COUNT(*) INTO menus_count FROM menus WHERE is_active = true;
-    SELECT COUNT(*) INTO parent_menus_count FROM menus WHERE parent_id IS NULL AND is_active = true;
-    SELECT COUNT(*) INTO menu_permissions_count FROM menu_permissions;
+    SELECT COUNT(*) INTO menus_count FROM menus;
+    SELECT COUNT(*) INTO parent_menus_count FROM menus WHERE parent_id IS NULL;
     
-    RAISE NOTICE '✅ Menus créés: % menus (% parents) avec % associations permissions', 
-                 menus_count, parent_menus_count, menu_permissions_count;
+    RAISE NOTICE '✅ Menus créés: % menus (% parents)', 
+                 menus_count, parent_menus_count;
     
     IF menus_count = 0 THEN
         RAISE EXCEPTION '❌ Erreur: Aucun menu n''a été créé';
@@ -100,12 +98,38 @@ BEGIN
 END $$;
 
 -- ========================================
--- ÉTAPE 4: CRÉATION DE L'ADMINISTRATEUR
+-- ÉTAPE 4: CRÉATION DES AUTORISATIONS
 -- ========================================
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '👤 ÉTAPE 4/4: Création de l''administrateur par défaut...';
+    RAISE NOTICE '🔗 ÉTAPE 4/5: Création des autorisations système...';
+END $$;
+
+-- Exécuter le seed des autorisations
+\i database/seeds/seeds/authorizations.seed.sql
+
+-- Vérification
+DO $$
+DECLARE
+    authorizations_count INT;
+BEGIN
+    SELECT COUNT(*) INTO authorizations_count FROM authorizations;
+    
+    RAISE NOTICE '✅ Autorisations créées: % associations rôle-permission-menu', authorizations_count;
+    
+    IF authorizations_count = 0 THEN
+        RAISE EXCEPTION '❌ Erreur: Aucune autorisation n''a été créée';
+    END IF;
+END $$;
+
+-- ========================================
+-- ÉTAPE 5: CRÉATION DE L'ADMINISTRATEUR
+-- ========================================
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '👤 ÉTAPE 5/5: Création de l''administrateur par défaut...';
 END $$;
 
 -- Exécuter le seed de l'admin
@@ -114,24 +138,14 @@ END $$;
 -- Vérification
 DO $$
 DECLARE
-    admin_user_id INT;
+    admin_user_id BIGINT;
     admin_roles_count INT;
-    admin_permissions_count INT;
-    admin_menus_count INT;
 BEGIN
     SELECT id INTO admin_user_id FROM users WHERE username = 'admin';
-    SELECT COUNT(*) INTO admin_roles_count FROM user_roles WHERE user_id = admin_user_id;
-    SELECT COUNT(*) INTO admin_permissions_count 
-    FROM role_permissions rp 
-    JOIN user_roles ur ON rp.role_id = ur.role_id 
-    WHERE ur.user_id = admin_user_id;
-    SELECT COUNT(*) INTO admin_menus_count 
-    FROM role_menus rm 
-    JOIN user_roles ur ON rm.role_id = ur.role_id 
-    WHERE ur.user_id = admin_user_id;
+    SELECT COUNT(*) INTO admin_roles_count FROM accesses WHERE user_id = admin_user_id;
     
-    RAISE NOTICE '✅ Administrateur créé: ID=% avec % rôles, % permissions, % menus', 
-                 admin_user_id, admin_roles_count, admin_permissions_count, admin_menus_count;
+    RAISE NOTICE '✅ Administrateur créé: ID=% avec % rôles', 
+                 admin_user_id, admin_roles_count;
     
     IF admin_user_id IS NULL THEN
         RAISE EXCEPTION '❌ Erreur: L''administrateur n''a pas été créé';
@@ -160,14 +174,14 @@ DECLARE
     total_menu_permissions INT;
 BEGIN
     -- Compter tous les éléments
-    SELECT COUNT(*) INTO total_roles FROM roles WHERE is_active = true;
-    SELECT COUNT(*) INTO total_permissions FROM permissions WHERE is_active = true;
-    SELECT COUNT(*) INTO total_menus FROM menus WHERE is_active = true;
-    SELECT COUNT(*) INTO total_users FROM users WHERE is_active = true;
-    SELECT COUNT(*) INTO total_user_roles FROM user_roles;
-    SELECT COUNT(*) INTO total_role_permissions FROM role_permissions;
-    SELECT COUNT(*) INTO total_role_menus FROM role_menus;
-    SELECT COUNT(*) INTO total_menu_permissions FROM menu_permissions;
+    SELECT COUNT(*) INTO total_roles FROM roles;
+    SELECT COUNT(*) INTO total_permissions FROM permissions;
+    SELECT COUNT(*) INTO total_menus FROM menus;
+    SELECT COUNT(*) INTO total_users FROM users;
+    SELECT COUNT(*) INTO total_user_roles FROM accesses;
+    SELECT COUNT(*) INTO total_role_permissions FROM authorizations;
+    SELECT COUNT(*) INTO total_role_menus FROM authorizations;
+    SELECT COUNT(*) INTO total_menu_permissions FROM authorizations;
     
     -- Afficher le résumé
     RAISE NOTICE '';
@@ -178,9 +192,7 @@ BEGIN
     RAISE NOTICE '🔑 Permissions: %', total_permissions;
     RAISE NOTICE '📋 Menus: %', total_menus;
     RAISE NOTICE '🔗 Associations utilisateur-rôle: %', total_user_roles;
-    RAISE NOTICE '🔗 Associations rôle-permission: %', total_role_permissions;
-    RAISE NOTICE '🔗 Associations rôle-menu: %', total_role_menus;
-    RAISE NOTICE '🔗 Associations menu-permission: %', total_menu_permissions;
+    RAISE NOTICE '🔗 Associations rôle-permission-menu: %', total_role_permissions;
     RAISE NOTICE '================================';
     
     -- Vérifications critiques
@@ -227,40 +239,27 @@ END $$;
 -- Test de validation des permissions de l'admin
 DO $$
 DECLARE
-    admin_user_id INT;
+    admin_user_id BIGINT;
     has_all_permissions BOOLEAN;
-    has_all_menus BOOLEAN;
 BEGIN
     SELECT id INTO admin_user_id FROM users WHERE username = 'admin';
     
-    -- Vérifier si l'admin a toutes les permissions
+    -- Vérifier si l'admin a toutes les permissions (via super_admin role)
     SELECT (
-        SELECT COUNT(*) FROM permissions WHERE is_active = true
+        SELECT COUNT(*) FROM permissions
     ) = (
         SELECT COUNT(DISTINCT p.id) 
         FROM permissions p 
-        JOIN role_permissions rp ON p.id = rp.permission_id 
-        JOIN user_roles ur ON rp.role_id = ur.role_id 
-        WHERE ur.user_id = admin_user_id
+        JOIN authorizations auth ON p.id = auth.permission_id 
+        JOIN accesses acc ON auth.role_id = acc.role_id 
+        WHERE acc.user_id = admin_user_id
     ) INTO has_all_permissions;
     
-    -- Vérifier si l'admin a accès à tous les menus
-    SELECT (
-        SELECT COUNT(*) FROM menus WHERE is_active = true
-    ) = (
-        SELECT COUNT(DISTINCT m.id) 
-        FROM menus m 
-        JOIN role_menus rm ON m.id = rm.menu_id 
-        JOIN user_roles ur ON rm.role_id = ur.role_id 
-        WHERE ur.user_id = admin_user_id
-    ) INTO has_all_menus;
-    
-    IF has_all_permissions AND has_all_menus THEN
+    IF has_all_permissions THEN
         RAISE NOTICE '✅ Validation réussie: L''administrateur a tous les accès requis';
     ELSE
         RAISE WARNING '⚠️  Attention: L''administrateur n''a pas tous les accès';
         RAISE NOTICE '   Permissions complètes: %', has_all_permissions;
-        RAISE NOTICE '   Accès menus complets: %', has_all_menus;
     END IF;
 END $$;
 
@@ -300,25 +299,24 @@ COMMIT;
 
 -- Afficher les catégories de permissions créées
 SELECT 
-    '📂 Catégories de permissions:' as info,
-    category,
+    '📂 Groupes de permissions:' as info,
+    "group",
     COUNT(*) as permissions_count,
-    STRING_AGG(SUBSTRING(name FROM 1 FOR POSITION('.' IN name) - 1), ', ' ORDER BY SUBSTRING(name FROM 1 FOR POSITION('.' IN name) - 1)) as resources
+    STRING_AGG(SUBSTRING(code FROM 1 FOR POSITION('.' IN code) - 1), ', ' ORDER BY SUBSTRING(code FROM 1 FOR POSITION('.' IN code) - 1)) as resources
 FROM permissions 
-WHERE is_active = true
-GROUP BY category 
-ORDER BY category;
+GROUP BY "group" 
+ORDER BY "group";
 
 -- Afficher la structure des menus principaux
 SELECT 
     '🌐 Menus principaux:' as info,
     label,
-    path,
+    route,
     CASE WHEN parent_id IS NULL THEN '📁 Parent' ELSE '📄 Sous-menu' END as menu_type,
-    order_index
+    sort_order
 FROM menus 
-WHERE parent_id IS NULL AND is_active = true
-ORDER BY order_index
+WHERE parent_id IS NULL
+ORDER BY sort_order
 LIMIT 10;
 
 \echo ''
