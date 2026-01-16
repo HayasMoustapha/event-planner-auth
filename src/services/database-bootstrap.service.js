@@ -50,6 +50,10 @@ class DatabaseBootstrap {
       await this.validateInstallation();
       actions.push('Validation de l\'installation');
 
+      // Phase 6: Garantir les permissions super-admin
+      await this.ensureSuperAdminPermissions();
+      actions.push('Garantie des permissions super-admin');
+
       await this.releaseLock();
 
       const duration = Date.now() - startTime;
@@ -337,6 +341,51 @@ class DatabaseBootstrap {
       `);
       
       return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Garantit que le super-admin ait toutes les permissions disponibles
+   */
+  async ensureSuperAdminPermissions() {
+    const client = await connection.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Récupérer le rôle super_admin
+      const roleResult = await client.query(`
+        SELECT id FROM roles WHERE code = 'super_admin'
+      `);
+
+      if (roleResult.rows.length === 0) {
+        console.log('⚠️  Rôle super_admin non trouvé, création des permissions ignorée');
+        return;
+      }
+
+      const superAdminRoleId = roleResult.rows[0].id;
+
+      // Récupérer toutes les permissions
+      const permissionsResult = await client.query(`
+        SELECT id FROM permissions
+      `);
+
+      // Insérer toutes les permissions manquantes pour le super_admin
+      for (const permission of permissionsResult.rows) {
+        await client.query(`
+          INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
+          VALUES ($1, $2, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ON CONFLICT (role_id, permission_id, menu_id) DO NOTHING
+        `, [superAdminRoleId, permission.id]);
+      }
+
+      await client.query('COMMIT');
+      console.log(`✅ Super-admin permissions garanties: ${permissionsResult.rows.length} permissions`);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('❌ Erreur lors de la garantie des permissions super-admin:', error.message);
+      throw error;
     } finally {
       client.release();
     }
