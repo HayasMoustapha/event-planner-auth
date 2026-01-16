@@ -25,6 +25,11 @@
       "key": "otpCode",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "personId",
+      "value": "",
+      "type": "string"
     }
   ],
   "auth": {
@@ -373,6 +378,23 @@
       "item": [
         {
           "name": "1. Générer OTP Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder l'email pour les prochaines requêtes",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('userEmail', responseJson.data.identifier);",
+                  "    console.log('OTP généré pour:', responseJson.data.identifier);",
+                  "    console.log('Expire le:', responseJson.data.expiresAt);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -417,6 +439,21 @@
         },
         {
           "name": "3. Vérifier OTP Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Si la vérification réussit, effacer le code OTP",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('otpCode', '');",
+                  "    console.log('OTP vérifié avec succès!');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -439,6 +476,22 @@
         },
         {
           "name": "4. Générer OTP Réinitialisation MDP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Sauvegarder l'email pour la réinitialisation",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('userEmail', responseJson.data.identifier);",
+                  "    console.log('OTP de réinitialisation généré pour:', responseJson.data.identifier);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -461,6 +514,21 @@
         },
         {
           "name": "5. Réinitialiser MDP avec OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Si la réinitialisation réussit, effacer les variables sensibles",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('otpCode', '');",
+                  "    console.log('Mot de passe réinitialisé avec succès!');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -613,6 +681,94 @@
               "raw": "{{baseUrl}}/api/people/1",
               "host": ["{{baseUrl}}"],
               "path": ["api", "people", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔧 Administration OTP",
+      "item": [
+        {
+          "name": "1. Lister les OTP d'une personne",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/person/{{personId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "person", "{{personId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Vérifier si une personne a des OTP actifs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/person/{{personId}}/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "person", "{{personId}}", "active"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Invalider les OTP d'une personne",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"email\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/person/{{personId}}/invalidate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "person", "{{personId}}", "invalidate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Nettoyer les OTP expirés",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/cleanup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "cleanup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Statistiques OTP",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "stats"]
             }
           },
           "response": []
