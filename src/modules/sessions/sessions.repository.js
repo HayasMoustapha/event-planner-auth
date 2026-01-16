@@ -290,7 +290,7 @@ class SessionRepository {
    */
   async isTokenBlacklisted(token) {
     const query = `
-      SELECT id FROM blacklisted_tokens 
+      SELECT id FROM personal_access_tokens 
       WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP
     `;
 
@@ -299,7 +299,7 @@ class SessionRepository {
       return result.rows.length > 0;
     } catch (error) {
       // Si la table n'existe pas, considérer que le token n'est pas blacklisté
-      if (error.message.includes('relation "blacklisted_tokens" does not exist')) {
+      if (error.message.includes('relation "personal_access_tokens" does not exist')) {
         return false;
       }
       throw new Error(`Erreur lors de la vérification du token blacklisté: ${error.message}`);

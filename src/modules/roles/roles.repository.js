@@ -288,8 +288,8 @@ class RoleRepository {
     const query = `
       SELECT p.id, p.code, p.description, p."group", p.status
       FROM permissions p
-      INNER JOIN role_permissions rp ON p.id = rp.permission_id
-      WHERE rp.role_id = $1 AND rp.status = 'active' AND p.status = 'active'
+      INNER JOIN authorizations a ON p.id = a.permission_id
+      WHERE a.role_id = $1 AND a.permission_id = p.id AND p.status = 'active'
       ORDER BY p."group" ASC, p.code ASC
     `;
 
@@ -328,9 +328,10 @@ class RoleRepository {
     ]);
 
     const query = `
-      INSERT INTO role_permissions (role_id, permission_id, created_by, created_at)
-      VALUES ${values}
-      RETURNING id
+      INSERT INTO authorizations (role_id, permission_id, menu_id, created_by, created_at)
+      SELECT $1, p.id, 1, $2, CURRENT_TIMESTAMP
+      FROM permissions p
+      WHERE p.id = ANY($3)
     `;
 
     try {
@@ -350,7 +351,7 @@ class RoleRepository {
    * @returns {Promise<number>} Nombre d'associations supprimées
    */
   async removeAllPermissions(roleId) {
-    const query = 'DELETE FROM role_permissions WHERE role_id = $1';
+    const query = 'DELETE FROM authorizations WHERE role_id = $1';
 
     try {
       const result = await connection.query(query, [roleId]);

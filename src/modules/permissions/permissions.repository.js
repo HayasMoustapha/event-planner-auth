@@ -328,8 +328,8 @@ class PermissionRepository {
     const query = `
       SELECT p.id, p.code, p.label, p."group", p.description, p.status
       FROM permissions p
-      INNER JOIN role_permissions rp ON p.id = rp.permission_id
-      WHERE rp.role_id = $1 AND rp.status = 'active' AND p.status = 'active'
+      INNER JOIN authorizations a ON p.id = a.permission_id
+      WHERE a.role_id = $1 AND a.permission_id = p.id AND p.status = 'active'
       ORDER BY p."group" ASC, p.code ASC
     `;
 
@@ -350,11 +350,11 @@ class PermissionRepository {
     const query = `
       SELECT DISTINCT p.id, p.code, p.label, p."group", p.description, p.status
       FROM permissions p
-      INNER JOIN role_permissions rp ON p.id = rp.permission_id
-      INNER JOIN accesses a ON rp.role_id = a.role_id
-      WHERE a.user_id = $1 
-        AND a.status = 'active' 
-        AND rp.status = 'active' 
+      INNER JOIN authorizations a ON p.id = a.permission_id
+      INNER JOIN accesses acc ON a.role_id = acc.role_id
+      WHERE acc.user_id = $1 
+        AND acc.status = 'active' 
+        AND a.permission_id = p.id
         AND p.status = 'active'
       ORDER BY p."group" ASC, p.code ASC
     `;
@@ -377,12 +377,12 @@ class PermissionRepository {
     const query = `
       SELECT 1
       FROM permissions p
-      INNER JOIN role_permissions rp ON p.id = rp.permission_id
-      INNER JOIN accesses a ON rp.role_id = a.role_id
-      WHERE a.user_id = $1 
+      INNER JOIN authorizations a ON p.id = a.permission_id
+      INNER JOIN accesses acc ON a.role_id = acc.role_id
+      WHERE acc.user_id = $1 
         AND p.code = $2
-        AND a.status = 'active' 
-        AND rp.status = 'active' 
+        AND acc.status = 'active' 
+        AND a.permission_id = p.id
         AND p.status = 'active'
       LIMIT 1
     `;
