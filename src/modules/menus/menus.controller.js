@@ -20,9 +20,7 @@ class MenuController {
         icon, 
         route, 
         parentMenuId, 
-        sortOrder, 
-        isVisible, 
-        status 
+        sortOrder
       } = req.body;
       const createdBy = req.user?.id;
 
@@ -33,8 +31,6 @@ class MenuController {
         route,
         parentMenuId,
         sortOrder,
-        isVisible,
-        status,
         createdBy
       });
 
@@ -60,8 +56,6 @@ class MenuController {
         page = 1,
         limit = 10,
         search,
-        status,
-        isVisible,
         parentMenuId,
         sortBy = 'sort_order',
         sortOrder = 'ASC'
@@ -71,8 +65,6 @@ class MenuController {
         page: parseInt(page),
         limit: parseInt(limit),
         search,
-        status,
-        isVisible: isVisible !== undefined ? isVisible === 'true' : undefined,
         parentMenuId: parentMenuId ? parseInt(parentMenuId) : undefined,
         sortBy,
         sortOrder

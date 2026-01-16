@@ -100,8 +100,6 @@ class MenuService {
       route: route?.trim() || null,
       parentMenuId,
       sortOrder,
-      isVisible,
-      status,
       createdBy
     });
 
@@ -120,11 +118,7 @@ class MenuService {
       page = 1,
       limit = 10,
       search,
-      status,
-      isVisible,
-      parentMenuId,
-      sortBy = 'sort_order',
-      sortOrder = 'ASC'
+      parentMenuId
     } = options;
 
     // Validation des options
@@ -136,27 +130,11 @@ class MenuService {
       throw new Error('La limite doit être entre 1 et 100');
     }
 
-    if (sortBy && !['label', 'description', 'route', 'sort_order', 'status', 'created_at', 'updated_at'].includes(sortBy)) {
-      throw new Error('Le champ de tri est invalide');
-    }
-
-    if (sortOrder && !['ASC', 'DESC'].includes(sortOrder.toUpperCase())) {
-      throw new Error('L\'ordre de tri doit être ASC ou DESC');
-    }
-
-    if (status && !['active', 'inactive', 'deleted'].includes(status)) {
-      throw new Error('Le statut de filtre est invalide');
-    }
-
     return await menuRepository.findAll({
       page,
       limit,
-      search: search?.trim(),
-      status,
-      isVisible,
-      parentMenuId,
-      sortBy,
-      sortOrder
+      search,
+      parentMenuId
     });
   }
 

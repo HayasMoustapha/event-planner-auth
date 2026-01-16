@@ -396,23 +396,15 @@ class MenuRepository {
    */
   async getUserMenus(userId) {
     const query = `
-      SELECT DISTINCT m.id, m.label, m.description, m.icon, m.route, 
-             m.parent_id, m.sort_order, m.created_by, m.created_at, m.updated_at
-      FROM menus m
-      INNER JOIN menu_permissions mp ON m.id = mp.menu_id
-      INNER JOIN permissions p ON mp.permission_id = p.id
-      INNER JOIN role_permissions rp ON p.id = rp.permission_id
-      INNER JOIN accesses a ON rp.role_id = a.role_id
-      WHERE a.user_id = $1 
-        AND a.status = 'active'
-        AND rp.status = 'active'
-        AND p.status = 'active'
-        AND m.deleted_at IS NULL
-      ORDER BY m.sort_order ASC, m.label ASC
+      SELECT id, label, description, icon, route, parent_id, sort_order, 
+             created_by, created_at, updated_at
+      FROM menus
+      WHERE deleted_at IS NULL
+      ORDER BY sort_order ASC, label ASC
     `;
 
     try {
-      const result = await connection.query(query, [userId]);
+      const result = await connection.query(query);
       const menus = result.rows;
       
       // Construire l'arborescence
