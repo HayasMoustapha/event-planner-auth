@@ -426,7 +426,7 @@ class AuthController {
       
       // Retourner l'utilisateur sans le mot de passe
       const userResponse = { ...updatedUser };
-      delete userResponse.password_hash;
+      delete userResponse.password;
 
       res.status(200).json(createResponse(
         true,

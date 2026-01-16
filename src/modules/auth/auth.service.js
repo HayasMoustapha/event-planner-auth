@@ -41,7 +41,7 @@ class AuthService {
 
     // Vérifier si le compte est actif
     if (user.status !== 'active') {
-      if (user.status === 'locked') {
+      if (user.status === 'lock') {
         throw new Error('Ce compte est verrouillé. Veuillez contacter l\'administrateur.');
       }
       if (user.status === 'inactive') {
@@ -205,7 +205,7 @@ class AuthService {
 
       // Retourner l'utilisateur sans le mot de passe
       const userResponse = { ...user };
-      delete userResponse.password_hash;
+      delete userResponse.password;
 
       return {
         ...userResponse,
@@ -267,7 +267,7 @@ class AuthService {
     
     // Retourner l'utilisateur sans le mot de passe
     const userResponse = { ...updatedUser };
-    delete userResponse.password_hash;
+    delete userResponse.password;
 
     return {
       success: true,
@@ -379,11 +379,11 @@ class AuthService {
       throw new Error('Utilisateur non trouvé');
     }
 
-    if (user.status === 'locked') {
+    if (user.status === 'lock') {
       throw new Error('Le compte est déjà verrouillé');
     }
 
-    return await usersRepository.updateStatus(userId, 'locked', lockedBy);
+    return await usersRepository.updateStatus(userId, 'lock', lockedBy);
   }
 
   /**
@@ -399,7 +399,7 @@ class AuthService {
       throw new Error('Utilisateur non trouvé');
     }
 
-    if (user.status !== 'locked') {
+    if (user.status !== 'lock') {
       throw new Error('Le compte n\'est pas verrouillé');
     }
 
