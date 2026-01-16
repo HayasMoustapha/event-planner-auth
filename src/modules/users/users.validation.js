@@ -67,8 +67,8 @@ const validateCreate = [
     
   body('status')
     .optional()
-    .isIn(['active', 'inactive', 'locked'])
-    .withMessage('Le statut doit être active, inactive ou locked'),
+    .isIn(['active', 'inactive', 'lock'])
+    .withMessage('Le statut doit être active, inactive ou lock'),
     
   body('personId')
     .optional()
@@ -125,8 +125,8 @@ const validateUpdate = [
     
   body('status')
     .optional()
-    .isIn(['active', 'inactive', 'locked'])
-    .withMessage('Le statut doit être active, inactive ou locked'),
+    .isIn(['active', 'inactive', 'lock'])
+    .withMessage('Le statut doit être active, inactive ou lock'),
     
   body('personId')
     .optional()
@@ -186,8 +186,8 @@ const validateStatusUpdate = [
     
   // Statut obligatoire
   body('status')
-    .isIn(['active', 'inactive', 'locked'])
-    .withMessage('Le statut doit être active, inactive ou locked'),
+    .isIn(['active', 'inactive', 'lock'])
+    .withMessage('Le statut doit être active, inactive ou lock'),
     
   handleValidationErrors
 ];
@@ -235,8 +235,8 @@ const validateQueryParams = [
     
   query('status')
     .optional()
-    .isIn(['active', 'inactive', 'locked'])
-    .withMessage('Le statut doit être active, inactive ou locked'),
+    .isIn(['active', 'inactive', 'lock'])
+    .withMessage('Le statut doit être active, inactive ou lock'),
     
   query('role')
     .optional()

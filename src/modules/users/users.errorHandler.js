@@ -191,7 +191,7 @@ const validateOperation = (req, res, next) => {
   }
   
   // Validation pour les opérations de mise à jour de statut
-  if (req.method === 'PATCH' && req.params.id && req.body.status === 'locked') {
+  if (req.method === 'PATCH' && req.params.id && req.body.status === 'lock') {
     const id = parseInt(req.params.id);
     
     // Empêcher de verrouiller son propre compte

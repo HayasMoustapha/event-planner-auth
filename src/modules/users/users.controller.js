@@ -133,8 +133,8 @@ class UsersController {
       const user = await usersService.create(userData, createdBy);
       
       // Retirer le mot de passe de la réponse
-      if (user.password_hash) {
-        delete user.password_hash;
+      if (user.password) {
+        delete user.password;
       }
       
       res.status(201).json(createResponse(
@@ -164,8 +164,8 @@ class UsersController {
       const user = await usersService.update(parseInt(id), updateData, updatedBy);
       
       // Retirer le mot de passe de la réponse
-      if (user.password_hash) {
-        delete user.password_hash;
+      if (user.password) {
+        delete user.password;
       }
       
       res.status(200).json(createResponse(
@@ -226,8 +226,8 @@ class UsersController {
       const user = await usersService.updatePassword(parseInt(id), currentPassword, newPassword, updatedBy);
       
       // Retirer le mot de passe de la réponse
-      if (user.password_hash) {
-        delete user.password_hash;
+      if (user.password) {
+        delete user.password;
       }
       
       res.status(200).json(createResponse(
@@ -253,8 +253,8 @@ class UsersController {
       const user = await usersService.authenticate(email, password);
       
       // Retirer le mot de passe de la réponse
-      if (user.password_hash) {
-        delete user.password_hash;
+      if (user.password) {
+        delete user.password;
       }
       
       res.status(200).json(createResponse(
@@ -284,8 +284,8 @@ class UsersController {
       const user = await usersService.updateStatus(parseInt(id), status, updatedBy);
       
       // Retirer le mot de passe de la réponse
-      if (user.password_hash) {
-        delete user.password_hash;
+      if (user.password) {
+        delete user.password;
       }
       
       res.status(200).json(createResponse(
@@ -378,8 +378,8 @@ class UsersController {
       const user = await usersService.resetPassword(email, newPassword, updatedBy);
       
       // Retirer le mot de passe de la réponse
-      if (user.password_hash) {
-        delete user.password_hash;
+      if (user.password) {
+        delete user.password;
       }
       
       res.status(200).json(createResponse(
