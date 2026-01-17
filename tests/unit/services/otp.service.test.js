@@ -192,4 +192,62 @@ describe('OtpService', () => {
       expect(otpRepository.deleteExpired).toHaveBeenCalled();
     });
   });
+
+  describe('validateOtpCode', () => {
+    it('should validate OTP code format', () => {
+      expect(service.validateOtpCode('123456')).toBe(true);
+      expect(service.validateOtpCode('abc123')).toBe(false);
+      expect(service.validateOtpCode('12345')).toBe(true);
+      expect(service.validateOtpCode('')).toBe(false);
+      expect(service.validateOtpCode(null)).toBe(false);
+    });
+  });
+
+  describe('generateCode', () => {
+    it('should generate 6-digit code by default', () => {
+      const code = service.generateCode();
+      expect(code).toMatch(/^\d{6}$/);
+      expect(code.length).toBe(6);
+    });
+
+    it('should generate code with specified length', () => {
+      const code = service.generateCode(8);
+      expect(code).toMatch(/^\d{8}$/);
+      expect(code.length).toBe(8);
+    });
+  });
+
+  describe('isOtpExpired', () => {
+    it('should return true for expired OTP', () => {
+      const expiredOtp = {
+        expires_at: new Date(Date.now() - 1000)
+      };
+      expect(service.isOtpExpired(expiredOtp)).toBe(true);
+    });
+
+    it('should return false for valid OTP', () => {
+      const validOtp = {
+        expires_at: new Date(Date.now() + 15 * 60 * 1000)
+      };
+      expect(service.isOtpExpired(validOtp)).toBe(false);
+    });
+  });
+
+  describe('formatOtpResponse', () => {
+    it('should format OTP response correctly', () => {
+      const mockOtp = {
+        id: 1,
+        otp_code: '123456',
+        expires_at: new Date()
+      };
+      
+      const response = service.formatOtpResponse(mockOtp);
+      
+      expect(response).toHaveProperty('id');
+      expect(response).toHaveProperty('code');
+      expect(response).toHaveProperty('expiresAt');
+      expect(response).toHaveProperty('purpose');
+      expect(response.code).toBe('123456');
+    });
+  });
 });

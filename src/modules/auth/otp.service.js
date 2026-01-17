@@ -304,6 +304,45 @@ class OtpService {
 
     return otp;
   }
+
+  /**
+   * Valide le format d'un code OTP
+   * @param {string} code - Code à valider
+   * @returns {boolean} True si valide
+   */
+  validateOtpCode(code) {
+    if (!code || typeof code !== 'string') {
+      return false;
+    }
+    return /^\d+$/.test(code) && code.length >= 4 && code.length <= 10;
+  }
+
+  /**
+   * Vérifie si un OTP est expiré
+   * @param {Object} otp - Objet OTP avec expires_at
+   * @returns {boolean} True si expiré
+   */
+  isOtpExpired(otp) {
+    if (!otp || !otp.expires_at) {
+      return true;
+    }
+    return new Date() > new Date(otp.expires_at);
+  }
+
+  /**
+   * Formate la réponse OTP pour le client
+   * @param {Object} otp - Objet OTP de la base
+   * @returns {Object} OTP formaté
+   */
+  formatOtpResponse(otp) {
+    return {
+      id: otp.id,
+      code: otp.otp_code,
+      purpose: otp.purpose,
+      expiresAt: otp.expires_at,
+      isUsed: otp.is_used
+    };
+  }
 }
 
 module.exports = new OtpService();
