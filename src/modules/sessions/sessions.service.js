@@ -301,7 +301,7 @@ class SessionService {
     console.log('🔍 Debug logoutSession - Token valide, user_id:', tokenValidation.decoded.id);
 
     // Récupérer la session
-    const session = await sessionRepository.findByAccessToken(accessToken);
+    let session = await sessionRepository.findByAccessToken(accessToken);
     console.log('🔍 Debug logoutSession - Session trouvée:', !!session);
     if (session) {
       console.log('🔍 Debug logoutSession - Session details:', {
