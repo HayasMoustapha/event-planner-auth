@@ -14,9 +14,7 @@ class PermissionRepository {
     const {
       code,
       description,
-      resource,
-      action,
-      status = 'active',
+      group,
       createdBy = null
     } = permissionData;
 
@@ -31,7 +29,7 @@ class PermissionRepository {
     const values = [
       code?.trim(), // code sera utilisé comme code (colonne 'code' du schéma)
       JSON.stringify({en: code?.trim(), fr: code?.trim()}), // label en JSONB (colonne 'label' du schéma)
-      resource?.trim() || null, // resource sera utilisé comme group (colonne 'group' du schéma)
+      group?.trim() || null, // group sera utilisé comme group (colonne 'group' du schéma)
       description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB (colonne 'description' du schéma)
       createdBy
     ];
@@ -58,8 +56,7 @@ class PermissionRepository {
       limit = 10,
       search = null,
       status = null,
-      resource = null,
-      action = null,
+      group = null,
       sortBy = 'created_at',
       sortOrder = 'DESC'
     } = options;
@@ -80,15 +77,13 @@ class PermissionRepository {
 
     // Pas de filtre de statut dans la table permissions
 
-    // Filtre de groupe (anciennement resource)
-    if (resource) {
+    // Filtre de groupe
+    if (group) {
       whereClause += ` AND "group" = $${paramIndex}`;
       countClause += ` AND "group" = $${paramIndex}`;
-      params.push(resource);
+      params.push(group);
       paramIndex++;
     }
-
-    // Le filtre d'action n'existe plus dans la nouvelle structure
 
     // Colonnes selon schéma de référence : id, code, label (JSON), "group", description (JSON), created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     // Validation du tri
@@ -184,7 +179,7 @@ class PermissionRepository {
     const query = `
       SELECT id, code, label, "group", description, created_by, created_at, updated_at
       FROM permissions
-      WHERE "group" = $1 AND status = 'active'
+      WHERE "group" = $1
       ORDER BY code ASC
     `;
 
@@ -192,7 +187,7 @@ class PermissionRepository {
       const result = await connection.query(query, [resource.trim()]);
       return result.rows;
     } catch (error) {
-      throw new Error(`Erreur lors de la recherche des permissions par ressource: ${error.message}`);
+      throw new Error(`Erreur lors de la recherche des permissions par groupe: ${error.message}`);
     }
   }
 
@@ -207,9 +202,7 @@ class PermissionRepository {
     const {
       code,
       description,
-      resource,
-      action,
-      status
+      group
     } = updateData;
 
     const updates = [];
@@ -228,21 +221,9 @@ class PermissionRepository {
       paramIndex++;
     }
 
-    if (resource !== undefined) {
+    if (group !== undefined) {
       updates.push(`"group" = $${paramIndex}`);
-      values.push(resource.trim());
-      paramIndex++;
-    }
-
-    if (action !== undefined) {
-      updates.push(`action = $${paramIndex}`);
-      values.push(action.trim());
-      paramIndex++;
-    }
-
-    if (status !== undefined) {
-      updates.push(`status = $${paramIndex}`);
-      values.push(status);
+      values.push(group.trim());
       paramIndex++;
     }
 

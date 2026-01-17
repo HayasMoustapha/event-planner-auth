@@ -14,14 +14,13 @@ class PermissionController {
    */
   async createPermission(req, res, next) {
     try {
-      const { code, description, group, status } = req.body;
+      const { code, description, group } = req.body;
       const createdBy = req.user?.id;
 
       const permission = await permissionService.createPermission({
         code,
         description,
         group,
-        status,
         createdBy
       });
 
@@ -48,8 +47,7 @@ class PermissionController {
         limit = 10,
         search,
         status,
-        resource,
-        action,
+        group,
         sortBy = 'created_at',
         sortOrder = 'DESC'
       } = req.query;
@@ -59,8 +57,7 @@ class PermissionController {
         limit: parseInt(limit),
         search,
         status,
-        resource,
-        action,
+        group,
         sortBy,
         sortOrder
       };
@@ -108,12 +105,12 @@ class PermissionController {
   async updatePermission(req, res, next) {
     try {
       const { id } = req.params;
-      const { code, description, group, status } = req.body;
+      const { code, description, group } = req.body;
       const updatedBy = req.user?.id;
 
       const permission = await permissionService.updatePermission(
         parseInt(id),
-        { code, description, group, status },
+        { code, description, group },
         updatedBy
       );
 

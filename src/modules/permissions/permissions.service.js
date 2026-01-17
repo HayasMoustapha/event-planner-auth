@@ -157,8 +157,7 @@ class PermissionService {
     const {
       code,
       description,
-      group,
-      status
+      group
     } = updateData;
 
     if (code !== undefined) {
@@ -176,21 +175,15 @@ class PermissionService {
       }
     }
 
-    if (resource !== undefined) {
-      if (!resource || !resource.trim()) {
-        throw new Error('La ressource est requise');
+    if (group !== undefined) {
+      if (!group || !group.trim()) {
+        throw new Error('Le groupe est requis');
       }
-      if (resource.trim().length < 2 || resource.trim().length > 50) {
-        throw new Error('La ressource doit contenir entre 2 et 50 caractères');
+      if (group.trim().length < 2 || group.trim().length > 50) {
+        throw new Error('Le groupe doit contenir entre 2 et 50 caractères');
       }
-    }
-
-    if (action !== undefined) {
-      if (!action || !action.trim()) {
-        throw new Error('L\'action est requise');
-      }
-      if (action.trim().length < 2 || action.trim().length > 50) {
-        throw new Error('L\'action doit contenir entre 2 et 50 caractères');
+      if (!/^[a-z_]+$/.test(group.trim())) {
+        throw new Error('Le groupe doit être en minuscules avec underscores uniquement');
       }
     }
 
@@ -198,29 +191,11 @@ class PermissionService {
       throw new Error('La description ne peut pas dépasser 255 caractères');
     }
 
-    if (status !== undefined) {
-      const validStatuses = ['active', 'inactive'];
-      if (!validStatuses.includes(status)) {
-        throw new Error('Le statut doit être "active" ou "inactive"');
-      }
-    }
-
-    // Validation du format du code si group est modifié
-    if (code !== undefined && (group !== undefined)) {
-      const finalGroup = group?.trim() || existingPermission.group;
-      const expectedCode = `${finalGroup}`;
-      
-      if (code.trim() !== expectedCode) {
-        throw new Error(`Le code de la permission doit suivre le format: ${expectedCode}`);
-      }
-    }
-
     // Mettre à jour la permission
     const updatedPermission = await permissionRepository.update(id, {
       code: code?.trim(),
       description: description?.trim(),
-      group: group?.trim(),
-      status
+      group: group?.trim()
     }, updatedBy);
 
     console.log(`🔐 Permission mise à jour: ${updatedPermission.code} (ID: ${updatedPermission.id}) par l'utilisateur ${updatedBy}`);
@@ -382,14 +357,14 @@ class PermissionService {
 
   /**
    * Génère les permissions de base pour une ressource
-   * @param {string} resource - Nom de la ressource
+   * @param {string} group - Nom du groupe
    * @param {Array<string>} actions - Liste des actions
    * @param {number} createdBy - ID de l'utilisateur qui crée
    * @returns {Promise<Array>} Permissions créées
    */
-  async generateResourcePermissions(resource, actions, createdBy = null) {
-    if (!resource || !resource.trim()) {
-      throw new Error('Nom de ressource requis');
+  async generateResourcePermissions(group, actions, createdBy = null) {
+    if (!group || !group.trim()) {
+      throw new Error('Nom de groupe requis');
     }
 
     if (!Array.isArray(actions) || actions.length === 0) {
@@ -403,28 +378,27 @@ class PermissionService {
       throw new Error(`Actions invalides: ${invalidActions.join(', ')}`);
     }
 
-const createdPermissions = [];
-  
-for (const action of actions) {
-  try {
-    const permissionName = `${resource.trim()}`;
-    const permission = await this.createPermission({
-      code: permissionName,
-      description: `Permission pour la ressource ${resource}`,
-      group: resource.trim(),
-      createdBy
-    });
-    createdPermissions.push(permission);
-  } catch (error) {
-    // Ignorer les erreurs de duplication pour les permissions existantes
-    if (!error.message.includes('existe déjà')) {
-      throw error;
+    const createdPermissions = [];
+    
+    for (const action of actions) {
+      try {
+        const permissionName = `${group.trim()}.${action}`;
+        const permission = await this.createPermission({
+          code: permissionName,
+          description: `Permission pour le groupe ${group} - action ${action}`,
+          group: group.trim(),
+          createdBy
+        });
+        createdPermissions.push(permission);
+      } catch (error) {
+        // Ignorer les erreurs de duplication pour les permissions existantes
+        if (!error.message.includes('existe déjà')) {
           throw error;
         }
       }
     }
 
-    console.log(`🔐 ${createdPermissions.length} permissions générées pour la ressource ${resource}`);
+    console.log(`🔐 ${createdPermissions.length} permissions générées pour le groupe ${group}`);
     
     return createdPermissions;
   }

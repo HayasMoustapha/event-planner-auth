@@ -52,28 +52,14 @@ const validateCreatePermission = [
     .isLength({ max: 255 })
     .withMessage('La description ne peut pas dépasser 255 caractères'),
     
-  body('resource')
+  body('group')
     .trim()
     .notEmpty()
-    .withMessage('La ressource est requise')
+    .withMessage('Le groupe est requis')
     .isLength({ min: 2, max: 50 })
-    .withMessage('La ressource doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-z]+$/)
-    .withMessage('La ressource ne peut contenir que des lettres minuscules'),
-    
-  body('action')
-    .trim()
-    .notEmpty()
-    .withMessage('L\'action est requise')
-    .isLength({ min: 2, max: 50 })
-    .withMessage('L\'action doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-z]+$/)
-    .withMessage('L\'action ne peut contenir que des lettres minuscules'),
-    
-  body('status')
-    .optional()
-    .isIn(['active', 'inactive'])
-    .withMessage('Le statut doit être "active" ou "inactive"'),
+    .withMessage('Le groupe doit contenir entre 2 et 50 caractères')
+    .matches(/^[a-z_]+$/)
+    .withMessage('Le groupe doit être en minuscules avec underscores uniquement'),
     
   handleValidationErrors
 ];
@@ -100,26 +86,13 @@ const validateUpdatePermission = [
     .isLength({ max: 255 })
     .withMessage('La description ne peut pas dépasser 255 caractères'),
     
-  body('resource')
+  body('group')
     .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
-    .withMessage('La ressource doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-z]+$/)
-    .withMessage('La ressource ne peut contenir que des lettres minuscules'),
-    
-  body('action')
-    .optional()
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('L\'action doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-z]+$/)
-    .withMessage('L\'action ne peut contenir que des lettres minuscules'),
-    
-  body('status')
-    .optional()
-    .isIn(['active', 'inactive'])
-    .withMessage('Le statut doit être "active" ou "inactive"'),
+    .withMessage('Le groupe doit contenir entre 2 et 50 caractères')
+    .matches(/^[a-z_]+$/)
+    .withMessage('Le groupe doit être en minuscules avec underscores uniquement'),
     
   handleValidationErrors
 ];
@@ -246,14 +219,14 @@ const validateGetRolePermissions = [
  * Validation pour la récupération des actions par ressource
  */
 const validateGetActionsByResource = [
-  param('resource')
+  param('group')
     .trim()
     .notEmpty()
-    .withMessage('Le nom de la ressource est requis')
+    .withMessage('Le nom du groupe est requis')
     .isLength({ min: 2, max: 50 })
-    .withMessage('La ressource doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-z]+$/)
-    .withMessage('La ressource ne peut contenir que des lettres minuscules'),
+    .withMessage('Le groupe doit contenir entre 2 et 50 caractères')
+    .matches(/^[a-z_]+$/)
+    .withMessage('Le groupe doit être en minuscules avec underscores uniquement'),
     
   handleValidationErrors
 ];
@@ -262,14 +235,14 @@ const validateGetActionsByResource = [
  * Validation pour la génération de permissions de ressource
  */
 const validateGenerateResourcePermissions = [
-  body('resource')
+  body('group')
     .trim()
     .notEmpty()
-    .withMessage('Le nom de la ressource est requis')
+    .withMessage('Le nom du groupe est requis')
     .isLength({ min: 2, max: 50 })
-    .withMessage('La ressource doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-z]+$/)
-    .withMessage('La ressource ne peut contenir que des lettres minuscules'),
+    .withMessage('Le groupe doit contenir entre 2 et 50 caractères')
+    .matches(/^[a-z_]+$/)
+    .withMessage('Le groupe doit être en minuscules avec underscores uniquement'),
     
   body('actions')
     .isArray({ min: 1 })
