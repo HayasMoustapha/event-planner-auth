@@ -167,7 +167,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"Jean\",\n  \"lastName\": \"Dupont\",\n  \"email\": \"jean.dupont{{$randomInt}}@example.com\",\n  \"phone\": \"+33612345678\",\n  \"password\": \"Password123\",\n  \"username\": \"jeandupont{{$randomInt}}\"\n}"
+              "raw": "{\n  \"first_name\": \"Jean\",\n  \"last_name\": \"Dupont\",\n  \"email\": \"jean.dupont{{$randomInt}}@example.com\",\n  \"phone\": \"+33612345678\",\n  \"password\": \"Password123\",\n  \"username\": \"jeandupont{{$randomInt}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
@@ -265,7 +265,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\"\n}"
+              "raw": "{\n  \"email\": \"admin@eventplanner.com\",\n  \"password\": \"admin123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
@@ -300,7 +300,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"Password123\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+              "raw": "{\n  \"currentPassword\": \"admin123\",\n  \"newPassword\": \"NewPassword123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/change-password",
@@ -775,7 +775,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"first_name\": \"Marie\",\n  \"last_name\": \"Curie\",\n  \"email\": \"marie.curie{{$randomInt}}@example.com\",\n  \"phone\": \"+33612345678\",\n  \"address\": \"1 Rue de la Paix, Paris\",\n  \"birth_date\": \"1990-01-01\"\n}"
+              "raw": "{\n  \"first_name\": \"Marie\",\n  \"last_name\": \"Curie\",\n  \"email\": \"marie.curie{{$randomInt}}@example.com\",\n  \"phone\": \"+33612345678\",\n  \"photo\": \"https://example.com/photo.jpg\",\n  \"status\": \"active\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/people",
@@ -1005,7 +1005,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"EDIT_USERS{{$randomInt}}\",\n  \"label\": {\"fr\": \"Éditer les utilisateurs\", \"en\": \"Edit users\"},\n  \"group\": \"users\",\n  \"description\": {\"fr\": \"Permission de modifier les utilisateurs\", \"en\": \"Permission to edit users\"}\n}"
+              "raw": "{\n  \"code\": \"edit_users{{$randomInt}}\",\n  \"description\": \"Permission to edit users\",\n  \"group\": \"users\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/permissions",
@@ -1027,7 +1027,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"label\": {\"fr\": \"Éditer les utilisateurs (avancé)\", \"en\": \"Edit users (advanced)\"},\n  \"description\": {\"fr\": \"Permission avancée de modifier les utilisateurs\", \"en\": \"Advanced permission to edit users\"}\n}"
+              "raw": "{\n  \"description\": \"Advanced permission to edit users\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/permissions/{{createdPermissionId}}",
@@ -1120,7 +1120,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"REPORTS{{$randomInt}}\",\n  \"label\": {\"fr\": \"Rapports\", \"en\": \"Reports\"},\n  \"icon\": \"fas fa-chart-bar\",\n  \"url\": \"/reports\",\n  \"order_index\": 10,\n  \"is_active\": true\n}"
+              "raw": "{\n  \"name\": \"Reports{{$randomInt}}\",\n  \"description\": \"Reports section\",\n  \"icon\": \"fas fa-chart-bar\",\n  \"route\": \"/reports\",\n  \"sortOrder\": 10,\n  \"isVisible\": true,\n  \"status\": \"active\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/menus",
@@ -1158,7 +1158,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"USER_REPORTS{{$randomInt}}\",\n  \"label\": {\"fr\": \"Rapports Utilisateurs\", \"en\": \"User Reports\"},\n  \"icon\": \"fas fa-users\",\n  \"url\": \"/reports/users\",\n  \"order_index\": 1,\n  \"parent_id\": {{createdMenuId}},\n  \"is_active\": true\n}"
+              "raw": "{\n  \"name\": \"User Reports{{$randomInt}}\",\n  \"description\": \"User reports section\",\n  \"icon\": \"fas fa-users\",\n  \"route\": \"/reports/users\",\n  \"parentMenuId\": {{createdMenuId}},\n  \"sortOrder\": 1,\n  \"isVisible\": true,\n  \"status\": \"active\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/menus",
@@ -1180,7 +1180,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"label\": {\"fr\": \"Rapports Avancés\", \"en\": \"Advanced Reports\"},\n  \"icon\": \"fas fa-chart-line\",\n  \"order_index\": 11\n}"
+              "raw": "{\n  \"name\": \"Advanced Reports\",\n  \"description\": \"Advanced reports section\",\n  \"icon\": \"fas fa-chart-line\",\n  \"sortOrder\": 11\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/menus/{{createdMenuId}}",
@@ -1202,7 +1202,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"is_active\": false\n}"
+              "raw": "{\n  \"status\": \"inactive\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/menus/{{createdMenuId}}/status",

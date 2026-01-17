@@ -46,6 +46,11 @@ const validateCreateRole = [
     .matches(/^[a-zA-Z0-9_\-\s]+$/)
     .withMessage('Le nom du rôle ne peut contenir que des lettres, chiffres, underscores, tirets et espaces'),
     
+  body('label')
+    .optional()
+    .isObject()
+    .withMessage('Le label doit être un objet JSON'),
+    
   body('description')
     .optional()
     .trim()
@@ -80,6 +85,11 @@ const validateUpdateRole = [
     .withMessage('Le code du rôle doit contenir entre 2 et 50 caractères')
     .matches(/^[a-zA-Z0-9_]+$/)
     .withMessage('Le code du rôle ne peut contenir que des lettres, chiffres et underscores'),
+    
+  body('label')
+    .optional()
+    .isObject()
+    .withMessage('Le label doit être un objet JSON'),
     
   body('description')
     .optional()
