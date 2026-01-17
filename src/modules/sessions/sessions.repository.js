@@ -322,9 +322,8 @@ class SessionRepository {
    * @returns {Promise<boolean>} True si ajouté avec succès
    */
   async blacklistToken(tokenData) {
-    const { token, userId, expiresAt } = tokenData;
+    const { token, userId, expiresAt, reason = 'logout', revokedBy = null } = tokenData;
     
-    // Vérifier si la table personal_access_tokens existe
     try {
       const checkTable = await connection.query(`
         SELECT EXISTS (
@@ -335,29 +334,377 @@ class SessionRepository {
       `);
       
       if (!checkTable.rows[0].exists) {
-        // Si la table n'existe pas, créer un fallback simple
-        // Pour l'instant, on simule le blacklistage en retournant true
         console.log('⚠️ Table personal_access_tokens non trouvée - fallback blacklist');
         return true;
       }
       
       const query = `
-        INSERT INTO personal_access_tokens (token, user_id, expires_at, created_at)
-        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-        ON CONFLICT (token) DO NOTHING
+        INSERT INTO personal_access_tokens (
+          token, user_id, token_type, expires_at, created_at, 
+          is_active, reason, revoked_by, revoked_at, metadata
+        ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, false, $5, $6, CURRENT_TIMESTAMP, $7)
+        ON CONFLICT (token) DO UPDATE SET
+          is_active = false,
+          revoked_at = CURRENT_TIMESTAMP,
+          reason = EXCLUDED.reason,
+          revoked_by = EXCLUDED.revoked_by,
+          updated_at = CURRENT_TIMESTAMP
       `;
 
       const result = await connection.query(query, [
         token,
         userId,
-        expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h par défaut
+        'access',
+        expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h par défaut
+        reason,
+        revokedBy,
+        JSON.stringify({
+          blacklisted_at: new Date().toISOString(),
+          blacklisted_by: revokedBy || 'system',
+          original_expires_at: expiresAt
+        })
       ]);
 
+      console.log('✅ Token blacklisté avec succès:', token.substring(0, 20) + '...');
       return result.rowCount > 0;
     } catch (error) {
-      // Fallback si erreur
       console.log('⚠️ Erreur blacklist token, fallback activé:', error.message);
       return true;
+    }
+  }
+
+  /**
+   * Récupère les statistiques des sessions
+   * @returns {Promise<Object>} Statistiques des sessions
+   */
+  async getSessionStats() {
+    try {
+      const queries = {
+        totalSessions: 'SELECT COUNT(*) as count FROM sessions',
+        activeSessions: 'SELECT COUNT(*) as count FROM sessions WHERE last_activity > $1',
+        blacklistedTokens: 'SELECT COUNT(*) as count FROM personal_access_tokens WHERE is_active = false',
+        expiredSessions: 'SELECT COUNT(*) as count FROM sessions WHERE last_activity < $1',
+        uniqueUsers: 'SELECT COUNT(DISTINCT user_id) as count FROM sessions'
+      };
+
+      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+      
+      const [
+        totalResult,
+        activeResult,
+        blacklistedResult,
+        expiredResult,
+        uniqueUsersResult
+      ] = await Promise.all([
+        connection.query(queries.totalSessions),
+        connection.query(queries.activeSessions, [twentyFourHoursAgo]),
+        connection.query(queries.blacklistedTokens),
+        connection.query(queries.expiredSessions, [twentyFourHoursAgo]),
+        connection.query(queries.uniqueUsers)
+      ]);
+
+      return {
+        totalSessions: parseInt(totalResult.rows[0].count),
+        activeSessions: parseInt(activeResult.rows[0].count),
+        blacklistedTokens: parseInt(blacklistedResult.rows[0].count),
+        expiredSessions: parseInt(expiredResult.rows[0].count),
+        uniqueUsers: parseInt(uniqueUsersResult.rows[0].count),
+        lastUpdated: new Date().toISOString()
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère les sessions actives avec pagination
+   * @param {Object} options - Options de pagination et filtrage
+   * @returns {Promise<Object>} Sessions actives paginées
+   */
+  async getActiveSessions(options = {}) {
+    const { page = 1, limit = 20, userId, status = 'active' } = options;
+    const offset = (page - 1) * limit;
+    const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+    let whereClause = 'WHERE last_activity > $1';
+    let queryParams = [twentyFourHoursAgo];
+    let paramIndex = 2;
+
+    if (userId) {
+      whereClause += ` AND user_id = $${paramIndex}`;
+      queryParams.push(userId);
+      paramIndex++;
+    }
+
+    const countQuery = `SELECT COUNT(*) as total FROM sessions ${whereClause}`;
+    const dataQuery = `
+      SELECT id, user_id, last_activity, ip_address, user_agent
+      FROM sessions ${whereClause}
+      ORDER BY last_activity DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    queryParams.push(limit, offset);
+
+    try {
+      const [countResult, dataResult] = await Promise.all([
+        connection.query(countQuery, queryParams.slice(0, paramIndex - 1)),
+        connection.query(dataQuery, queryParams)
+      ]);
+
+      return {
+        sessions: dataResult.rows,
+        pagination: {
+          page,
+          limit,
+          total: parseInt(countResult.rows[0].total),
+          pages: Math.ceil(countResult.rows[0].total / limit)
+        }
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des sessions actives: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère les sessions d'un utilisateur spécifique
+   * @param {number} userId - ID de l'utilisateur
+   * @param {Object} options - Options de pagination
+   * @returns {Promise<Object>} Sessions de l'utilisateur
+   */
+  async getUserSessions(userId, options = {}) {
+    const { page = 1, limit = 10, includeExpired = false } = options;
+    const offset = (page - 1) * limit;
+
+    let whereClause = 'WHERE user_id = $1';
+    let queryParams = [userId];
+    let paramIndex = 2;
+
+    if (!includeExpired) {
+      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+      whereClause += ` AND last_activity > $${paramIndex}`;
+      queryParams.push(twentyFourHoursAgo);
+      paramIndex++;
+    }
+
+    const countQuery = `SELECT COUNT(*) as total FROM sessions ${whereClause}`;
+    const dataQuery = `
+      SELECT id, last_activity, ip_address, user_agent
+      FROM sessions ${whereClause}
+      ORDER BY last_activity DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    queryParams.push(limit, offset);
+
+    try {
+      const [countResult, dataResult] = await Promise.all([
+        connection.query(countQuery, queryParams.slice(0, paramIndex - 1)),
+        connection.query(dataQuery, queryParams)
+      ]);
+
+      return {
+        sessions: dataResult.rows,
+        pagination: {
+          page,
+          limit,
+          total: parseInt(countResult.rows[0].total),
+          pages: Math.ceil(countResult.rows[0].total / limit)
+        }
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des sessions utilisateur: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère les tokens blacklistés
+   * @param {Object} options - Options de pagination et filtrage
+   * @returns {Promise<Object>} Tokens blacklistés
+   */
+  async getBlacklistedTokens(options = {}) {
+    const { page = 1, limit = 20, userId, reason } = options;
+    const offset = (page - 1) * limit;
+
+    let whereClause = 'WHERE is_active = false';
+    let queryParams = [];
+    let paramIndex = 1;
+
+    if (userId) {
+      whereClause += ` AND user_id = $${paramIndex}`;
+      queryParams.push(userId);
+      paramIndex++;
+    }
+
+    if (reason) {
+      whereClause += ` AND reason = $${paramIndex}`;
+      queryParams.push(reason);
+      paramIndex++;
+    }
+
+    const countQuery = `SELECT COUNT(*) as total FROM personal_access_tokens ${whereClause}`;
+    const dataQuery = `
+      SELECT token, user_id, reason, created_at, revoked_at, metadata
+      FROM personal_access_tokens ${whereClause}
+      ORDER BY revoked_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    queryParams.push(limit, offset);
+
+    try {
+      const [countResult, dataResult] = await Promise.all([
+        connection.query(countQuery, queryParams.slice(0, paramIndex - 1)),
+        connection.query(dataQuery, queryParams)
+      ]);
+
+      return {
+        tokens: dataResult.rows.map(row => ({
+          ...row,
+          token: row.token.substring(0, 20) + '...' // Masquer le token pour la sécurité
+        })),
+        pagination: {
+          page,
+          limit,
+          total: parseInt(countResult.rows[0].total),
+          pages: Math.ceil(countResult.rows[0].total / limit)
+        }
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des tokens blacklistés: ${error.message}`);
+    }
+  }
+
+  /**
+   * Révoque toutes les sessions d'un utilisateur
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number} revokedBy - ID de l'utilisateur qui révoque
+   * @param {string} reason - Raison de la révocation
+   * @returns {Promise<Object>} Résultat de la révocation
+   */
+  async revokeAllUserSessions(userId, revokedBy = null, reason = 'admin_action') {
+    try {
+      // Récupérer toutes les sessions actives de l'utilisateur
+      const sessionsQuery = 'SELECT id FROM sessions WHERE user_id = $1';
+      const sessionsResult = await connection.query(sessionsQuery, [userId]);
+      
+      const revokedCount = sessionsResult.rows.length;
+      
+      // Blacklister tous les tokens
+      if (revokedCount > 0) {
+        const blacklistPromises = sessionsResult.rows.map(session => 
+          this.blacklistToken({
+            token: session.id,
+            userId,
+            reason,
+            revokedBy
+          })
+        );
+        
+        await Promise.all(blacklistPromises);
+        
+        // Supprimer les sessions
+        const deleteQuery = 'DELETE FROM sessions WHERE user_id = $1';
+        await connection.query(deleteQuery, [userId]);
+      }
+
+      return {
+        revokedCount,
+        userId,
+        reason,
+        revokedBy,
+        revokedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la révocation des sessions utilisateur: ${error.message}`);
+    }
+  }
+
+  /**
+   * Nettoie les sessions expirées
+   * @param {number} olderThan - Nombre de jours d'ancienneté
+   * @returns {Promise<Object>} Résultat du nettoyage
+   */
+  async cleanupExpiredSessions(olderThan = 7) {
+    try {
+      const cutoffDate = new Date(Date.now() - olderThan * 24 * 60 * 60 * 1000);
+      
+      const deleteQuery = 'DELETE FROM sessions WHERE last_activity < $1 RETURNING id';
+      const result = await connection.query(deleteQuery, [cutoffDate]);
+
+      return {
+        deletedCount: result.rowCount,
+        cutoffDate: cutoffDate.toISOString(),
+        olderThan
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors du nettoyage des sessions expirées: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère les statistiques de sessions d'un utilisateur
+   * @param {number} userId - ID de l'utilisateur
+   * @returns {Promise<Object>} Statistiques de l'utilisateur
+   */
+  async getUserSessionStats(userId) {
+    try {
+      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+      
+      const queries = {
+        totalSessions: 'SELECT COUNT(*) as count FROM sessions WHERE user_id = $1',
+        activeSessions: 'SELECT COUNT(*) as count FROM sessions WHERE user_id = $1 AND last_activity > $2',
+        blacklistedTokens: 'SELECT COUNT(*) as count FROM personal_access_tokens WHERE user_id = $1 AND is_active = false'
+      };
+
+      const [totalResult, activeResult, blacklistedResult] = await Promise.all([
+        connection.query(queries.totalSessions, [userId]),
+        connection.query(queries.activeSessions, [userId, twentyFourHoursAgo]),
+        connection.query(queries.blacklistedTokens, [userId])
+      ]);
+
+      return {
+        userId,
+        totalSessions: parseInt(totalResult.rows[0].count),
+        activeSessions: parseInt(activeResult.rows[0].count),
+        blacklistedTokens: parseInt(blacklistedResult.rows[0].count)
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des statistiques utilisateur: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère les sessions suspectes (anomalies)
+   * @param {Object} options - Options de filtrage
+   * @returns {Promise<Object>} Sessions suspectes
+   */
+  async getSuspiciousSessions(options = {}) {
+    const { hours = 24, maxSessionsPerUser = 10 } = options;
+    const cutoffDate = Date.now() - hours * 60 * 60 * 1000;
+
+    try {
+      const query = `
+        SELECT user_id, COUNT(*) as session_count
+        FROM sessions 
+        WHERE last_activity > $1
+        GROUP BY user_id
+        HAVING COUNT(*) > $2
+        ORDER BY session_count DESC
+      `;
+
+      const result = await connection.query(query, [cutoffDate, maxSessionsPerUser]);
+
+      return {
+        suspiciousUsers: result.rows,
+        criteria: {
+          hours,
+          maxSessionsPerUser,
+          cutoffDate: new Date(cutoffDate).toISOString()
+        }
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des sessions suspectes: ${error.message}`);
     }
   }
 }

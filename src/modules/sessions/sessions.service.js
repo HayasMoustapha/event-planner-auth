@@ -200,7 +200,7 @@ class SessionService {
       deviceInfo,
       ipAddress,
       userAgent,
-      expiresIn = 3600 // 1 heure
+      expiresIn = 3600 // 1 heure par défaut
     } = sessionData;
 
     console.log('🔍 Debug createSession - Données reçues:', {
@@ -211,6 +211,12 @@ class SessionService {
       userAgent,
       expiresIn
     });
+
+    // Vérifier les limites de sessions avant création
+    const limitsCheck = await this.checkSessionLimits(userId);
+    if (!limitsCheck.canCreateNewSession) {
+      throw new Error(`Limite de sessions atteinte: ${limitsCheck.activeSessions}/${limitsCheck.maxActiveSessions} sessions actives`);
+    }
 
     // Créer la session en base de données avec le token existant
     try {
@@ -235,6 +241,54 @@ class SessionService {
       console.log('🔍 Debug createSession - Erreur création:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Vérifie les limites de sessions pour un utilisateur
+   * @param {number} userId - ID de l'utilisateur
+   * @returns {Promise<Object>} Résultat de la vérification
+   */
+  async checkSessionLimits(userId) {
+    try {
+      const { maxActiveSessions = 5, maxTotalSessions = 20 } = this.getSessionLimits();
+      
+      const stats = await sessionRepository.getUserSessionStats(userId);
+      
+      const isOverLimit = {
+        active: stats.activeSessions >= maxActiveSessions,
+        total: stats.totalSessions >= maxTotalSessions
+      };
+
+      return {
+        userId,
+        stats,
+        limits: { maxActiveSessions, maxTotalSessions },
+        isOverLimit,
+        canCreateNewSession: !isOverLimit.active && !isOverLimit.total
+      };
+    } catch (error) {
+      console.log('⚠️ Erreur vérification limites sessions:', error.message);
+      // En cas d'erreur, autoriser la création (fallback)
+      return {
+        userId,
+        stats: { activeSessions: 0, totalSessions: 0 },
+        limits: { maxActiveSessions: 5, maxTotalSessions: 20 },
+        isOverLimit: { active: false, total: false },
+        canCreateNewSession: true
+      };
+    }
+  }
+
+  /**
+   * Récupère les limites de sessions configurées
+   * @returns {Object} Limites configurées
+   */
+  getSessionLimits() {
+    return {
+      maxActiveSessions: parseInt(process.env.MAX_ACTIVE_SESSIONS) || 5,
+      maxTotalSessions: parseInt(process.env.MAX_TOTAL_SESSIONS) || 20,
+      sessionTimeout: parseInt(process.env.SESSION_TIMEOUT) || 24 * 60 * 60 * 1000 // 24h par défaut
+    };
   }
 
   /**
