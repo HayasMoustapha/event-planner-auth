@@ -288,15 +288,57 @@ class SessionService {
    * @returns {Promise<Object>} Résultat de la déconnexion
    */
   async logoutSession(accessToken) {
+    // Debug: Vérifier le token reçu
+    console.log('🔍 Debug logoutSession - Token reçu:', accessToken ? accessToken.substring(0, 20) + '...' : 'null');
+    
     // Vérifier le token
     const tokenValidation = await this.verifyAccessToken(accessToken);
     if (!tokenValidation.valid) {
+      console.log('🔍 Debug logoutSession - Token invalide:', tokenValidation.error);
       throw new Error('Token invalide ou expiré');
     }
+    
+    console.log('🔍 Debug logoutSession - Token valide, user_id:', tokenValidation.decoded.id);
 
     // Récupérer la session
     const session = await sessionRepository.findByAccessToken(accessToken);
+    console.log('🔍 Debug logoutSession - Session trouvée:', !!session);
+    if (session) {
+      console.log('🔍 Debug logoutSession - Session details:', {
+        id: session.id,
+        user_id: session.user_id,
+        last_activity: session.last_activity
+      });
+    }
+    
     if (!session) {
+      console.log('🔍 Debug logoutSession - Session non trouvée, tentative de création...');
+      // Optionnel: Créer la session si elle n'existe pas (fallback)
+      try {
+        const user = await usersRepository.findById(tokenValidation.decoded.id);
+        if (user) {
+          console.log('🔍 Debug logoutSession - Création session fallback pour user:', user.id);
+          await this.createSession({
+            accessToken: accessToken,
+            userId: user.id,
+            ipAddress: null,
+            userAgent: null,
+            expiresIn: 24 * 60 * 60
+          });
+          // Retenter pour récupérer la session
+          const sessionRetry = await sessionRepository.findByAccessToken(accessToken);
+          if (sessionRetry) {
+            console.log('🔍 Debug logoutSession - Session créée avec succès');
+            session = sessionRetry;
+          }
+        }
+      } catch (createError) {
+        console.log('🔍 Debug logoutSession - Erreur création session fallback:', createError.message);
+      }
+    }
+    
+    if (!session) {
+      console.log('🔍 Debug logoutSession - Session toujours non trouvée après fallback');
       throw new Error('Session non trouvée');
     }
 
