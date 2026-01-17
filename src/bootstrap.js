@@ -16,7 +16,7 @@ class ApplicationBootstrap {
     try {
       // 1. Bootstrap de la base de données
       console.log('📊 Initializing database...');
-      await DatabaseBootstrap.runBootstrap();
+      await DatabaseBootstrap.initialize(); // ✅ METHODE CORRECTE
       console.log('✅ Database initialized successfully');
       
       // 2. Initialisation du container de services

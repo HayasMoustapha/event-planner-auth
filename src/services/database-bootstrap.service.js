@@ -5,7 +5,25 @@ const { connection } = require('../config/database');
 
 /**
  * Service de Bootstrap de Base de Données
- * Gère l'initialisation automatique et sécurisée de la base de données
+ * 
+ * CONTRAT PUBLIC:
+ * ================
+ * Méthode obligatoire: initialize()
+ * - Type: async function
+ * - Rôle: Initialise la base de données et les migrations
+ * - Retour: Promise<Object> Résultat du bootstrap
+ * - Erreur: Lance une exception si échec critique
+ * 
+ * Méthodes optionnelles: verify(), shutdown()
+ * - Type: async function
+ * - Rôle: Validation et arrêt contrôlé
+ * 
+ * Export: module.exports = new DatabaseBootstrap()
+ * 
+ * INVARIANTS:
+ * - initialize() est TOUJOURS disponible
+ * - initialize() est idempotente
+ * - Toute erreur critique est propagée (pas masquée)
  */
 class DatabaseBootstrap {
   constructor() {
@@ -16,7 +34,9 @@ class DatabaseBootstrap {
   }
 
   /**
-   * Point d'entrée principal du bootstrap
+   * Initialise la base de données (méthode OBLIGATOIRE)
+   * @returns {Promise<Object>} Résultat du bootstrap
+   * @throws {Error} Si échec critique d'initialisation
    */
   async initialize() {
     try {
@@ -392,4 +412,4 @@ class DatabaseBootstrap {
   }
 }
 
-module.exports = DatabaseBootstrap;
+module.exports = new DatabaseBootstrap();
