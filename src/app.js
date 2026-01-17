@@ -59,7 +59,7 @@ app.use(cors({
 // Compression
 app.use(compression());
 
-// Rate limiting
+// Rate limiting (désactivé pour les tests)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
@@ -69,11 +69,12 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req, res) => process.env.NODE_ENV === 'test'
 });
 
 app.use('/api/', limiter);
 
-// Rate limiting plus strict pour l'authentification
+// Rate limiting plus strict pour l'authentification (désactivé pour les tests)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Augmenté pour les tests
@@ -82,6 +83,7 @@ const authLimiter = rateLimit({
     message: 'Veuillez réessayer plus tard'
   },
   skipSuccessfulRequests: true,
+  skip: (req, res) => process.env.NODE_ENV === 'test'
 });
 
 // Logging
