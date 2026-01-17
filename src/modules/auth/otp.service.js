@@ -146,8 +146,18 @@ class OtpService {
     // Normaliser l'identifiant
     const normalizedIdentifier = identifier.toLowerCase().trim();
 
+    // Debug logs
+    console.log('🔍 Debug OTP Validation:', {
+      otpCode,
+      personId,
+      purpose,
+      normalizedIdentifier
+    });
+
     // Vérifier et marquer comme utilisé
     const otp = await otpRepository.validateOtp(otpCode, personId, purpose);
+    
+    console.log('🔍 Debug OTP Result:', otp ? 'OTP trouvé' : 'OTP non trouvé');
     
     if (!otp) {
       throw new Error('Code OTP invalide ou expiré');

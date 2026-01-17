@@ -61,10 +61,30 @@ class OtpRepository {
       LIMIT 1
     `;
 
+    // Debug log
+    console.log('🔍 Debug Repository Query:', {
+      otpCode,
+      personId,
+      purpose,
+      query: query.replace(/\s+/g, ' ').trim()
+    });
+
     try {
       const result = await connection.query(query, [otpCode, personId, purpose]);
+      console.log('🔍 Debug Repository Result:', result.rows.length, 'OTP(s) trouvé(s)');
+      if (result.rows.length > 0) {
+        console.log('🔍 Debug OTP Details:', {
+          id: result.rows[0].id,
+          code: result.rows[0].otp_code,
+          personId: result.rows[0].person_id,
+          purpose: result.rows[0].purpose,
+          isUsed: result.rows[0].is_used,
+          expiresAt: result.rows[0].expires_at
+        });
+      }
       return result.rows[0] || null;
     } catch (error) {
+      console.log('❌ Debug Repository Error:', error.message);
       throw new Error(`Erreur lors de la recherche de l'OTP: ${error.message}`);
     }
   }
