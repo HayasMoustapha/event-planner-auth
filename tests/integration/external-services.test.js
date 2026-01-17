@@ -34,7 +34,7 @@ describe('External Services Validation', () => {
       expect(typeof isConfigured).toBe('boolean');
     });
 
-    it('should test email service readiness', () => {
+    it('should test email service readiness', async () => {
       const isReady = emailService.isReady();
       
       console.log(`📧 Email Service Ready: ${isReady}`);
@@ -163,11 +163,11 @@ describe('External Services Validation', () => {
     });
 
     it('should test Redis service readiness', () => {
-      const isReady = cacheService.isReady();
+      const stats = cacheService.getStats();
       
-      console.log(`🗄️ Redis Service Ready: ${isReady}`);
+      console.log(`🗄️ Redis Service Ready: ${stats.ready}`);
       
-      expect(typeof isReady).toBe('boolean');
+      expect(typeof stats.ready).toBe('boolean');
     });
 
     it('should test Redis cache operations', async () => {

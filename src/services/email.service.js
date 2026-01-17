@@ -487,7 +487,7 @@ Pour définir un nouveau mot de passe, visitez : ${resetUrl}
    * @returns {boolean} True si configuré
    */
   isReady() {
-    return this.isConfigured;
+    return Boolean(this.isConfigured);
   }
 }
 

@@ -380,7 +380,7 @@ class CacheService {
   async getStats() {
     try {
       if (!this.isReady()) {
-        return { connected: false };
+        return { connected: false, ready: false };
       }
 
       const info = await this.client.info();
@@ -388,13 +388,14 @@ class CacheService {
       
       return {
         connected: true,
+        ready: true,
         keys: keyspace ? parseInt(keyspace.split(':')[1].split(',')[0]) : 0,
         memory: info.split('\r\n').find(line => line.startsWith('used_memory_human')),
         uptime: info.split('\r\n').find(line => line.startsWith('uptime_in_seconds'))
       };
     } catch (error) {
       logger.error('Cache stats error', { error: error.message });
-      return { connected: false, error: error.message };
+      return { connected: false, ready: false, error: error.message };
     }
   }
 
