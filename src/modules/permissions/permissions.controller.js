@@ -14,11 +14,12 @@ class PermissionController {
    */
   async createPermission(req, res, next) {
     try {
-      const { code, description, group } = req.body;
+      const { code, label, description, group } = req.body;
       const createdBy = req.user?.id;
 
       const permission = await permissionService.createPermission({
         code,
+        label,
         description,
         group,
         createdBy

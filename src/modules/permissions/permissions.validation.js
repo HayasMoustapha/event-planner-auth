@@ -46,6 +46,11 @@ const validateCreatePermission = [
     .matches(/^[a-z_]+[a-z_]*$/)
     .withMessage('Le code doit être en minuscules avec underscores (ex: users.create)'),
     
+  body('label')
+    .optional()
+    .isObject()
+    .withMessage('Le label doit être un objet JSON'),
+    
   body('description')
     .optional()
     .trim()
@@ -79,6 +84,11 @@ const validateUpdatePermission = [
     .withMessage('Le code de la permission doit contenir entre 3 et 100 caractères')
     .matches(/^[a-z_]+[a-z_]*$/)
     .withMessage('Le code doit être en minuscules avec underscores (ex: users.create)'),
+    
+  body('label')
+    .optional()
+    .isObject()
+    .withMessage('Le label doit être un objet JSON'),
     
   body('description')
     .optional()

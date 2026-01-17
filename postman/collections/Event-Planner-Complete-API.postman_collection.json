@@ -1005,7 +1005,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"edit_users{{$randomInt}}\",\n  \"description\": \"Permission to edit users\",\n  \"group\": \"users\"\n}"
+              "raw": "{\n  \"code\": \"edit_users{{$randomInt}}\",\n  \"label\": {\"fr\": \"Éditer les utilisateurs\", \"en\": \"Edit users\"},\n  \"description\": \"Permission to edit users\",\n  \"group\": \"users\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/permissions",
@@ -1027,7 +1027,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"description\": \"Advanced permission to edit users\"\n}"
+              "raw": "{\n  \"label\": {\"fr\": \"Éditer les utilisateurs (avancé)\", \"en\": \"Edit users (advanced)\"},\n  \"description\": \"Advanced permission to edit users\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/permissions/{{createdPermissionId}}",

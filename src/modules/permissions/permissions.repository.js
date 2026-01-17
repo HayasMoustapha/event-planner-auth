@@ -13,6 +13,7 @@ class PermissionRepository {
   async create(permissionData) {
     const {
       code,
+      label,
       description,
       group,
       createdBy = null
@@ -28,7 +29,7 @@ class PermissionRepository {
 
     const values = [
       code?.trim(), // code sera utilisé comme code (colonne 'code' du schéma)
-      JSON.stringify({en: code?.trim(), fr: code?.trim()}), // label en JSONB (colonne 'label' du schéma)
+      label ? JSON.stringify(label) : JSON.stringify({en: code?.trim(), fr: code?.trim()}), // label en JSONB (colonne 'label' du schéma)
       group?.trim() || null, // group sera utilisé comme group (colonne 'group' du schéma)
       description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB (colonne 'description' du schéma)
       createdBy
@@ -106,10 +107,13 @@ class PermissionRepository {
     `;
 
     try {
-      const [dataResult, countResult] = await Promise.all([
+      const results = await Promise.all([
         connection.query(dataQuery, [...params, limit, offset]),
         connection.query(countQuery, params)
       ]);
+
+      const dataResult = results[0];
+      const countResult = results[1];
 
       const total = parseInt(countResult.rows[0].total);
       const permissions = dataResult.rows;

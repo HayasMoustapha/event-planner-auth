@@ -14,6 +14,7 @@ class PermissionService {
   async createPermission(permissionData) {
     const {
       code,
+      label,
       description,
       group,
       createdBy
@@ -48,6 +49,7 @@ class PermissionService {
     // Préparation des données pour le repository
     const cleanData = {
       code: code.trim(),
+      label,
       description: description?.trim(),
       group: group?.trim(),
       createdBy
@@ -55,7 +57,7 @@ class PermissionService {
 
     // Vérifier si la permission existe déjà
     const existingPermission = await permissionRepository.findAll({ search: code.trim(), limit: 1 });
-    if (existingPermission.data.length > 0) {
+    if (existingPermission.permissions.length > 0) {
       throw new Error('Une permission avec ce code existe déjà');
     }
 
