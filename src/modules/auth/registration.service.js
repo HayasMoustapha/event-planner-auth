@@ -95,7 +95,7 @@ class RegistrationService {
       };
 
       const person = await peopleRepository.create(personData);
-      this.logger.info(`Personne créée: ${person.id} - ${person.email}`);
+      logger.info(`Personne créée: ${person.id} - ${person.email}`);
 
       // 6. Créer l'utilisateur associé
       const userData = {
@@ -109,7 +109,7 @@ class RegistrationService {
       };
 
       const user = await usersRepository.create(userData);
-      this.logger.info(`Utilisateur créé: ${user.id} - ${user.email}`);
+      logger.info(`Utilisateur créé: ${user.id} - ${user.email}`);
 
       // 7. Générer et envoyer l'OTP
       const otpResult = await otpService.generateEmailOtp(person.id, person.email);
@@ -125,13 +125,13 @@ class RegistrationService {
           throw new Error('Échec d\'envoi de l\'email de vérification');
         }
         
-        this.logger.info('OTP email sent successfully during registration', {
+        logger.info('OTP email sent successfully during registration', {
           personId: person.id,
           email: person.email,
           otpId: otpResult.id
         });
       } catch (emailError) {
-        this.logger.error('Failed to send OTP email during registration', {
+        logger.error('Failed to send OTP email during registration', {
           personId: person.id,
           email: person.email,
           error: emailError.message
@@ -171,7 +171,7 @@ class RegistrationService {
       };
 
     } catch (error) {
-      this.logger.error(`Erreur lors de l'inscription: ${error.message}`);
+      logger.error(`Erreur lors de l'inscription: ${error.message}`);
       throw new Error(`Erreur lors de l'inscription: ${error.message}`);
     }
   }
@@ -267,7 +267,7 @@ class RegistrationService {
       // 5. Marquer l'email comme vérifié
       await usersRepository.updateEmailVerifiedAt(user.id);
       
-      this.logger.info(`Compte activé: ${user.id} - ${user.email}`);
+      logger.info(`Compte activé: ${user.id} - ${user.email}`);
 
       return {
         success: true,
@@ -284,7 +284,7 @@ class RegistrationService {
       };
 
     } catch (error) {
-      this.logger.error(`Erreur lors de la vérification email: ${error.message}`);
+      logger.error(`Erreur lors de la vérification email: ${error.message}`);
       throw new Error(`Erreur lors de la vérification: ${error.message}`);
     }
   }
@@ -326,13 +326,13 @@ class RegistrationService {
           throw new Error('Échec d\'envoi de l\'email de vérification');
         }
         
-        this.logger.info('OTP email sent successfully during resend', {
+        logger.info('OTP email sent successfully during resend', {
           personId: person.id,
           email: person.email,
           otpId: otpResult.id
         });
       } catch (emailError) {
-        this.logger.error('Failed to send OTP email during resend', {
+        logger.error('Failed to send OTP email during resend', {
           personId: person.id,
           email: person.email,
           error: emailError.message
@@ -356,7 +356,7 @@ class RegistrationService {
       };
 
     } catch (error) {
-      this.logger.error(`Erreur lors du renvoi OTP: ${error.message}`);
+      logger.error(`Erreur lors du renvoi OTP: ${error.message}`);
       throw new Error(`Erreur lors du renvoi du code: ${error.message}`);
     }
   }
