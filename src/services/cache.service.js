@@ -20,26 +20,13 @@ class CacheService {
   async initialize() {
     try {
       // Vérifier si Redis est configuré
-      try {
-        if (!configValidation.isServiceConfigured('redis')) {
-          logger.warn('Redis service not configured - cache disabled');
-          this.isConnected = false;
-          return;
-        }
-      } catch (error) {
-        logger.warn('Redis service configuration check failed - cache disabled', { error: error.message });
+      if (!configValidation.isServiceConfigured('redis')) {
+        logger.warn('Redis service not configured - cache disabled');
         this.isConnected = false;
         return;
       }
 
-      let config;
-      try {
-        config = configValidation.getConfig();
-      } catch (error) {
-        logger.warn('Redis service - configuration not available - cache disabled', { error: error.message });
-        this.isConnected = false;
-        return;
-      }
+      const config = configValidation.getConfig();
       
       // Créer le client Redis
       this.client = redis.createClient({
@@ -48,35 +35,27 @@ class CacheService {
         password: config.REDIS_PASSWORD || undefined,
         db: config.REDIS_DB,
         retry_delay_on_failover: 100,
-        enable_offline_queue: false,
+        retry_attempts_on_failover: 3,
         lazyConnect: true
       });
 
-      // Gérer les événements de connexion
+      // Écouter les événements
       this.client.on('connect', () => {
-        logger.info('Connected to Redis cache');
         this.isConnected = true;
+        logger.info('Redis connected successfully');
       });
 
-      this.client.on('ready', () => {
-        logger.info('Redis cache ready');
-      });
-
-      this.client.on('error', (err) => {
-        logger.error('Redis connection error', { error: err.message });
+      this.client.on('error', (error) => {
         this.isConnected = false;
+        logger.error('Redis connection error', { error: error.message });
       });
 
       this.client.on('end', () => {
-        logger.warn('Redis connection ended');
         this.isConnected = false;
+        logger.info('Redis connection ended');
       });
 
-      this.client.on('reconnecting', () => {
-        logger.info('Redis reconnecting...');
-      });
-
-      // Connexion asynchrone
+      // Connexion
       this.connectionPromise = this.client.connect();
       await this.connectionPromise;
 
@@ -92,6 +71,60 @@ class CacheService {
    */
   isReady() {
     return this.isConnected && this.client;
+  }
+
+  /**
+   * Méthodes Redis de base
+   */
+  async get(key) {
+    try {
+      if (!this.isReady()) {
+        return null;
+      }
+      return await this.client.get(key);
+    } catch (error) {
+      logger.error('Cache get error', { key, error: error.message });
+      return null;
+    }
+  }
+
+  async set(key, value) {
+    try {
+      if (!this.isReady()) {
+        return false;
+      }
+      await this.client.set(key, value);
+      return true;
+    } catch (error) {
+      logger.error('Cache set error', { key, error: error.message });
+      return false;
+    }
+  }
+
+  async setEx(key, ttl, value) {
+    try {
+      if (!this.isReady()) {
+        return false;
+      }
+      await this.client.setEx(key, ttl, value);
+      return true;
+    } catch (error) {
+      logger.error('Cache setEx error', { key, ttl, error: error.message });
+      return false;
+    }
+  }
+
+  async del(key) {
+    try {
+      if (!this.isReady()) {
+        return false;
+      }
+      await this.client.del(key);
+      return true;
+    } catch (error) {
+      logger.error('Cache del error', { key, error: error.message });
+      return false;
+    }
   }
 
   /**

@@ -6,10 +6,10 @@
 const logger = require('../utils/logger');
 const configValidation = require('../config/validation');
 
-// Import des services
-const EmailService = require('./email.service');
-const SMSService = require('./sms.service');
-const CacheService = require('./cache.service');
+// Import des services (déjà des instances)
+const emailService = require('./email.service');
+const smsService = require('./sms.service');
+const cacheService = require('./cache.service');
 
 /**
  * Container de services avec validation des contrats
@@ -35,19 +35,17 @@ class ServiceContainer {
       // Initialiser le logger (toujours disponible)
       this.services.logger = logger;
 
-      // Initialiser le service email
-      this.services.emailService = new EmailService();
+      // Utiliser les services existants (déjà des instances)
+      this.services.emailService = emailService;
       this.validateService('emailService', ['sendOTP', 'sendWelcomeEmail', 'isReady']);
 
-      // Initialiser le service SMS
-      this.services.smsService = new SMSService();
+      this.services.smsService = smsService;
       this.validateService('smsService', ['sendOTP', 'sendWelcomeSMS', 'isReady']);
 
-      // Initialiser le service cache
-      this.services.cacheService = new CacheService();
+      this.services.cacheService = cacheService;
       this.validateService('cacheService', [
         'get', 'set', 'setEx', 'del', 'getStats', 'isReady',
-        'setLoginAttempt', 'getLoginAttempts', 'getLoginAttempt', // Méthodes manquantes à ajouter
+        'setLoginAttempt', 'getLoginAttempts', 'getLoginAttempt',
         'incrementLoginAttempt', 'resetLoginAttempt'
       ]);
 

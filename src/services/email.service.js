@@ -11,6 +11,7 @@ class EmailService {
   constructor() {
     this.transporter = null;
     this.isConfigured = false;
+    // Appeler initialize() automatiquement à l'instanciation
     this.initialize();
   }
 

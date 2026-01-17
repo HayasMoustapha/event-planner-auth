@@ -10,6 +10,7 @@ class SMSService {
   constructor() {
     this.client = null;
     this.isConfigured = false;
+    // Appeler initialize() automatiquement à l'instanciation
     this.initialize();
   }
 
