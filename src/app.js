@@ -6,9 +6,18 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 
 const env = require('./config/env');
+const configValidation = require('./config/validation');
 const { errorHandler, notFoundHandler } = require('./middlewares/error.middleware');
 const metricsMiddleware = require('./middlewares/metrics.middleware');
 const securityMiddleware = require('./middlewares/security.middleware');
+
+// Valider la configuration au démarrage
+try {
+  configValidation.validateConfig();
+} catch (error) {
+  console.error('❌ Configuration validation failed:', error.message);
+  process.exit(1);
+}
 
 // Import des routes
 const authRoutes = require('./modules/auth/auth.routes');
