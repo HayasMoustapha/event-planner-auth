@@ -40,11 +40,11 @@ class PeopleRepository {
     params.push(limit, offset);
 
     try {
-      const [people] = await connection.query(query, params);
-      const [countResult] = await connection.query(countQuery, search || status ? params.slice(0, -2) : []);
+      const peopleResult = await connection.query(query, params);
+      const countResult = await connection.query(countQuery, search || status ? params.slice(0, -2) : []);
 
       return {
-        data: people.rows,
+        data: peopleResult.rows,
         pagination: {
           page,
           limit,

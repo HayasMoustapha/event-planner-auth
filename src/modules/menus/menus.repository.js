@@ -25,7 +25,7 @@ class MenuRepository {
       INSERT INTO menus (
         label, description, icon, route, parent_id, sort_order, 
         created_by, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING id, label, description, icon, route, parent_id, sort_order, 
                 created_by, created_at, updated_at
     `;
@@ -88,10 +88,13 @@ class MenuRepository {
     params.push(limit, offset);
 
     try {
-      const [dataResult, countResult] = await Promise.all([
+      const results = await Promise.all([
         connection.query(dataQuery, params),
         connection.query(`SELECT COUNT(*) as total FROM menus ${countClause}`, search || parentMenuId ? params.slice(0, -2) : [])
       ]);
+
+      const dataResult = results[0];
+      const countResult = results[1];
 
       return {
         data: dataResult.rows,

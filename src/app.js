@@ -156,15 +156,6 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: env.NODE_ENV
-  });
-});
-
 // Routes API
 app.use('/api/auth', 
   securityMiddleware.bruteForceProtection({

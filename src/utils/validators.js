@@ -65,6 +65,27 @@ function validatePhone(phone) {
 }
 
 /**
+ * Valide le format d'un mot de passe
+ * @param {string} password - Mot de passe à valider
+ * @returns {boolean} True si le mot de passe est valide
+ */
+function validatePassword(password) {
+  if (!password || typeof password !== 'string') {
+    return false;
+  }
+
+  // Longueur minimale
+  if (password.length < 8) {
+    return false;
+  }
+
+  // Doit contenir au moins une majuscule, une minuscule et un chiffre
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  
+  return passwordRegex.test(password);
+}
+
+/**
  * Valide le format d'un nom ou prénom
  * @param {string} name - Nom à valider
  * @returns {boolean} True si le nom est valide
@@ -145,6 +166,7 @@ function cleanName(name) {
 module.exports = {
   validateEmail,
   validatePhone,
+  validatePassword,
   validateName,
   validatePhotoUrl,
   cleanEmail,
