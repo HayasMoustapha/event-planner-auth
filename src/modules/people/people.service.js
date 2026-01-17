@@ -91,8 +91,8 @@ class PeopleService {
    */
   async create(personData, createdBy = null) {
     const {
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       email,
       phone,
       photo,
@@ -100,10 +100,10 @@ class PeopleService {
     } = personData;
 
     // Validation des champs obligatoires
-    if (!firstName || !firstName.trim()) {
+    if (!first_name || !first_name.trim()) {
       throw new Error('Le prénom est obligatoire');
     }
-    if (!lastName || !lastName.trim()) {
+    if (!last_name || !last_name.trim()) {
       throw new Error('Le nom de famille est obligatoire');
     }
     if (!email) {
@@ -125,8 +125,8 @@ class PeopleService {
 
     // Nettoyage des données
     const cleanData = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      first_name: first_name.trim(),
+      last_name: last_name.trim(),
       email: email.toLowerCase().trim(),
       phone: phone ? phone.trim() : null,
       photo: photo ? photo.trim() : null,
@@ -169,8 +169,8 @@ class PeopleService {
     }
 
     const {
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       email,
       phone,
       photo,
@@ -190,8 +190,8 @@ class PeopleService {
 
     // Nettoyage des données
     const cleanData = {};
-    if (firstName !== undefined) cleanData.firstName = firstName.trim();
-    if (lastName !== undefined) cleanData.lastName = lastName.trim();
+    if (first_name !== undefined) cleanData.first_name = first_name.trim();
+    if (last_name !== undefined) cleanData.last_name = last_name.trim();
     if (email !== undefined) cleanData.email = email.toLowerCase().trim();
     if (phone !== undefined) cleanData.phone = phone ? phone.trim() : null;
     if (photo !== undefined) cleanData.photo = photo ? photo.trim() : null;

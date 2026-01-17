@@ -10,14 +10,14 @@ const validate = require('../../config/validation');
 
 // Validation pour l'inscription
 const registerValidation = [
-  body('firstName')
+  body('first_name')
     .notEmpty()
     .withMessage('Le prénom est requis')
     .isLength({ min: 2, max: 50 })
     .withMessage('Le prénom doit contenir entre 2 et 50 caractères')
     .trim(),
   
-  body('lastName')
+  body('last_name')
     .optional()
     .isLength({ max: 50 })
     .withMessage('Le nom ne doit pas dépasser 50 caractères')

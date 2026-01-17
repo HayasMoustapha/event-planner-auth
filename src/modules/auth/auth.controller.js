@@ -172,7 +172,7 @@ class AuthController {
         true,
         'OTP généré avec succès',
         {
-          identifier: email,
+          contactInfo: email,
           expiresAt: otp.expires_at,
           expiresInMinutes
         }
@@ -258,7 +258,7 @@ class AuthController {
         true,
         'OTP généré avec succès',
         {
-          identifier: phone,
+          contactInfo: phone,
           expiresAt: otp.expires_at,
           expiresInMinutes
         }
@@ -334,26 +334,26 @@ class AuthController {
    */
   async loginWithOtp(req, res, next) {
     try {
-      const { identifier, code, type = 'email' } = req.body;
+      const { contactInfo, code, type = 'email' } = req.body;
       
-      if (!identifier || !code) {
+      if (!contactInfo || !code) {
         return res.status(400).json(createResponse(
           false,
-          'Identifiant et code OTP requis'
+          'Contact et code OTP requis'
         ));
       }
 
       // Vérifier l'OTP
-      const otpResult = await otpService.verifyOtp(code, identifier, type);
+      const otpResult = await otpService.verifyOtp(code, contactInfo, type);
       
       // Récupérer l'utilisateur
       const usersRepository = require('../users/users.repository');
       let user;
       
       if (type === 'email') {
-        user = await usersRepository.findByEmail(identifier);
+        user = await usersRepository.findByEmail(contactInfo);
       } else if (type === 'phone') {
-        user = await usersRepository.findByPhone(identifier);
+        user = await usersRepository.findByPhone(contactInfo);
       }
       
       if (!user) {
@@ -448,7 +448,7 @@ class AuthController {
         true,
         'OTP de réinitialisation généré avec succès',
         {
-          identifier: email,
+          contactInfo: email,
           expiresAt: otp.expires_at
         }
       ));

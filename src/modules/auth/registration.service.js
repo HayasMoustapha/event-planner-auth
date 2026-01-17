@@ -45,8 +45,8 @@ class RegistrationService {
    */
   async register(registrationData) {
     const {
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       email,
       phone,
       password,
@@ -88,8 +88,8 @@ class RegistrationService {
 
       // 5. Créer la personne
       const personData = {
-        firstName: firstName.trim(),
-        lastName: lastName?.trim() || null,
+        first_name: first_name.trim(),
+        last_name: last_name?.trim() || null,
         email: email.trim().toLowerCase(),
         phone: phone?.trim() || null,
         status: 'active'
@@ -103,7 +103,7 @@ class RegistrationService {
         username: username?.trim() || email.split('@')[0], // Utiliser la partie email comme username par défaut
         email: email.trim().toLowerCase(),
         password: password,
-        userCode: userCode || this.generateUserCode(firstName, lastName),
+        userCode: userCode || this.generateUserCode(first_name, last_name),
         phone: phone?.trim() || null,
         status: 'inactive', // Inactif jusqu'à validation OTP
         personId: person.id
@@ -152,8 +152,8 @@ class RegistrationService {
           person: {
             id: person.id,
             email: person.email,
-            firstName: person.first_name,
-            lastName: person.last_name
+            first_name: person.first_name,
+            last_name: person.last_name
           },
           user: {
             id: user.id,
@@ -182,10 +182,10 @@ class RegistrationService {
    * @param {Object} data - Données à valider
    */
   validateRegistrationData(data) {
-    const { firstName, email, password } = data;
+    const { first_name, email, password } = data;
 
     // Validation des champs requis
-    if (!firstName || !firstName.trim()) {
+    if (!first_name || !first_name.trim()) {
       throw new Error('Le prénom est requis');
     }
 
@@ -228,12 +228,12 @@ class RegistrationService {
 
   /**
    * Génère un user_code à partir du nom
-   * @param {string} firstName - Prénom
-   * @param {string} lastName - Nom
+   * @param {string} first_name - Prénom
+   * @param {string} last_name - Nom
    * @returns {string} User code généré
    */
-  generateUserCode(firstName, lastName) {
-    const base = `${firstName?.toLowerCase() || ''}${lastName?.toLowerCase() || ''}`.replace(/[^a-z0-9]/g, '');
+  generateUserCode(first_name, last_name) {
+    const base = `${first_name?.toLowerCase() || ''}${last_name?.toLowerCase() || ''}`.replace(/[^a-z0-9]/g, '');
     const timestamp = Date.now().toString(36);
     return `${base}_${timestamp}`;
   }

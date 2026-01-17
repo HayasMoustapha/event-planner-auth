@@ -220,7 +220,7 @@ class AttackDetectionService {
       // Vérifier les champs suspects (exclure les champs légitimes)
       if (typeof body === 'object' && body !== null) {
         const suspiciousFields = ['admin', 'sudo', 'root', 'secret', 'api_key', 'private_key'];
-        const legitimateFields = ['password', 'token', 'email', 'username', 'firstName', 'lastName', 'phone', 'user_code'];
+        const legitimateFields = ['password', 'token', 'email', 'username', 'first_name', 'last_name', 'phone', 'user_code'];
         
         const foundFields = Object.keys(body).filter(key => 
           suspiciousFields.some(field => key.toLowerCase().includes(field)) &&

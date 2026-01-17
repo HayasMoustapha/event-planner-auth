@@ -37,14 +37,14 @@ const handleValidationErrors = (req, res, next) => {
  */
 const validateCreate = [
   // Champs obligatoires
-  body('firstName')
+  body('first_name')
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Le prénom doit contenir entre 2 et 100 caractères')
     .matches(/^[a-zA-Z\u00C0-\u017F\s'\-]+$/)
     .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
     
-  body('lastName')
+  body('last_name')
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Le nom de famille doit contenir entre 2 et 100 caractères')
@@ -90,7 +90,7 @@ const validateUpdate = [
     .withMessage('L\'ID doit être un entier positif'),
     
   // Champs optionnels pour la mise à jour
-  body('firstName')
+  body('first_name')
     .optional()
     .trim()
     .isLength({ min: 2, max: 100 })
@@ -98,7 +98,7 @@ const validateUpdate = [
     .matches(/^[a-zA-Z\u00C0-\u017F\s'\-]+$/)
     .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
     
-  body('lastName')
+  body('last_name')
     .optional()
     .trim()
     .isLength({ min: 2, max: 100 })

@@ -128,8 +128,8 @@ class PeopleRepository {
    */
   async create(personData) {
     const {
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       email,
       phone,
       photo,
@@ -145,8 +145,8 @@ class PeopleRepository {
 
     try {
       const result = await connection.query(query, [
-        firstName,
-        lastName,
+        first_name,
+        last_name,
         email,
         phone,
         photo,
@@ -177,8 +177,8 @@ class PeopleRepository {
    */
   async update(id, personData) {
     const {
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       email,
       phone,
       photo,
@@ -191,13 +191,13 @@ class PeopleRepository {
     const values = [];
     let paramIndex = 1;
 
-    if (firstName !== undefined) {
+    if (first_name !== undefined) {
       updates.push(`first_name = $${paramIndex++}`);
-      values.push(firstName);
+      values.push(first_name);
     }
-    if (lastName !== undefined) {
+    if (last_name !== undefined) {
       updates.push(`last_name = $${paramIndex++}`);
-      values.push(lastName);
+      values.push(last_name);
     }
     if (email !== undefined) {
       updates.push(`email = $${paramIndex++}`);

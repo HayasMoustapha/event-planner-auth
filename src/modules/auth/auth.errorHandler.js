@@ -124,11 +124,11 @@ const authErrorHandler = (error, req, res, next) => {
     });
   }
 
-  if (error.message.includes('Identifiant requis')) {
+  if (error.message.includes('Contact requis')) {
     return res.status(400).json({
       success: false,
-      message: 'L\'identifiant (email ou téléphone) est requis',
-      code: 'IDENTIFIER_REQUIRED',
+      message: 'Le contact (email ou téléphone) est requis',
+      code: 'CONTACT_REQUIRED',
       timestamp: new Date().toISOString()
     });
   }

@@ -59,12 +59,12 @@ const validateLogin = [
  * Validation pour la connexion avec OTP
  */
 const validateLoginWithOtp = [
-  body('identifier')
+  body('contactInfo')
     .trim()
     .notEmpty()
-    .withMessage('L\'identifiant (email ou téléphone) est requis')
+    .withMessage('Le contact (email ou téléphone) est requis')
     .isLength({ min: 3, max: 254 })
-    .withMessage('L\'identifiant doit contenir entre 3 et 254 caractères'),
+    .withMessage('Le contact doit contenir entre 3 et 254 caractères'),
     
   body('code')
     .trim()
@@ -307,7 +307,7 @@ const validateChangePassword = [
  * Validation pour l'inscription d'un nouvel utilisateur
  */
 const validateRegister = [
-  body('firstName')
+  body('first_name')
     .trim()
     .notEmpty()
     .withMessage('Le prénom est requis')
@@ -316,7 +316,7 @@ const validateRegister = [
     .matches(/^[a-zA-ZÀ-ÿ\s'-]+$/)
     .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
     
-  body('lastName')
+  body('last_name')
     .optional()
     .trim()
     .isLength({ max: 50 })

@@ -26,12 +26,12 @@ class OtpService {
    * Génère et sauvegarde un OTP pour une personne
    * @param {number} personId - ID de la personne
    * @param {string} purpose - Purpose de l'OTP ('email' ou 'phone')
-   * @param {string} identifier - Email ou numéro de téléphone
+   * @param {string} contactInfo - Email ou numéro de téléphone
    * @param {number} expiresInMinutes - Durée de validité en minutes (défaut: 15)
    * @param {number} createdBy - ID de l'utilisateur qui crée l'OTP
    * @returns {Promise<Object>} OTP créé
    */
-  async generateOtp(personId, purpose, identifier, expiresInMinutes = 15, createdBy = null) {
+  async generateOtp(personId, purpose, contactInfo, expiresInMinutes = 15, createdBy = null) {
     // Validation des paramètres
     if (!personId || personId <= 0) {
       throw new Error('ID personne invalide');
@@ -41,8 +41,8 @@ class OtpService {
       throw new Error('Purpose d\'OTP invalide. Valeurs autorisées: email, phone');
     }
     
-    if (!identifier || !identifier.trim()) {
-      throw new Error('Identifiant (email/téléphone) requis');
+    if (!contactInfo || !contactInfo.trim()) {
+      throw new Error('Contact (email/téléphone) requis');
     }
     
     if (expiresInMinutes < 1 || expiresInMinutes > 60) {
@@ -122,19 +122,19 @@ class OtpService {
   /**
    * Vérifie un code OTP
    * @param {string} otpCode - Code OTP à vérifier
-   * @param {string} identifier - Email ou téléphone
+   * @param {string} contactInfo - Email ou téléphone
    * @param {string} purpose - Purpose de l'OTP ('email' ou 'phone')
    * @param {number} personId - ID de la personne (optionnel, pour validation)
    * @returns {Promise<Object>} OTP validé et marqué comme utilisé
    */
-  async verifyOtp(otpCode, identifier, purpose, personId = null) {
+  async verifyOtp(otpCode, contactInfo, purpose, personId = null) {
     // Validation des paramètres
     if (!otpCode || !otpCode.trim()) {
       throw new Error('Code OTP requis');
     }
     
-    if (!identifier || !identifier.trim()) {
-      throw new Error('Identifiant requis');
+    if (!contactInfo || !contactInfo.trim()) {
+      throw new Error('Contact requis');
     }
     
     if (!purpose || !['email', 'phone'].includes(purpose)) {
@@ -145,15 +145,15 @@ class OtpService {
       throw new Error('Code OTP invalide');
     }
 
-    // Normaliser l'identifiant
-    const normalizedIdentifier = identifier.toLowerCase().trim();
+    // Normaliser le contact
+    const normalizedContact = contactInfo.toLowerCase().trim();
 
     // Debug logs
     console.log('🔍 Debug OTP Validation:', {
       otpCode,
       personId,
       purpose,
-      normalizedIdentifier
+      normalizedContact
     });
 
     // Vérifier et marquer comme utilisé
@@ -178,7 +178,7 @@ class OtpService {
     return {
       id: otp.id,
       purpose: otp.purpose,
-      identifier: normalizedIdentifier,
+      contactInfo: normalizedContact,
       expiresAt: otp.expires_at,
       createdAt: otp.created_at
     };
