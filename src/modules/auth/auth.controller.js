@@ -125,18 +125,37 @@ class AuthController {
 
       const otp = await otpService.generateEmailOtp(targetPersonId, email, expiresInMinutes, req.user?.id || null);
       
-      // Envoyer l'OTP par email (désactivé pour les tests)
-      // await emailService.sendOTP(email, otp.code, 'login', {
-      //   ip: req.ip,
-      //   userAgent: req.get('User-Agent')
-      // });
-      
-      logger.auth('OTP email generated', {
-        email,
-        personId: targetPersonId,
-        expiresInMinutes,
-        ip: req.ip
-      });
+      // Envoyer l'OTP par email
+      try {
+        const emailSent = await emailService.sendOTP(email, otp.code, 'login', {
+          ip: req.ip,
+          userAgent: req.get('User-Agent')
+        });
+        
+        if (!emailSent) {
+          throw new Error('Échec d\'envoi de l\'email OTP');
+        }
+        
+        logger.auth('OTP email sent successfully', {
+          email,
+          personId: targetPersonId,
+          otpId: otp.id,
+          expiresInMinutes,
+          ip: req.ip
+        });
+      } catch (emailError) {
+        logger.error('Failed to send OTP email', {
+          email,
+          personId: targetPersonId,
+          error: emailError.message,
+          ip: req.ip
+        });
+        
+        // Supprimer l'OTP généré si l'envoi échoue
+        await otpService.invalidateOtp(otp.id);
+        
+        throw new Error(`Échec d'envoi de l'OTP par email: ${emailError.message}`);
+      }
       
       res.status(201).json(createResponse(
         true,

@@ -57,7 +57,19 @@ class SMSService {
   async sendOTP(phoneNumber, otpCode, purpose = 'login', options = {}) {
     try {
       if (!this.isConfigured) {
-        return this.fallbackSendOTP(phoneNumber, otpCode, purpose);
+        // En développement, logger le code mais ne PAS retourner de succès
+        if (configValidation.getConfig().NODE_ENV === 'development') {
+          logger.warn('OTP SMS fallback - service not configured', {
+            phoneNumber: this.maskPhoneNumber(phoneNumber),
+            purpose,
+            otpCode: otpCode.substring(0, 3) + '***' // Masquer partiellement le code
+          });
+          console.log(`🔐 [DEV] OTP SMS pour ${this.maskPhoneNumber(phoneNumber)}: ${otpCode} (purpose: ${purpose})`);
+          return true; // En développement uniquement
+        }
+        
+        // En production, lever une erreur si le service n'est pas configuré
+        throw new Error('Service SMS non configuré - impossible d\'envoyer l\'OTP');
       }
 
       const { message } = this.generateOTPMessage(otpCode, purpose, options);
@@ -68,7 +80,7 @@ class SMSService {
         to: phoneNumber
       });
       
-      logger.auth('OTP SMS sent', {
+      logger.auth('OTP SMS sent successfully', {
         phoneNumber: this.maskPhoneNumber(phoneNumber),
         purpose,
         messageSid: result.sid,
@@ -86,8 +98,8 @@ class SMSService {
         ip: options.ip
       });
       
-      // Essayer le fallback en cas d'échec
-      return this.fallbackSendOTP(phoneNumber, otpCode, purpose);
+      // NE PAS utiliser de fallback - lever l'erreur pour que l'API échoue
+      throw new Error(`Échec d'envoi de l'OTP par SMS: ${error.message}`);
     }
   }
 

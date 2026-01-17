@@ -330,6 +330,22 @@ class OtpService {
   }
 
   /**
+   * Invalide un OTP (marque comme utilisé)
+   * @param {number} otpId - ID de l'OTP à invalider
+   * @returns {Promise<boolean>} True si invalidé avec succès
+   */
+  async invalidateOtp(otpId) {
+    try {
+      await otpRepository.markAsUsed(otpId);
+      logger.info(`OTP invalidé: ${otpId}`);
+      return true;
+    } catch (error) {
+      logger.error(`Erreur lors de l'invalidation de l'OTP ${otpId}: ${error.message}`);
+      return false;
+    }
+  }
+
+  /**
    * Formate la réponse OTP pour le client
    * @param {Object} otp - Objet OTP de la base
    * @returns {Object} OTP formaté

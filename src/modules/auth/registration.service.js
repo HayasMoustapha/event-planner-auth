@@ -86,6 +86,35 @@ class RegistrationService {
       // 7. Générer et envoyer l'OTP
       const otpResult = await otpService.generateEmailOtp(person.id, person.email);
       
+      // 8. Envoyer l'OTP par email
+      try {
+        const emailSent = await emailService.sendOTP(person.email, otpResult.code, 'verification', {
+          ip: options.ip,
+          userAgent: options.userAgent
+        });
+        
+        if (!emailSent) {
+          throw new Error('Échec d\'envoi de l\'email de vérification');
+        }
+        
+        logger.info('OTP email sent successfully during registration', {
+          personId: person.id,
+          email: person.email,
+          otpId: otpResult.id
+        });
+      } catch (emailError) {
+        logger.error('Failed to send OTP email during registration', {
+          personId: person.id,
+          email: person.email,
+          error: emailError.message
+        });
+        
+        // Supprimer l'OTP généré si l'envoi échoue
+        await otpService.invalidateOtp(otpResult.id);
+        
+        throw new Error(`Échec d'envoi de l'email de vérification: ${emailError.message}`);
+      }
+      
       // 8. Retourner le résultat sans données sensibles
       return {
         success: true,
@@ -257,6 +286,35 @@ class RegistrationService {
 
       // 3. Générer un nouvel OTP
       const otpResult = await otpService.generateEmailOtp(person.id, person.email);
+
+      // 4. Envoyer l'OTP par email
+      try {
+        const emailSent = await emailService.sendOTP(person.email, otpResult.code, 'verification', {
+          ip: options.ip,
+          userAgent: options.userAgent
+        });
+        
+        if (!emailSent) {
+          throw new Error('Échec d\'envoi de l\'email de vérification');
+        }
+        
+        logger.info('OTP email sent successfully during resend', {
+          personId: person.id,
+          email: person.email,
+          otpId: otpResult.id
+        });
+      } catch (emailError) {
+        logger.error('Failed to send OTP email during resend', {
+          personId: person.id,
+          email: person.email,
+          error: emailError.message
+        });
+        
+        // Supprimer l'OTP généré si l'envoi échoue
+        await otpService.invalidateOtp(otpResult.id);
+        
+        throw new Error(`Échec d'envoi de l'email de vérification: ${emailError.message}`);
+      }
 
       return {
         success: true,

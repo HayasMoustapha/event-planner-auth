@@ -69,7 +69,19 @@ class EmailService {
   async sendOTP(email, otpCode, purpose = 'login', options = {}) {
     try {
       if (!this.isConfigured) {
-        return this.fallbackSendOTP(email, otpCode, purpose);
+        // En développement, logger le code mais ne PAS retourner de succès
+        if (configValidation.getConfig().NODE_ENV === 'development') {
+          logger.warn('OTP email fallback - service not configured', {
+            email,
+            purpose,
+            otpCode: otpCode.substring(0, 3) + '***' // Masquer partiellement le code
+          });
+          console.log(`🔐 [DEV] OTP pour ${email}: ${otpCode} (purpose: ${purpose})`);
+          return true; // En développement uniquement
+        }
+        
+        // En production, lever une erreur si le service n'est pas configuré
+        throw new Error('Service email non configuré - impossible d\'envoyer l\'OTP');
       }
 
       const { subject, html, text } = this.generateOTPTemplate(email, otpCode, purpose, options);
@@ -84,7 +96,7 @@ class EmailService {
 
       const result = await this.transporter.sendMail(mailOptions);
       
-      logger.auth('OTP email sent', {
+      logger.auth('OTP email sent successfully', {
         email,
         purpose,
         messageId: result.messageId,
@@ -100,8 +112,8 @@ class EmailService {
         ip: options.ip
       });
       
-      // Essayer le fallback en cas d'échec
-      return this.fallbackSendOTP(email, otpCode, purpose);
+      // NE PAS utiliser de fallback - lever l'erreur pour que l'API échoue
+      throw new Error(`Échec d'envoi de l'OTP par email: ${error.message}`);
     }
   }
 
