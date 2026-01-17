@@ -220,6 +220,7 @@ class UsersRepository {
       userCode,
       phone,
       status,
+      emailVerifiedAt,
       updatedBy = null
     } = updateData;
 
@@ -255,6 +256,10 @@ class UsersRepository {
     if (status !== undefined) {
       updates.push(`status = $${paramIndex++}`);
       values.push(status);
+    }
+    if (emailVerifiedAt !== undefined) {
+      updates.push(`email_verified_at = $${paramIndex++}`);
+      values.push(emailVerifiedAt);
     }
 
     if (updates.length === 0) {
