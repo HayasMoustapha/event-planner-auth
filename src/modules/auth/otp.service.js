@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const otpRepository = require('./otp.repository');
+const peopleRepository = require('../people/people.repository');
 const logger = require('../../utils/logger');
 
 /**
@@ -191,6 +192,15 @@ class OtpService {
    * @returns {Promise<Object>} OTP validé
    */
   async verifyEmailOtp(otpCode, email, personId = null) {
+    // Si personId n'est pas fourni, le récupérer depuis l'email
+    if (!personId) {
+      const person = await peopleRepository.findByEmail(email);
+      if (!person) {
+        throw new Error('Aucun compte trouvé avec cet email');
+      }
+      personId = person.id;
+    }
+    
     return await this.verifyOtp(otpCode, email, 'email', personId);
   }
 
@@ -202,6 +212,15 @@ class OtpService {
    * @returns {Promise<Object>} OTP validé
    */
   async verifyPhoneOtp(otpCode, phone, personId = null) {
+    // Si personId n'est pas fourni, le récupérer depuis le téléphone
+    if (!personId) {
+      const person = await peopleRepository.findByPhone(phone);
+      if (!person) {
+        throw new Error('Aucun compte trouvé avec ce numéro de téléphone');
+      }
+      personId = person.id;
+    }
+    
     return await this.verifyOtp(otpCode, phone, 'phone', personId);
   }
 
