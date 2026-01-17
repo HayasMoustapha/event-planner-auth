@@ -153,6 +153,36 @@ class AuthController {
   }
 
   /**
+   * Connexion avec remember token
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async loginWithRememberToken(req, res, next) {
+    try {
+      const { token } = req.body;
+      
+      if (!token) {
+        return res.status(400).json(createResponse(
+          false,
+          'Token requis',
+          null
+        ));
+      }
+
+      const result = await authService.loginWithRememberToken(token);
+      
+      res.status(200).json(createResponse(
+        true,
+        'Connexion réussie',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Génère un OTP pour le téléphone
    * @param {Object} req - Requête Express
    * @param {Object} res - Réponse Express

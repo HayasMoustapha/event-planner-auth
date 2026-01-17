@@ -347,6 +347,54 @@ class AuthService {
   }
 
   /**
+   * Génère un remember token pour "Remember me"
+   * @param {number} userId - ID de l'utilisateur
+   * @returns {Promise<string>} Remember token généré
+   */
+  async generateRememberToken(userId) {
+    try {
+      const crypto = require('crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+      
+      // Sauvegarder le token dans la base de données
+      await usersRepository.update(userId, { remember_token: token });
+      
+      logger.info('Remember token generated', { userId });
+      return token;
+    } catch (error) {
+      logger.error('Error generating remember token', { userId, error: error.message });
+      throw new Error('Erreur lors de la génération du remember token');
+    }
+  }
+
+  /**
+   * Vérifie un remember token
+   * @param {string} token - Remember token à vérifier
+   * @returns {Promise<Object|null>} Utilisateur si token valide
+   */
+  async verifyRememberToken(token) {
+    try {
+      const user = await usersRepository.findByRememberToken(token);
+      
+      if (!user) {
+        return null;
+      }
+
+      // Vérifier si le token n'est pas expiré (optionnel: 30 jours)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      
+      if (user.updated_at < thirtyDaysAgo) {
+        return null;
+      }
+
+      return user;
+    } catch (error) {
+      logger.error('Error verifying remember token', { error: error.message });
+      throw new Error('Erreur lors de la vérification du remember token');
+    }
+  }
+
+  /**
    * Désactive un compte utilisateur
    * @param {number} userId - ID de l'utilisateur
    * @param {number} deactivatedBy - ID de l'utilisateur qui désactive

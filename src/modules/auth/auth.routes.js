@@ -19,6 +19,12 @@ router.post('/login',
   authController.login
 );
 
+// Connexion avec remember token
+router.post('/login-remember', 
+  authValidation.validateLogin,
+  authController.loginWithRememberToken
+);
+
 // Connexion avec OTP
 router.post('/login-otp', 
   authValidation.validateLoginWithOtp,

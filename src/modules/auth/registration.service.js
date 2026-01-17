@@ -205,11 +205,11 @@ class RegistrationService {
       }
 
       // 4. Activer le compte utilisateur
-      const activatedUser = await usersRepository.updateStatus(user.id, 'active');
+      const activatedUser = await usersRepository.updateStatus(user.id, 'active', 'activatedBy');
       
-      // 5. Marquer l'email comme vérifié si la colonne existe
-      // Note: email_verified_at n'est pas encore implémenté dans le repository
-
+      // 5. Marquer l'email comme vérifié
+      await usersRepository.updateEmailVerifiedAt(user.id);
+      
       logger.info(`Compte activé: ${user.id} - ${user.email}`);
 
       return {

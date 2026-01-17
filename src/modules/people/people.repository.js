@@ -172,10 +172,10 @@ class PeopleRepository {
   /**
    * Met à jour une personne
    * @param {number} id - ID de la personne
-   * @param {Object} updateData - Données à mettre à jour
+   * @param {Object} personData - Données à mettre à jour
    * @returns {Promise<Object>} Personne mise à jour
    */
-  async update(id, updateData) {
+  async update(id, personData) {
     const {
       firstName,
       lastName,
@@ -184,7 +184,7 @@ class PeopleRepository {
       photo,
       status,
       updatedBy = null
-    } = updateData;
+    } = personData;
 
     // Construction dynamique de la requête
     const updates = [];
@@ -254,6 +254,29 @@ class PeopleRepository {
   }
 
   /**
+   * Met à jour la photo d'une personne
+   * @param {number} id - ID de la personne
+   * @param {string} photoUrl - URL de la photo
+   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
+   * @returns {Promise<Object>} Personne mise à jour
+   */
+  async updatePhoto(id, photoUrl, updatedBy = null) {
+    const query = `
+      UPDATE people 
+      SET photo = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND deleted_at IS NULL
+      RETURNING id, first_name, last_name, email, phone, photo, status, updated_at
+    `;
+
+    try {
+      const result = await connection.query(query, [id, photoUrl, updatedBy]);
+      return result.rows[0];
+    } catch (error) {
+      throw new Error(`Erreur lors de la mise à jour de la photo: ${error.message}`);
+    }
+  }
+
+  /**
    * Supprime logiquement une personne (soft delete)
    * @param {number} id - ID de la personne
    * @param {number} deletedBy - ID de l'utilisateur qui supprime
@@ -293,38 +316,6 @@ class PeopleRepository {
       return parseInt(result.rows[0].count) > 0;
     } catch (error) {
       throw new Error(`Erreur lors de la vérification des utilisateurs associés: ${error.message}`);
-    }
-  }
-
-  /**
-   * Active ou désactive une personne
-   * @param {number} id - ID de la personne
-   * @param {string} status - Nouveau statut (active/inactive)
-   * @param {number} updatedBy - ID de l'utilisateur qui modifie
-   * @returns {Promise<Object>} Personne mise à jour
-   */
-  async updateStatus(id, status, updatedBy = null) {
-    if (!['active', 'inactive'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive');
-    }
-
-    const query = `
-      UPDATE people 
-      SET status = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND deleted_at IS NULL
-      RETURNING *
-    `;
-
-    try {
-      const result = await connection.query(query, [id, status, updatedBy]);
-      
-      if (result.rows.length === 0) {
-        throw new Error('Personne non trouvée');
-      }
-
-      return result.rows[0];
-    } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour du statut: ${error.message}`);
     }
   }
 }

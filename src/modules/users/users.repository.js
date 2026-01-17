@@ -310,42 +310,26 @@ class UsersRepository {
       const result = await connection.query(query, [id, deletedBy]);
       return result.rowCount > 0;
     } catch (error) {
-      throw new Error(`Erreur lors de la suppression de l'utilisateur: ${error.message}`);
-    }
+
+  if (username !== undefined) {
+    updates.push(`username = $${paramIndex++}`);
+    values.push(username);
   }
-
-  /**
-   * Met à jour le mot de passe d'un utilisateur
-   * @param {number} id - ID de l'utilisateur
-   * @param {string} newPassword - Nouveau mot de passe
-   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
-   * @returns {Promise<Object>} Utilisateur mis à jour
-   */
-  async updatePassword(id, newPassword, updatedBy = null) {
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-    // Ajouter à l'historique avant la mise à jour
+  if (email !== undefined) {
+    updates.push(`email = $${paramIndex++}`);
+    values.push(email);
+  }
+  if (password !== undefined) {
+    const hashedPassword = await bcrypt.hash(password, 12);
+    updates.push(`password = $${paramIndex++}`);
+    values.push(hashedPassword);
+    
+    // Ajouter à l'historique des mots de passe
     await this.addPasswordHistory(id, hashedPassword);
-
-    const query = `
-      UPDATE users 
-      SET password = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND deleted_at IS NULL
-      RETURNING id, username, email, user_code, phone, status, updated_at
-    `;
-
-    try {
-      const result = await connection.query(query, [id, hashedPassword, updatedBy]);
-      
-      if (result.rows.length === 0) {
-        throw new Error('Utilisateur non trouvé');
-      }
-
-      return result.rows[0];
-    } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour du mot de passe: ${error.message}`);
-    }
   }
+  if (userCode !== undefined) {
+    updates.push(`user_code = $${paramIndex++}`);
+    values.push(userCode);
 
   /**
    * Vérifie si un mot de passe est correct
@@ -378,40 +362,10 @@ class UsersRepository {
    */
   async updateLastLogin(id) {
     // Note: last_login_at n'existe pas dans le schéma SQL actuel
-    // Cette fonction est conservée pour compatibilité mais ne fait rien
-    return true;
   }
-
-  /**
-   * Change le statut d'un utilisateur
-   * @param {number} id - ID de l'utilisateur
-   * @param {string} status - Nouveau statut
-   * @param {number} updatedBy - ID de l'utilisateur qui modifie
-   * @returns {Promise<Object>} Utilisateur mis à jour
-   */
-  async updateStatus(id, status, updatedBy = null) {
-    if (!['active', 'inactive', 'lock'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
-    }
-
-    const query = `
-      UPDATE users 
-      SET status = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND deleted_at IS NULL
-      RETURNING id, username, email, user_code, phone, status, updated_at
-    `;
-
-    try {
-      const result = await connection.query(query, [id, status, updatedBy]);
-      
-      if (result.rows.length === 0) {
-        throw new Error('Utilisateur non trouvé');
-      }
-
-      return result.rows[0];
-    } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour du statut: ${error.message}`);
-    }
+  if (status !== undefined) {
+    updates.push(`status = $${paramIndex++}`);
+    values.push(status);
   }
 
   /**
