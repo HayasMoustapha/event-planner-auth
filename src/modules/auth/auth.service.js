@@ -4,6 +4,7 @@ const usersRepository = require('../users/users.repository');
 const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
 const emailService = require('../../services/email.service');
+const sessionService = require('../sessions/sessions.service');
 
 /**
  * Service métier pour l'authentification et le login
@@ -54,6 +55,23 @@ class AuthService {
 
     // Générer le token JWT
     const token = this.generateToken(user);
+
+    // Créer une session pour le token
+    try {
+      await sessionService.createSession({
+        accessToken: token,
+        userId: user.id,
+        ipAddress: null, // Sera ajouté par le middleware
+        userAgent: null,  // Sera ajouté par le middleware
+        expiresIn: 24 * 60 * 60 // 24 heures
+      });
+    } catch (sessionError) {
+      logger.warn('Failed to create session during login', { 
+        error: sessionError.message,
+        userId: user.id 
+      });
+      // Continuer même si la session échoue
+    }
 
     // Retourner l'utilisateur sans le mot de passe
     const userResponse = { ...user };

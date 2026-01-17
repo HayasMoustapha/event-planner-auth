@@ -195,6 +195,7 @@ class SessionService {
    */
   async createSession(sessionData) {
     const {
+      accessToken,
       userId,
       deviceInfo,
       ipAddress,
@@ -202,54 +203,20 @@ class SessionService {
       expiresIn = 3600 // 1 heure
     } = sessionData;
 
-    // Récupérer les informations utilisateur
-    const user = await usersRepository.findById(userId);
-    if (!user) {
-      throw new Error('Utilisateur non trouvé');
-    }
-
-    if (user.status !== 'active') {
-      throw new Error('Utilisateur non actif');
-    }
-
-    // Générer les tokens
-    const accessToken = this.generateAccessToken(user, { expiresIn: `${expiresIn}s` });
-    const refreshToken = this.generateRefreshToken(user);
-
-    // Créer la session en base de données
+    // Créer la session en base de données avec le token existant
     const session = await sessionRepository.create({
-      userId,
       accessToken,
-      refreshToken,
+      userId,
       deviceInfo,
       ipAddress,
       userAgent,
       expiresIn
     });
 
-    // Retourner les tokens et les informations de session
     return {
-      session: {
-        id: session.id,
-        userId: session.user_id,
-        deviceInfo: session.device_info,
-        ipAddress: session.ip_address,
-        expiresAt: session.expires_at,
-        createdAt: session.created_at
-      },
-      tokens: {
-        accessToken,
-        refreshToken,
-        expiresIn,
-        tokenType: 'Bearer'
-      },
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        role: user.role,
-        status: user.status
-      }
+      success: true,
+      session,
+      accessToken
     };
   }
 
