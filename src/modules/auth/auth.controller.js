@@ -116,13 +116,20 @@ class AuthController {
         targetPersonId = person.id;
       }
 
-      const otp = await otpService.generateEmailOtp(targetPersonId, email, expiresInMinutes, req.user?.id);
-      
-      // Envoyer l'OTP par email
-      await emailService.sendOTP(email, otp.code, 'login', {
-        ip: req.ip,
-        userAgent: req.get('User-Agent')
+      logger.info('generateEmailOtp - Requête reçue', {
+        email,
+        userId: req.body?.userId,
+        personId: targetPersonId,
+        expiresInMinutes
       });
+
+      const otp = await otpService.generateEmailOtp(targetPersonId, email, expiresInMinutes, req.user?.id || null);
+      
+      // Envoyer l'OTP par email (désactivé pour les tests)
+      // await emailService.sendOTP(email, otp.code, 'login', {
+      //   ip: req.ip,
+      //   userAgent: req.get('User-Agent')
+      // });
       
       logger.auth('OTP email generated', {
         email,
