@@ -113,6 +113,16 @@ class SessionService {
           message: 'Token invalide'
         };
       }
+      
+      // Cas spécial pour les tokens blacklistés
+      if (error.message === 'Token a été révoqué') {
+        return {
+          valid: false,
+          error: 'TOKEN_REVOKED',
+          message: 'Token a été révoqué'
+        };
+      }
+      
       return {
         valid: false,
         error: 'VERIFICATION_ERROR',
