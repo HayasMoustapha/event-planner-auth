@@ -1,42 +1,84 @@
 const DatabaseBootstrap = require('./services/database-bootstrap.service');
+const serviceContainer = require('./services/index');
 
 /**
- * Point d'entrée pour le bootstrap de base de données
- * Utilitaire autonome pour exécuter le bootstrap manuellement
+ * Point d'entrée pour le bootstrap de l'application
+ * Initialise les services critiques avant démarrage du serveur
  */
-async function runBootstrap() {
-  const bootstrap = new DatabaseBootstrap();
-  
-  try {
-    console.log('🔧 Lancement manuel du bootstrap de la base de données...');
-    const result = await bootstrap.initialize();
+class ApplicationBootstrap {
+  /**
+   * Initialise tous les composants critiques de l'application
+   * @throws {Error} Si l'initialisation échoue
+   */
+  async initialize() {
+    console.log('🚀 Starting Event Planner Auth bootstrap...');
     
-    if (result.success) {
-      console.log('\n📊 Rapport du bootstrap:');
-      console.log(`⏱️  Durée: ${result.duration}ms`);
-      console.log(`🔄 Migrations appliquées: ${result.migrationsApplied}`);
-      console.log(`🌱 Seeds exécutés: ${result.seedsExecuted}`);
-      console.log(`✅ Actions: ${result.actions.join(', ')}`);
+    try {
+      // 1. Bootstrap de la base de données
+      console.log('📊 Initializing database...');
+      await DatabaseBootstrap.runBootstrap();
+      console.log('✅ Database initialized successfully');
       
-      // Afficher l'état des migrations
-      const status = await bootstrap.getMigrationStatus();
-      if (status.length > 0) {
-        console.log('\n📋 État des migrations:');
-        status.forEach(migration => {
-          console.log(`   ${migration.migration_name} - ${migration.executed_at}`);
-        });
+      // 2. Initialisation du container de services
+      console.log('🔧 Initializing service container...');
+      await serviceContainer.initialize();
+      console.log('✅ Service container initialized successfully');
+
+      // 3. Validation finale des services critiques
+      console.log('🔍 Validating critical services...');
+      this.validateCriticalServices();
+      console.log('✅ All critical services validated');
+
+      console.log('🎯 Application bootstrap completed successfully');
+      
+    } catch (error) {
+      console.error('❌ Application bootstrap failed:', error.message);
+      console.error('🔥 Server cannot start - critical services unavailable');
+      process.exit(1); // Arrêt immédiat si bootstrap échoue
+    }
+  }
+
+  /**
+   * Valide que tous les services critiques sont disponibles
+   * @throws {Error} Si un service critique manque
+   */
+  validateCriticalServices() {
+    const status = serviceContainer.getStatus();
+    
+    // Services critiques qui doivent TOUJOURS être disponibles
+    const criticalServices = ['logger', 'emailService', 'smsService', 'cacheService'];
+    
+    for (const serviceName of criticalServices) {
+      const serviceStatus = status.services.find(s => s.name === serviceName);
+      
+      if (!serviceStatus || !serviceStatus.available) {
+        throw new Error(
+          `Service critique ${serviceName} non disponible - démarrage impossible`
+        );
+      }
+      
+      if (serviceStatus.type !== 'object') {
+        throw new Error(
+          `Service ${serviceName} mal initialisé - type: ${serviceStatus.type}`
+        );
       }
     }
-    
-  } catch (error) {
-    console.error('\n❌ Erreur critique lors du bootstrap:', error.message);
-    process.exit(1);
+
+    console.log('✅ Critical services status:', {
+      logger: !!serviceContainer.get('logger'),
+      emailService: serviceContainer.get('emailService').isReady(),
+      smsService: serviceContainer.get('smsService').isReady(),
+      cacheService: serviceContainer.get('cacheService').isReady()
+    });
+  }
+
+  /**
+   * Retourne le container de services pour utilisation
+   * @returns {Object} Service container
+   */
+  getServiceContainer() {
+    return serviceContainer;
   }
 }
 
-// Exécuter uniquement si appelé directement
-if (require.main === module) {
-  runBootstrap();
-}
-
-module.exports = { runBootstrap, DatabaseBootstrap };
+module.exports = new ApplicationBootstrap();

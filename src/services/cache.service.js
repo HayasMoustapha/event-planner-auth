@@ -341,6 +341,75 @@ class CacheService {
   }
 
   /**
+   * Récupère une tentative de connexion (alias pour compatibilité)
+   * @param {string} identifier - Identifiant (IP, email, etc.)
+   * @returns {Promise<Object|null>} Données de tentative ou null
+   */
+  async getLoginAttempt(identifier) {
+    return await this.getLoginAttempts(identifier);
+  }
+
+  /**
+   * Incrémente le compteur de tentatives de connexion
+   * @param {string} identifier - Identifiant (IP, email, etc.)
+   * @param {Object} attemptData - Données de la tentative
+   * @returns {Promise<boolean>} True si enregistré avec succès
+   */
+  async incrementLoginAttempt(identifier, attemptData = {}) {
+    try {
+      if (!this.isReady()) {
+        return false;
+      }
+
+      const key = `rate_limit:login:${identifier}`;
+      const ttl = 900; // 15 minutes
+      
+      // Récupérer les tentatives existantes
+      const existing = await this.getLoginAttempts(identifier);
+      const attempts = existing ? existing.attempts + 1 : 1;
+      
+      const data = {
+        attempts,
+        firstAttempt: existing ? existing.firstAttempt : new Date().toISOString(),
+        lastAttempt: new Date().toISOString(),
+        ...attemptData
+      };
+
+      await this.client.setEx(key, ttl, JSON.stringify(data));
+      return true;
+    } catch (error) {
+      logger.error('Cache increment error for login attempt', {
+        identifier,
+        error: error.message
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Réinitialise les tentatives de connexion pour un identifiant
+   * @param {string} identifier - Identifiant (IP, email, etc.)
+   * @returns {Promise<boolean>} True si réinitialisé avec succès
+   */
+  async resetLoginAttempt(identifier) {
+    try {
+      if (!this.isReady()) {
+        return false;
+      }
+
+      const key = `rate_limit:login:${identifier}`;
+      await this.client.del(key);
+      return true;
+    } catch (error) {
+      logger.error('Cache reset error for login attempt', {
+        identifier,
+        error: error.message
+      });
+      return false;
+    }
+  }
+
+  /**
    * Nettoie les clés expirées ou correspondant à un pattern
    * @param {string} pattern - Pattern des clés à supprimer
    * @returns {Promise<number>} Nombre de clés supprimées

@@ -2,21 +2,13 @@ require('dotenv').config();
 const app = require('./app');
 const env = require('./config/env');
 const { connection } = require('./config/database');
-const DatabaseBootstrap = require('./services/database-bootstrap.service');
+const bootstrap = require('./bootstrap');
 
-// Bootstrap automatique de la base de données
-const runDatabaseBootstrap = async () => {
+// Bootstrap automatique de l'application
+const runApplicationBootstrap = async () => {
   try {
-    const bootstrap = new DatabaseBootstrap();
-    const result = await bootstrap.initialize();
-    
-    if (result.success && result.actions.length > 0) {
-      console.log('\n📊 Bootstrap de la base de données:');
-      console.log(`⏱️  Durée: ${result.duration}ms`);
-      console.log(`🔄 Migrations: ${result.migrationsApplied}`);
-      console.log(`🌱 Seeds: ${result.seedsExecuted}`);
-      console.log(`✅ Actions: ${result.actions.join(', ')}\n`);
-    }
+    await bootstrap.initialize();
+    console.log('✅ Application bootstrap completed successfully');
   } catch (error) {
     console.error('❌ Erreur critique lors du bootstrap:', error.message);
     // En production, on peut choisir de continuer ou d'arrêter
@@ -44,8 +36,8 @@ const testDatabaseConnection = async () => {
 
 // Démarrage du serveur
 const startServer = async () => {
-  // 1. Bootstrap automatique de la base de données (si activé)
-  await runDatabaseBootstrap();
+  // 1. Bootstrap automatique de l'application
+  await runApplicationBootstrap();
   
   // 2. Test de connexion standard
   await testDatabaseConnection();
