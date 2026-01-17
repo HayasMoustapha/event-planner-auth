@@ -341,16 +341,6 @@ class UsersRepository {
       throw new Error(`Erreur lors de la suppression de l'utilisateur: ${error.message}`);
     }
   }
-    const hashedPassword = await bcrypt.hash(password, 12);
-    updates.push(`password = $${paramIndex++}`);
-    values.push(hashedPassword);
-    
-    // Ajouter à l'historique des mots de passe
-    await this.addPasswordHistory(id, hashedPassword);
-  }
-  if (userCode !== undefined) {
-    updates.push(`user_code = $${paramIndex++}`);
-    values.push(userCode);
 
   /**
    * Vérifie si un mot de passe est correct
@@ -383,10 +373,6 @@ class UsersRepository {
    */
   async updateLastLogin(id) {
     // Note: last_login_at n'existe pas dans le schéma SQL actuel
-  }
-  if (status !== undefined) {
-    updates.push(`status = $${paramIndex++}`);
-    values.push(status);
   }
 
   /**
@@ -463,10 +449,10 @@ class UsersRepository {
    */
   async getStats() {
     try {
-      const [active] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL');
-      const [inactive] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL');
-      const [locked] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL');
-      const [all] = await connection.query('SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL');
+      const active = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['active']);
+      const inactive = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['inactive']);
+      const locked = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['locked']);
+      const all = await connection.query('SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL');
 
       return {
         total: parseInt(all.rows[0].count),
