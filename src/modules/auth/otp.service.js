@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const otpRepository = require('./otp.repository');
+const logger = require('../../utils/logger');
 
 /**
  * Service métier pour la gestion des OTP (One-Time Password)
