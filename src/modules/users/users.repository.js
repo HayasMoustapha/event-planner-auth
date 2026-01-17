@@ -294,6 +294,34 @@ class UsersRepository {
   }
 
   /**
+   * Met à jour le mot de passe d'un utilisateur
+   * @param {number} id - ID de l'utilisateur
+   * @param {string} newPassword - Nouveau mot de passe
+   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
+   * @returns {Promise<Object>} Utilisateur mis à jour
+   */
+  async updatePassword(id, newPassword, updatedBy = null) {
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Ajouter à l'historique avant la mise à jour
+    await this.addPasswordHistory(id, hashedPassword);
+
+    const query = `
+      UPDATE users 
+      SET password = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND deleted_at IS NULL
+      RETURNING id, username, email, user_code, phone, status, updated_at
+    `;
+
+    try {
+      const result = await connection.query(query, [id, hashedPassword, updatedBy]);
+      return result.rows[0];
+    } catch (error) {
+      throw new Error(`Erreur lors de la mise à jour du mot de passe: ${error.message}`);
+    }
+  }
+
+  /**
    * Supprime logiquement un utilisateur
    * @param {number} id - ID de l'utilisateur
    * @param {number} deletedBy - ID de l'utilisateur qui supprime
@@ -310,16 +338,9 @@ class UsersRepository {
       const result = await connection.query(query, [id, deletedBy]);
       return result.rowCount > 0;
     } catch (error) {
-
-  if (username !== undefined) {
-    updates.push(`username = $${paramIndex++}`);
-    values.push(username);
+      throw new Error(`Erreur lors de la suppression de l'utilisateur: ${error.message}`);
+    }
   }
-  if (email !== undefined) {
-    updates.push(`email = $${paramIndex++}`);
-    values.push(email);
-  }
-  if (password !== undefined) {
     const hashedPassword = await bcrypt.hash(password, 12);
     updates.push(`password = $${paramIndex++}`);
     values.push(hashedPassword);
@@ -442,9 +463,9 @@ class UsersRepository {
    */
   async getStats() {
     try {
-      const [active] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['active']);
-      const [inactive] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['inactive']);
-      const [locked] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL', ['lock']);
+      const [active] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL');
+      const [inactive] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL');
+      const [locked] = await connection.query('SELECT COUNT(*) as count FROM users WHERE status = $1 AND deleted_at IS NULL');
       const [all] = await connection.query('SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL');
 
       return {
