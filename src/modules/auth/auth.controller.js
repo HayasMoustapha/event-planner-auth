@@ -1,11 +1,14 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const { validationResult } = require('express-validator');
 const authService = require('./auth.service');
 const otpService = require('./otp.service');
 const usersService = require('../users/users.service');
+const usersRepository = require('../users/users.repository');
 const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
 const emailService = require('../../services/email.service');
+const sessionService = require('../sessions/sessions.service');
 
 /**
  * Controller HTTP pour la gestion de l'authentification et des OTP
@@ -44,7 +47,15 @@ class AuthController {
     try {
       const token = req.headers.authorization?.replace('Bearer ', '');
       
-      const result = await authService.logout(token);
+      if (!token) {
+        return res.status(401).json(createResponse(
+          false,
+          'Token requis pour la déconnexion',
+          { code: 'TOKEN_REQUIRED' }
+        ));
+      }
+      
+      const result = await sessionService.logoutSession(token);
       
       res.status(200).json(createResponse(
         true,
