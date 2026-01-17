@@ -51,7 +51,8 @@ class RegistrationService {
       phone,
       password,
       username,
-      userCode = null
+      userCode = null,
+      options = {}
     } = registrationData;
 
     try {
@@ -294,7 +295,7 @@ class RegistrationService {
    * @param {string} email - Email de l'utilisateur
    * @returns {Promise<Object>} Résultat de l'envoi
    */
-  async resendOTP(email) {
+  async resendOTP(email, options = {}) {
     try {
       // 1. Vérifier si la personne existe
       const person = await peopleRepository.findByEmail(email);
