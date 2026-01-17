@@ -55,17 +55,26 @@ class AuthService {
 
     // Générer le token JWT
     const token = this.generateToken(user);
+    console.log('🔍 Debug authenticate - Token généré:', token ? 'Oui' : 'Non');
+    console.log('🔍 Debug authenticate - Token length:', token ? token.length : 0);
+    console.log('🔍 Debug authenticate - User ID:', user.id);
 
     // Créer une session pour le token
     try {
-      await sessionService.createSession({
+      console.log('🔍 Debug authenticate - Création session...');
+      const sessionResult = await sessionService.createSession({
         accessToken: token,
         userId: user.id,
         ipAddress: null, // Sera ajouté par le middleware
         userAgent: null,  // Sera ajouté par le middleware
         expiresIn: 24 * 60 * 60 // 24 heures
       });
+      console.log('🔍 Debug authenticate - Session créée:', sessionResult.success);
+      if (sessionResult.success) {
+        console.log('🔍 Debug authenticate - Session ID:', sessionResult.session?.id?.substring(0, 20) + '...');
+      }
     } catch (sessionError) {
+      console.log('🔍 Debug authenticate - Erreur création session:', sessionError.message);
       logger.warn('Failed to create session during login', { 
         error: sessionError.message,
         userId: user.id 

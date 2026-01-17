@@ -203,9 +203,8 @@ class SessionService {
       expiresIn = 3600 // 1 heure
     } = sessionData;
 
-    // Créer la session en base de données avec le token existant
-    const session = await sessionRepository.create({
-      accessToken,
+    console.log('🔍 Debug createSession - Données reçues:', {
+      accessToken: accessToken ? accessToken.substring(0, 20) + '...' : 'null',
       userId,
       deviceInfo,
       ipAddress,
@@ -213,11 +212,29 @@ class SessionService {
       expiresIn
     });
 
-    return {
-      success: true,
-      session,
-      accessToken
-    };
+    // Créer la session en base de données avec le token existant
+    try {
+      console.log('🔍 Debug createSession - Création en base...');
+      const session = await sessionRepository.create({
+        accessToken,
+        userId,
+        deviceInfo,
+        ipAddress,
+        userAgent,
+        expiresIn
+      });
+      console.log('🔍 Debug createSession - Session créée en base:', !!session);
+      console.log('🔍 Debug createSession - Session ID:', session?.id?.substring(0, 20) + '...');
+
+      return {
+        success: true,
+        session,
+        accessToken
+      };
+    } catch (error) {
+      console.log('🔍 Debug createSession - Erreur création:', error.message);
+      throw error;
+    }
   }
 
   /**

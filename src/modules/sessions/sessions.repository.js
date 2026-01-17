@@ -12,14 +12,22 @@ class SessionRepository {
    */
   async create(sessionData) {
     const {
-      userId,
       accessToken,
-      refreshToken,
+      userId,
       deviceInfo,
       ipAddress,
       userAgent,
       expiresIn = 3600 // 1 heure par défaut
     } = sessionData;
+
+    console.log('🔍 Debug repository.create - Données reçues:', {
+      accessToken: accessToken ? accessToken.substring(0, 20) + '...' : 'null',
+      userId,
+      deviceInfo,
+      ipAddress,
+      userAgent,
+      expiresIn
+    });
 
     const query = `
       INSERT INTO sessions (
@@ -37,10 +45,16 @@ class SessionRepository {
       Date.now() // last_activity
     ];
 
+    console.log('🔍 Debug repository.create - Exécution query...');
+    console.log('🔍 Debug repository.create - Valeurs:', values.map((v, i) => i === 0 ? v?.substring(0, 20) + '...' : v));
+
     try {
       const result = await connection.query(query, values);
+      console.log('🔍 Debug repository.create - Session insérée:', !!result.rows[0]);
+      console.log('🔍 Debug repository.create - Session ID:', result.rows[0]?.id?.substring(0, 20) + '...');
       return result.rows[0];
     } catch (error) {
+      console.log('🔍 Debug repository.create - Erreur query:', error.message);
       throw new Error(`Erreur lors de la création de la session: ${error.message}`);
     }
   }
