@@ -23,14 +23,14 @@ try {
 const authRoutes = require('./modules/auth/auth.routes');
 const peopleRoutes = require('./modules/people/people.routes');
 const usersRoutes = require('./modules/users/users.routes');
-const authorizationRoutes = require('./modules/authorizations/authorization.routes');
-const menuRoutes = require('./modules/menus/menu.routes');
-const permissionRoutes = require('./modules/permissions/permission.routes');
-const roleRoutes = require('./modules/roles/role.routes');
+const authorizationRoutes = require('./modules/authorizations/authorizations.routes');
+const menuRoutes = require('./modules/menus/menus.routes');
+const permissionRoutes = require('./modules/permissions/permissions.routes');
+const roleRoutes = require('./modules/roles/roles.routes');
 const sessionRoutes = require('./modules/sessions/sessions.routes');
 const sessionMonitoringRoutes = require('./modules/sessions/session-monitoring.routes');
 const healthRoutes = require('./health/health.routes');
-const metricsRoutes = require('./health/metrics.routes');
+const metricsRoutes = require('./metrics/metrics.routes');
 const docsRoutes = require('./docs/docs.routes');
 const dashboardRoutes = require('./dashboard/dashboard.routes');
 

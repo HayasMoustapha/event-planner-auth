@@ -54,25 +54,21 @@ router.post('/logout-all', sessionController.logoutAllSessions);
 
 // Récupérer les sessions actives de l'utilisateur
 router.get('/user/:userId?', 
-  sessionValidation.validateGetUserSessions,
   sessionController.getUserSessions
 );
 
 // Récupérer l'historique des connexions
 router.get('/history/:userId?', 
-  sessionValidation.validateGetLoginHistory,
   sessionController.getLoginHistory
 );
 
 // Récupérer les statistiques des sessions
 router.get('/stats', 
-  sessionController.validateGetSessionStats,
   sessionController.getSessionStats
 );
 
 // Révoquer un token spécifique
 router.post('/revoke', 
-  sessionValidation.validateRevokeToken,
   sessionController.revokeToken
 );
 
@@ -81,9 +77,6 @@ router.post('/revoke',
  */
 
 // Nettoyer les sessions et tokens expirés
-router.post('/cleanup', 
-  rbacMiddleware.requirePermission('sessions.manage'),
-  sessionController.cleanupExpired
-);
+// router.post('/cleanup', sessionController.cleanupExpiredSessions);
 
 module.exports = router;

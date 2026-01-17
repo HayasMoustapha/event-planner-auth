@@ -2,7 +2,7 @@ const express = require('express');
 const { body, param, query } = require('express-validator');
 const sessionMonitoringController = require('./session-monitoring.controller');
 const { authenticate } = require('../../middlewares/auth.middleware');
-const { authorize } = require('../../middlewares/rbac.middleware');
+const { requirePermission } = require('../../middlewares/rbac.middleware');
 
 const router = express.Router();
 
@@ -47,7 +47,7 @@ const validateSuspiciousSessions = [
  */
 router.get('/stats', 
   authenticate, 
-  authorize('sessions.read'), 
+  requirePermission('sessions.read'), 
   sessionMonitoringController.getSessionStats
 );
 
@@ -58,7 +58,7 @@ router.get('/stats',
  */
 router.get('/active', 
   authenticate, 
-  authorize('sessions.read'), 
+  requirePermission('sessions.read'), 
   validatePagination,
   sessionMonitoringController.getActiveSessions
 );
@@ -70,7 +70,7 @@ router.get('/active',
  */
 router.get('/user/:userId', 
   authenticate, 
-  authorize('sessions.read'), 
+  requirePermission('sessions.read'), 
   validateUserId,
   validatePagination,
   sessionMonitoringController.getUserSessions
@@ -83,7 +83,7 @@ router.get('/user/:userId',
  */
 router.get('/blacklisted', 
   authenticate, 
-  authorize('sessions.read'), 
+  requirePermission('sessions.read'), 
   validatePagination,
   sessionMonitoringController.getBlacklistedTokens
 );
@@ -95,7 +95,7 @@ router.get('/blacklisted',
  */
 router.post('/revoke-all/:userId', 
   authenticate, 
-  authorize('sessions.revoke'), 
+  requirePermission('sessions.revoke'), 
   validateUserId,
   validateRevokeSessions,
   sessionMonitoringController.revokeAllUserSessions
@@ -108,7 +108,7 @@ router.post('/revoke-all/:userId',
  */
 router.post('/cleanup', 
   authenticate, 
-  authorize('sessions.cleanup'), 
+  requirePermission('sessions.cleanup'), 
   validateSessionCleanup,
   sessionMonitoringController.cleanupExpiredSessions
 );
@@ -120,7 +120,7 @@ router.post('/cleanup',
  */
 router.get('/limits/:userId', 
   authenticate, 
-  authorize('sessions.read'), 
+  requirePermission('sessions.read'), 
   validateUserId,
   validateSessionLimits,
   sessionMonitoringController.checkSessionLimits
@@ -133,7 +133,7 @@ router.get('/limits/:userId',
  */
 router.get('/suspicious', 
   authenticate, 
-  authorize('sessions.monitor'), 
+  requirePermission('sessions.monitor'), 
   validateSuspiciousSessions,
   sessionMonitoringController.getSuspiciousSessions
 );
