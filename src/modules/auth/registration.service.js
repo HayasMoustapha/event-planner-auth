@@ -117,7 +117,7 @@ class RegistrationService {
       
       // 8. Envoyer l'OTP par email
       try {
-        const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.code, 'verification', {
+        const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.otp_code, 'verification', {
           ip: options.ip,
           userAgent: options.userAgent
         });
@@ -318,7 +318,7 @@ class RegistrationService {
 
       // 4. Envoyer l'OTP par email
       try {
-        const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.code, 'verification', {
+        const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.otp_code, 'verification', {
           ip: options.ip,
           userAgent: options.userAgent
         });
