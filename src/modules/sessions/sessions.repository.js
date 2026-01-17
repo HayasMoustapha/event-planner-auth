@@ -23,21 +23,18 @@ class SessionRepository {
 
     const query = `
       INSERT INTO sessions (
-        user_id, access_token, refresh_token, device_info, 
-        ip_address, user_agent, expires_at, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, user_id, access_token, refresh_token, device_info, 
-                ip_address, user_agent, expires_at, created_at, updated_at, is_active
+        id, user_id, ip_address, user_agent, payload, last_activity
+      ) VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, user_id, ip_address, user_agent, payload, last_activity
     `;
 
     const values = [
-      userId,
-      accessToken,
-      refreshToken,
-      deviceInfo || null,
-      ipAddress || null,
-      userAgent || null,
-      new Date(Date.now() + (expiresIn * 1000))
+      accessToken, // id
+      userId,       // user_id
+      ipAddress || null,  // ip_address
+      userAgent || null,  // user_agent
+      JSON.stringify({ userId }), // payload
+      Date.now() // last_activity
     ];
 
     try {
@@ -55,7 +52,7 @@ class SessionRepository {
    */
   async findByAccessToken(accessToken) {
     const query = `
-      SELECT id, user_id, device_info, 
+      SELECT id, user_id, 
              ip_address, user_agent, payload, last_activity
       FROM sessions 
       WHERE id = $1
@@ -76,7 +73,7 @@ class SessionRepository {
    */
   async findByRefreshToken(refreshToken) {
     const query = `
-      SELECT id, user_id, access_token, refresh_token, device_info, 
+      SELECT id, user_id, access_token, refresh_token, 
              ip_address, user_agent, expires_at, created_at, updated_at, is_active
       FROM sessions 
       WHERE refresh_token = $1 AND is_active = TRUE AND expires_at > CURRENT_TIMESTAMP
@@ -107,7 +104,7 @@ class SessionRepository {
     `;
 
     const dataQuery = `
-      SELECT id, user_id, access_token, refresh_token, device_info, 
+      SELECT id, user_id, access_token, refresh_token, 
              ip_address, user_agent, expires_at, created_at, updated_at, is_active
       FROM sessions 
       WHERE user_id = $1 AND is_active = TRUE AND expires_at > CURRENT_TIMESTAMP
@@ -198,10 +195,9 @@ class SessionRepository {
    * @returns {Promise<boolean>} True si désactivée
    */
   async deactivate(sessionId) {
-    let query = `
-      UPDATE sessions 
-      SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
-      WHERE user_id = $1 AND is_active = TRUE
+    const query = `
+      DELETE FROM sessions 
+      WHERE id = $1
     `;
 
     try {
