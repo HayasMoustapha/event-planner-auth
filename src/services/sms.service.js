@@ -19,6 +19,8 @@ class SMSService {
    */
   initialize() {
     try {
+      // Valider la configuration d'abord
+      configValidation.validateConfig();
       const config = configValidation.getConfig();
       
       // Vérifier si le service SMS est configuré
