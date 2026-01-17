@@ -26,6 +26,7 @@ class UsersRepository {
     let countQuery = `
       SELECT COUNT(*) as total 
       FROM users u 
+      LEFT JOIN people p ON u.person_id = p.id
       WHERE u.deleted_at IS NULL
     `;
     const params = [];
