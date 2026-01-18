@@ -30,8 +30,8 @@ class PermissionService {
     }
 
     // Validation du format du code (format: resource.action)
-    if (!/^[a-z_]+[a-z_]*$/.test(code.trim())) {
-      throw new Error('Le code doit être en minuscules avec underscores (ex: users.create)');
+    if (!/^[a-z_.]+[a-z_.]*$/.test(code.trim())) {
+      throw new Error('Le code doit être en minuscules avec underscores et/ou points (ex: users.read, user.read)');
     }
 
     if (group && group.trim().length > 50) {
