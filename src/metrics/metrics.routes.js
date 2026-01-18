@@ -10,7 +10,7 @@ const router = express.Router();
  */
 
 // Endpoint principal pour les métriques (publique pour monitoring)
-router.get('/metrics', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const metrics = await metricsService.getMetrics();
     res.set('Content-Type', 'text/plain; version=0.0.4');
@@ -21,7 +21,7 @@ router.get('/metrics', async (req, res) => {
 });
 
 // Informations sur les métriques (protégé)
-router.get('/metrics/info', 
+router.get('/info', 
   authenticate, 
   requirePermission('admin.metrics.read'),
   (req, res) => {
@@ -42,7 +42,7 @@ router.get('/metrics/info',
 );
 
 // Réinitialiser les métriques (admin uniquement)
-router.post('/metrics/reset', 
+router.post('/reset', 
   authenticate, 
   requirePermission('admin.metrics.reset'),
   (req, res) => {

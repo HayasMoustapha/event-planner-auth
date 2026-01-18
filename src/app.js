@@ -181,6 +181,10 @@ app.use('/api/sessions/monitoring', sessionMonitoringRoutes);
 app.use('/health', healthRoutes);
 app.use('/metrics', metricsRoutes);
 
+// Routes API pour compatibilité Postman
+app.use('/api/health', healthRoutes);
+app.use('/api/metrics', metricsRoutes);
+
 // Routes de documentation API
 app.use('/docs', docsRoutes);
 
