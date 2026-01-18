@@ -26,12 +26,8 @@ class MenuService {
     } = menuData;
 
     // Validation des entrées
-    if (!label || !label.trim()) {
-      throw new Error('Le label du menu est requis');
-    }
-
-    if (label.trim().length < 2 || label.trim().length > 255) {
-      throw new Error('Le label du menu doit contenir entre 2 et 255 caractères');
+    if (!label || typeof label !== 'object') {
+      throw new Error('Le label du menu est requis et doit être un objet JSON');
     }
 
     if (typeof sortOrder !== 'number' || sortOrder < 0 || sortOrder > 9999) {
@@ -73,7 +69,7 @@ class MenuService {
     });
     
     const duplicateLabel = existingMenus.menus.find(menu => 
-      menu.label.toLowerCase() === label.trim().toLowerCase()
+      JSON.stringify(menu.label).toLowerCase() === JSON.stringify(label).toLowerCase()
     );
     
     if (duplicateLabel) {
@@ -82,7 +78,7 @@ class MenuService {
 
     // Créer le menu
     const menu = await menuRepository.create({
-      label: label.trim(),
+      label,
       description: description || null,
       icon: icon?.trim() || null,
       route: route?.trim() || null,
@@ -94,7 +90,7 @@ class MenuService {
       createdBy
     });
 
-    console.log(`📋 Menu créé: ${menu.label} (ID: ${menu.id}) par l'utilisateur ${createdBy}`);
+    console.log(`📋 Menu créé: ${JSON.stringify(menu.label)} (ID: ${menu.id}) par l'utilisateur ${createdBy}`);
     
     return menu;
   }
@@ -200,24 +196,18 @@ class MenuService {
     } = updateData;
 
     if (label !== undefined) {
-      if (!label || !label.trim()) {
-        throw new Error('Le label du menu est requis');
+      if (!label || typeof label !== 'object') {
+        throw new Error('Le label du menu est requis et doit être un objet JSON');
       }
-      if (label.trim().length < 2 || label.trim().length > 100) {
-        throw new Error('Le label du menu doit contenir entre 2 et 100 caractères');
-      }
-
-      // Vérifier si le nouveau label est déjà utilisé au même niveau
-      const finalParentId = parentMenuId !== undefined ? parentMenuId : existingMenu.parent_menu_id;
+      
       const existingMenus = await menuRepository.findAll({
         page: 1,
         limit: 100,
-        parentMenuId: finalParentId,
-        status: 'active'
+        parentMenuId
       });
       
       const duplicateLabel = existingMenus.menus.find(menu => 
-        menu.label.toLowerCase() === label.trim().toLowerCase() && menu.id !== id
+        JSON.stringify(menu.label).toLowerCase() === JSON.stringify(label).toLowerCase() && menu.id !== id
       );
       
       if (duplicateLabel) {
@@ -276,7 +266,7 @@ class MenuService {
 
     // Mettre à jour le menu
     const updatedMenu = await menuRepository.update(id, {
-      label: label?.trim(),
+      label,
       description: description?.trim(),
       icon: icon?.trim(),
       route: route?.trim(),

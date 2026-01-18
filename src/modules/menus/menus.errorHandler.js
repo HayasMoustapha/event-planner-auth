@@ -298,13 +298,13 @@ const validateMenuOperation = (req, res, next) => {
 const sanitizeMenuData = (req, res, next) => {
   // Nettoyer les données d'entrée
   if (req.body) {
-    // Normaliser le nom du menu
-    if (req.body.name) {
-      req.body.name = req.body.name.trim().replace(/\s+/g, ' ');
+    // Normaliser le label du menu
+    if (req.body.label && typeof req.body.label === 'string') {
+      req.body.label = req.body.label.trim().replace(/\s+/g, ' ');
     }
     
     // Normaliser la description
-    if (req.body.description) {
+    if (req.body.description && typeof req.body.description === 'string') {
       req.body.description = req.body.description.trim().replace(/\s+/g, ' ');
     }
     

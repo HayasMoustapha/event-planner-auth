@@ -158,7 +158,7 @@ class MenuRepository {
     `;
 
     try {
-      const result = await connection.query(query, [label.trim()]);
+      const result = await connection.query(query, [label]);
       return result.rows[0] || null;
     } catch (error) {
       throw new Error(`Erreur lors de la recherche du menu par label: ${error.message}`);
@@ -234,7 +234,7 @@ class MenuRepository {
 
     if (label !== undefined) {
       updates.push(`label = $${paramIndex}`);
-      values.push(label.trim());
+      values.push(label);
       paramIndex++;
     }
 
