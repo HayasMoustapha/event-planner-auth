@@ -271,9 +271,7 @@ class MenuService {
       icon: icon?.trim(),
       route: route?.trim(),
       parentMenuId,
-      sortOrder,
-      isVisible,
-      status
+      sortOrder
     }, updatedBy);
 
     console.log(`📋 Menu mis à jour: ${updatedMenu.label} (ID: ${updatedMenu.id}) par l'utilisateur ${updatedBy}`);

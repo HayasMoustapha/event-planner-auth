@@ -306,8 +306,8 @@ class MenuRepository {
     `;
 
     try {
-      await connection.query(query, [id, deletedBy]);
-      return true;
+      const result = await connection.query(query, [id, deletedBy]);
+      return result.rowCount > 0;
     } catch (error) {
       throw new Error(`Erreur lors de la suppression du menu: ${error.message}`);
     }
@@ -427,6 +427,25 @@ class MenuRepository {
       return this.buildMenuTree(menus);
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des menus utilisateur: ${error.message}`);
+    }
+  }
+
+  /**
+   * Supprime toutes les permissions d'un menu
+   * @param {number} menuId - ID du menu
+   * @returns {Promise<number>} Nombre de permissions supprimées
+   */
+  async removeAllPermissions(menuId) {
+    const query = `
+      DELETE FROM menu_permissions
+      WHERE menu_id = $1
+    `;
+
+    try {
+      const result = await connection.query(query, [menuId]);
+      return result.rowCount;
+    } catch (error) {
+      throw new Error(`Erreur lors de la suppression des permissions du menu: ${error.message}`);
     }
   }
 

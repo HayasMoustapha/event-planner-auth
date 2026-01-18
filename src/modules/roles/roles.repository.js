@@ -244,8 +244,8 @@ class RoleRepository {
   async delete(id, deletedBy = null) {
     const query = `
       UPDATE roles
-      SET is_system = true, updated_by = $2, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND is_system = false
+      SET deleted_at = CURRENT_TIMESTAMP, deleted_by = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND deleted_at IS NULL
     `;
 
     try {
