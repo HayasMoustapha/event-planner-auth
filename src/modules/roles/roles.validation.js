@@ -62,6 +62,11 @@ const validateCreateRole = [
     .isInt({ min: 0, max: 100 })
     .withMessage('Le niveau doit être un entier entre 0 et 100'),
     
+  body('isSystem')
+    .optional()
+    .isBoolean()
+    .withMessage('is_system doit être un booléen'),
+    
   handleValidationErrors
 ];
 
