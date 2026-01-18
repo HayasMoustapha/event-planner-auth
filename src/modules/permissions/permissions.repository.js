@@ -183,7 +183,7 @@ class PermissionRepository {
     const query = `
       SELECT id, code, label, "group", description, created_by, created_at, updated_at
       FROM permissions
-      WHERE "group" = $1
+      WHERE "group" = $1 AND deleted_at IS NULL
       ORDER BY code ASC
     `;
 
@@ -388,7 +388,7 @@ class PermissionRepository {
     const query = `
       SELECT DISTINCT "group"
       FROM permissions
-      WHERE status = 'active'
+      WHERE deleted_at IS NULL
       ORDER BY "group" ASC
     `;
 
@@ -409,7 +409,7 @@ class PermissionRepository {
     const query = `
       SELECT DISTINCT code
       FROM permissions
-      WHERE "group" = $1 AND status = 'active'
+      WHERE "group" = $1 AND deleted_at IS NULL
       ORDER BY code ASC
     `;
 
@@ -429,9 +429,8 @@ class PermissionRepository {
     const query = `
       SELECT 
         COUNT(*) as total_permissions,
-        COUNT(CASE WHEN status = 'active' THEN 1 END) as active_permissions,
-        COUNT(CASE WHEN status = 'inactive' THEN 1 END) as inactive_permissions,
-        COUNT(CASE WHEN status = 'deleted' THEN 1 END) as deleted_permissions,
+        COUNT(CASE WHEN deleted_at IS NULL THEN 1 END) as active_permissions,
+        COUNT(CASE WHEN deleted_at IS NOT NULL THEN 1 END) as deleted_permissions,
         COUNT(DISTINCT "group") as total_resources,
         COUNT(DISTINCT code) as total_actions
       FROM permissions
