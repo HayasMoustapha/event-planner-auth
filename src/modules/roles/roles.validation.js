@@ -144,21 +144,6 @@ const validateGetRoles = [
 ];
 
 /**
- * Validation pour la mise à jour du statut de rôle
- */
-const validateUpdateRoleStatus = [
-  param('id')
-    .isInt({ min: 1 })
-    .withMessage('L\'ID du rôle doit être un entier positif'),
-    
-  body('status')
-    .isIn(['active', 'inactive'])
-    .withMessage('Le statut doit être "active" ou "inactive"'),
-    
-  handleValidationErrors
-];
-
-/**
  * Validation pour l'association de permissions
  */
 const validateAssignPermissions = [
@@ -260,7 +245,6 @@ module.exports = {
   validateUpdateRole,
   validateGetRoleById,
   validateGetRoles,
-  validateUpdateRoleStatus,
   validateAssignPermissions,
   validateGetUserRoles,
   validateCheckUserRole,

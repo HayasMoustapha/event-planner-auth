@@ -102,12 +102,12 @@ class RoleController {
   async updateRole(req, res, next) {
     try {
       const { id } = req.params;
-      const { code, description, status, level } = req.body;
+      const { code, description, level } = req.body;
       const updatedBy = req.user?.id;
 
       const role = await roleService.updateRole(
         parseInt(id),
-        { code, description, status, level },
+        { code, description, level },
         updatedBy
       );
 
@@ -190,34 +190,6 @@ class RoleController {
       const { id } = req.params;
 
       const result = await roleService.removeAllPermissions(parseInt(id));
-
-      res.status(200).json(createResponse(
-        true,
-        result.message,
-        result
-      ));
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Active ou désactive un rôle
-   * @param {Object} req - Requête Express
-   * @param {Object} res - Réponse Express
-   * @param {Function} next - Middleware suivant
-   */
-  async updateRoleStatus(req, res, next) {
-    try {
-      const { id } = req.params;
-      const { status } = req.body;
-      const updatedBy = req.user?.id;
-
-      const result = await roleService.updateRoleStatus(
-        parseInt(id),
-        status,
-        updatedBy
-      );
 
       res.status(200).json(createResponse(
         true,

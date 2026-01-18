@@ -194,11 +194,7 @@ class RoleRepository {
       paramIndex++;
     }
 
-    if (status !== undefined) {
-      updates.push(`status = $${paramIndex}`);
-      values.push(status);
-      paramIndex++;
-    }
+    // Pas de champ status dans la table roles - utilisation de deleted_at pour le soft delete
 
     if (level !== undefined) {
       updates.push(`level = $${paramIndex}`);
@@ -286,10 +282,10 @@ class RoleRepository {
    */
   async getRolePermissions(roleId) {
     const query = `
-      SELECT p.id, p.code, p.description, p."group", p.status
+      SELECT p.id, p.code, p.description, p."group"
       FROM permissions p
       INNER JOIN authorizations a ON p.id = a.permission_id
-      WHERE a.role_id = $1 AND a.permission_id = p.id AND p.status = 'active'
+      WHERE a.role_id = $1 AND a.permission_id = p.id AND p.deleted_at IS NULL
       ORDER BY p."group" ASC, p.code ASC
     `;
 
@@ -375,14 +371,14 @@ class RoleRepository {
       SELECT COUNT(*) as total
       FROM users u
       INNER JOIN accesses a ON u.id = a.user_id
-      WHERE a.role_id = $1 AND a.status = 'active'
+      WHERE a.role_id = $1 AND a.deleted_at IS NULL
     `;
 
     const dataQuery = `
       SELECT u.id, u.email, u.username, u.status, a.created_at as assigned_at
       FROM users u
       INNER JOIN accesses a ON u.id = a.user_id
-      WHERE a.role_id = $1 AND a.status = 'active'
+      WHERE a.role_id = $1 AND a.deleted_at IS NULL
       ORDER BY a.created_at DESC
       LIMIT $2 OFFSET $3
     `;
@@ -424,7 +420,7 @@ class RoleRepository {
       FROM users u
       INNER JOIN accesses a ON u.id = a.user_id
       INNER JOIN roles r ON a.role_id = r.id
-      WHERE u.id = $1 AND r.code = $2 AND a.status = 'active' AND r.is_system = false
+      WHERE u.id = $1 AND r.code = $2 AND a.deleted_at IS NULL AND r.is_system = false
       LIMIT 1
     `;
 
@@ -446,7 +442,7 @@ class RoleRepository {
       SELECT r.id, r.code, r.label, r.description, r.level, a.created_at as assigned_at
       FROM roles r
       INNER JOIN accesses a ON r.id = a.role_id
-      WHERE a.user_id = $1 AND a.status = 'active' AND r.is_system = false
+      WHERE a.user_id = $1 AND a.deleted_at IS NULL AND r.is_system = false
       ORDER BY r.level DESC, r.code ASC
     `;
 
@@ -482,27 +478,6 @@ class RoleRepository {
     }
   }
 
-  /**
-   * Active ou désactive un rôle
-   * @param {number} id - ID du rôle
-   * @param {string} status - Nouveau statut
-   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
-   * @returns {Promise<boolean>} True si mis à jour
-   */
-  async updateStatus(id, isActive, updatedBy = null) {
-    const query = `
-      UPDATE roles
-      SET is_system = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1
-    `;
-
-    try {
-      const result = await connection.query(query, [id, !isActive, updatedBy]);
-      return result.rowCount > 0;
-    } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour du statut: ${error.message}`);
-    }
-  }
 }
 
 module.exports = new RoleRepository();

@@ -66,7 +66,7 @@ class RoleService {
 
     // Vérifier si le code existe déjà
     const existingRole = await roleRepository.findAll({ search: code.trim(), limit: 1 });
-    if (existingRole.data.length > 0) {
+    if (existingRole.roles && existingRole.roles.length > 0) {
       throw new Error('Un rôle avec ce code existe déjà');
     }
 
@@ -187,13 +187,7 @@ class RoleService {
       throw new Error('La description ne peut pas dépasser 255 caractères');
     }
 
-    if (status !== undefined) {
-      const validStatuses = ['active', 'inactive'];
-      if (!validStatuses.includes(status)) {
-        throw new Error('Le statut doit être "active" ou "inactive"');
-      }
-    }
-
+    
     if (level !== undefined) {
       if (typeof level !== 'number' || level < 0 || level > 100) {
         throw new Error('Le niveau doit être un nombre entre 0 et 100');
@@ -327,42 +321,6 @@ class RoleService {
       removed: removedCount,
       roleId,
       message: `${removedCount} permissions supprimées avec succès`
-    };
-  }
-
-  /**
-   * Active ou désactive un rôle
-   * @param {number} id - ID du rôle
-   * @param {string} status - Nouveau statut
-   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
-   * @returns {Promise<Object>} Résultat de la mise à jour
-   */
-  async updateRoleStatus(id, status, updatedBy = null) {
-    if (!id || id <= 0) {
-      throw new Error('ID de rôle invalide');
-    }
-
-    const validStatuses = ['active', 'inactive'];
-    if (!validStatuses.includes(status)) {
-      throw new Error('Le statut doit être "active" ou "inactive"');
-    }
-
-    const role = await roleRepository.findById(id);
-    if (!role) {
-      throw new Error('Rôle non trouvé');
-    }
-
-    const updated = await roleRepository.updateStatus(id, status, updatedBy);
-    
-    if (updated) {
-      console.log(`🔄 Rôle ${status === 'active' ? 'activé' : 'désactivé'}: ${role.name} (ID: ${id})`);
-    }
-    
-    return {
-      updated,
-      roleId: id,
-      status,
-      message: `Rôle ${status === 'active' ? 'activé' : 'désactivé'} avec succès`
     };
   }
 

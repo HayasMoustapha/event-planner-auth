@@ -37,18 +37,16 @@ const handleValidationErrors = (req, res, next) => {
  * Validation pour la création de menu
  */
 const validateCreateMenu = [
-  body('name')
-    .trim()
+  body('label')
     .notEmpty()
-    .withMessage('Le nom du menu est requis')
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Le nom du menu doit contenir entre 2 et 100 caractères'),
+    .withMessage('Le label du menu est requis')
+    .isObject()
+    .withMessage('Le label doit être un objet JSON'),
     
   body('description')
     .optional()
-    .trim()
-    .isLength({ max: 255 })
-    .withMessage('La description ne peut pas dépasser 255 caractères'),
+    .isObject()
+    .withMessage('La description doit être un objet JSON'),
     
   body('icon')
     .optional()
@@ -93,17 +91,15 @@ const validateUpdateMenu = [
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu doit être un entier positif'),
     
-  body('name')
+  body('label')
     .optional()
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Le nom du menu doit contenir entre 2 et 100 caractères'),
+    .isObject()
+    .withMessage('Le label doit être un objet JSON'),
     
   body('description')
     .optional()
-    .trim()
-    .isLength({ max: 255 })
-    .withMessage('La description ne peut pas dépasser 255 caractères'),
+    .isObject()
+    .withMessage('La description doit être un objet JSON'),
     
   body('icon')
     .optional()
@@ -188,7 +184,7 @@ const validateGetMenus = [
     
   query('sortBy')
     .optional()
-    .isIn(['name', 'description', 'route', 'sort_order', 'status', 'created_at', 'updated_at'])
+    .isIn(['label', 'description', 'route', 'sort_order', 'created_at', 'updated_at'])
     .withMessage('Le champ de tri est invalide'),
     
   query('sortOrder')
@@ -271,12 +267,11 @@ const validateDuplicateMenu = [
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu source doit être un entier positif'),
     
-  body('name')
-    .trim()
+  body('label')
     .notEmpty()
-    .withMessage('Le nom du nouveau menu est requis')
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Le nom du menu doit contenir entre 2 et 100 caractères'),
+    .withMessage('Le label du nouveau menu est requis')
+    .isObject()
+    .withMessage('Le label doit être un objet JSON'),
     
   body('description')
     .optional()

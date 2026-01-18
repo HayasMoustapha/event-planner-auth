@@ -84,13 +84,6 @@ router.delete('/:id',
   roleController.deleteRole
 );
 
-// Activer ou désactiver un rôle
-router.patch('/:id/status', 
-  rbacMiddleware.requirePermission('roles.update'),
-  roleValidation.validateUpdateRoleStatus,
-  roleController.updateRoleStatus
-);
-
 // Dupliquer un rôle
 router.post('/:id/duplicate', 
   rbacMiddleware.requirePermission('roles.create'),
