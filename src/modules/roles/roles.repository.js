@@ -13,9 +13,10 @@ class RoleRepository {
   async create(roleData) {
     const {
       code,
+      label,
       description,
-      status = 'active',
       level = 0,
+      isSystem = false,
       createdBy = null
     } = roleData;
 
@@ -29,10 +30,10 @@ class RoleRepository {
 
     const values = [
       code?.trim(), // code sera utilisé comme code (colonne 'code' du schéma)
-      JSON.stringify({en: code?.trim(), fr: code?.trim()}), // label en JSONB (colonne 'label' du schéma)
-      description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB (colonne 'description' du schéma)
+      label, // label en JSONB (colonne 'label' du schéma)
+      description ? JSON.stringify(description) : null, // description en JSONB (colonne 'description' du schéma)
       level,
-      false, // is_system par défaut (colonne 'is_system' du schéma)
+      isSystem, // is_system (colonne 'is_system' du schéma)
       createdBy
     ];
 
@@ -57,7 +58,6 @@ class RoleRepository {
       page = 1,
       limit = 10,
       search = null,
-      status = null,
       sortBy = 'created_at',
       sortOrder = 'DESC'
     } = options;

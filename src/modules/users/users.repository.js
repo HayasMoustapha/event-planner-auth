@@ -402,6 +402,22 @@ class UsersRepository {
   }
 
   /**
+   * Met à jour le statut d'un utilisateur
+   * @param {number} id - ID de l'utilisateur
+   * @param {string} status - Nouveau statut
+   * @param {number} updatedBy - ID de l'utilisateur qui modifie
+   * @returns {Promise<Object>} Utilisateur mis à jour
+   */
+  async updateStatus(id, status, updatedBy = null) {
+    const validStatuses = ['active', 'inactive', 'lock'];
+    if (!validStatuses.includes(status)) {
+      throw new Error(`Statut invalide: ${status}. Valeurs autorisées: ${validStatuses.join(', ')}`);
+    }
+
+    return await this.update(id, { status, updatedBy });
+  }
+
+  /**
    * Vérifie si un mot de passe a déjà été utilisé
    * @param {number} userId - ID de l'utilisateur
    * @param {string} password - Mot de passe à vérifier

@@ -17,10 +17,11 @@ class MenuService {
       description,
       icon,
       route,
-      parentMenuId = null,
+      component,
+      parentPath,
+      menuGroup,
       sortOrder = 0,
-      isVisible = true,
-      status = 'active',
+      depth = 0,
       createdBy = null
     } = menuData;
 
@@ -29,33 +30,20 @@ class MenuService {
       throw new Error('Le label du menu est requis');
     }
 
-    if (label.trim().length < 2 || label.trim().length > 100) {
-      throw new Error('Le label du menu doit contenir entre 2 et 100 caractères');
-    }
-
-    if (description && description.length > 255) {
-      throw new Error('La description ne peut pas dépasser 255 caractères');
-    }
-
-    if (icon && icon.length > 100) {
-      throw new Error('L\'icône ne peut pas dépasser 100 caractères');
-    }
-
-    if (route && route.length > 255) {
-      throw new Error('La route ne peut pas dépasser 255 caractères');
-    }
-
-    const validStatuses = ['active', 'inactive'];
-    if (!validStatuses.includes(status)) {
-      throw new Error('Le statut doit être "active" ou "inactive"');
-    }
-
-    if (typeof isVisible !== 'boolean') {
-      throw new Error('La visibilité doit être un booléen');
+    if (label.trim().length < 2 || label.trim().length > 255) {
+      throw new Error('Le label du menu doit contenir entre 2 et 255 caractères');
     }
 
     if (typeof sortOrder !== 'number' || sortOrder < 0 || sortOrder > 9999) {
       throw new Error('L\'ordre de tri doit être un nombre entre 0 et 9999');
+    }
+
+    if (typeof depth !== 'number' || depth < 0 || depth > 10) {
+      throw new Error('La profondeur doit être un nombre entre 0 et 10');
+    }
+
+    if (typeof menuGroup !== 'number' || menuGroup < 1) {
+      throw new Error('Le groupe de menu doit être un nombre positif');
     }
 
     // Validation du menu parent si spécifié
@@ -95,11 +83,14 @@ class MenuService {
     // Créer le menu
     const menu = await menuRepository.create({
       label: label.trim(),
-      description: description?.trim() || null,
+      description: description || null,
       icon: icon?.trim() || null,
       route: route?.trim() || null,
-      parentMenuId,
+      component: component?.trim() || null,
+      parentPath: parentPath?.trim() || null,
+      menuGroup,
       sortOrder,
+      depth,
       createdBy
     });
 

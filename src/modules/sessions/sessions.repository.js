@@ -87,10 +87,9 @@ class SessionRepository {
    */
   async findByRefreshToken(refreshToken) {
     const query = `
-      SELECT id, user_id, access_token, refresh_token, 
-             ip_address, user_agent, expires_at, created_at, updated_at, is_active
+      SELECT id, user_id, ip_address, user_agent, payload, last_activity
       FROM sessions 
-      WHERE refresh_token = $1 AND is_active = TRUE AND expires_at > CURRENT_TIMESTAMP
+      WHERE id = $1
     `;
 
     try {
@@ -653,21 +652,19 @@ class SessionRepository {
       
       const queries = {
         totalSessions: 'SELECT COUNT(*) as count FROM sessions WHERE user_id = $1',
-        activeSessions: 'SELECT COUNT(*) as count FROM sessions WHERE user_id = $1 AND last_activity > $2',
-        blacklistedTokens: 'SELECT COUNT(*) as count FROM personal_access_tokens WHERE user_id = $1 AND is_active = false'
+        activeSessions: 'SELECT COUNT(*) as count FROM sessions WHERE user_id = $1 AND last_activity > $2'
       };
 
-      const [totalResult, activeResult, blacklistedResult] = await Promise.all([
+      const [totalResult, activeResult] = await Promise.all([
         connection.query(queries.totalSessions, [userId]),
-        connection.query(queries.activeSessions, [userId, twentyFourHoursAgo]),
-        connection.query(queries.blacklistedTokens, [userId])
+        connection.query(queries.activeSessions, [userId, twentyFourHoursAgo])
       ]);
 
       return {
         userId,
         totalSessions: parseInt(totalResult.rows[0].count),
         activeSessions: parseInt(activeResult.rows[0].count),
-        blacklistedTokens: parseInt(blacklistedResult.rows[0].count)
+        blacklistedTokens: 0
       };
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des statistiques utilisateur: ${error.message}`);

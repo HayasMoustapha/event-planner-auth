@@ -14,6 +14,7 @@ class RoleService {
   async createRole(roleData) {
     const {
       code,
+      label,
       description,
       level = 0,
       isSystem = false,
@@ -39,6 +40,15 @@ class RoleService {
       throw new Error('Le niveau doit être un entier positif ou null');
     }
 
+    // Validation du label (JSONB requis)
+    if (!label) {
+      throw new Error('Le label est requis');
+    }
+
+    if (typeof label !== 'object') {
+      throw new Error('Le label doit être un objet JSON');
+    }
+
     // Validation du type boolean
     if (typeof isSystem !== 'boolean') {
       throw new Error('is_system doit être un boolean');
@@ -47,7 +57,8 @@ class RoleService {
     // Préparation des données pour le repository
     const cleanData = {
       code: code.trim(),
-      description: description?.trim(),
+      label,
+      description: description || null,
       level,
       isSystem,
       createdBy
@@ -77,7 +88,6 @@ class RoleService {
       page = 1,
       limit = 10,
       search,
-      status,
       sortBy = 'created_at',
       sortOrder = 'DESC'
     } = options;
@@ -91,7 +101,7 @@ class RoleService {
       throw new Error('La limite doit être entre 1 et 100');
     }
 
-    if (sortBy && !['code', 'description', 'status', 'level', 'created_at', 'updated_at'].includes(sortBy)) {
+    if (sortBy && !['code', 'label', 'description', 'level', 'is_system', 'created_at', 'updated_at'].includes(sortBy)) {
       throw new Error('Le champ de tri est invalide');
     }
 
@@ -99,15 +109,10 @@ class RoleService {
       throw new Error('L\'ordre de tri doit être ASC ou DESC');
     }
 
-    if (status && !['active', 'inactive', 'deleted'].includes(status)) {
-      throw new Error('Le statut de filtre est invalide');
-    }
-
     return await roleRepository.findAll({
       page,
       limit,
       search: search?.trim(),
-      status,
       sortBy,
       sortOrder
     });

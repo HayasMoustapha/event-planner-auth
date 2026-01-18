@@ -16,27 +16,36 @@ class MenuRepository {
       description,
       icon,
       route,
-      parentMenuId = null,
+      component,
+      parentPath,
+      menuGroup,
       sortOrder = 0,
+      depth = 0,
       createdBy = null
     } = menuData;
 
     const query = `
       INSERT INTO menus (
-        label, description, icon, route, parent_id, sort_order, 
+        parent_id, label, icon, route, component, parent_path, 
+        menu_group, sort_order, depth, description, 
         created_by, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, label, description, icon, route, parent_id, sort_order, 
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING id, parent_id, label, icon, route, component, parent_path, 
+                menu_group, sort_order, depth, description, 
                 created_by, created_at, updated_at
     `;
 
     const values = [
-      label?.trim(),
-      description?.trim(),
-      icon?.trim(),
-      route?.trim(),
-      parentMenuId,
+      null, // parent_id par défaut
+      label,
+      icon || null,
+      route || null,
+      component || null,
+      parentPath || null,
+      menuGroup,
       sortOrder,
+      depth,
+      description ? JSON.stringify(description) : null,
       createdBy
     ];
 
@@ -60,29 +69,33 @@ class MenuRepository {
     let whereClause = 'WHERE deleted_at IS NULL';
     let countClause = 'WHERE deleted_at IS NULL';
     const params = [];
+    let paramIndex = 1;
 
     // Filtre de recherche
     if (search) {
-      whereClause += ` AND (label ILIKE $${params.length + 1} OR description ILIKE $${params.length + 1})`;
-      countClause += ` AND (label ILIKE $${params.length + 1} OR description ILIKE $${params.length + 1})`;
+      whereClause += ` AND (label::text ILIKE $${paramIndex} OR description::text ILIKE $${paramIndex})`;
+      countClause += ` AND (label::text ILIKE $${paramIndex} OR description::text ILIKE $${paramIndex})`;
       params.push(`%${search}%`);
+      paramIndex++;
     }
 
     // Filtre de menu parent
     if (parentMenuId !== null) {
-      whereClause += ` AND parent_id = $${params.length + 1}`;
-      countClause += ` AND parent_id = $${params.length + 1}`;
+      whereClause += ` AND parent_id = $${paramIndex}`;
+      countClause += ` AND parent_id = $${paramIndex}`;
       params.push(parentMenuId);
+      paramIndex++;
     }
 
     // Tri et pagination
     const dataQuery = `
-      SELECT id, label, description, icon, route, parent_id, sort_order, 
+      SELECT id, parent_id, label, icon, route, component, parent_path, 
+             menu_group, sort_order, depth, description, 
              created_by, created_at, updated_at
       FROM menus
       ${whereClause}
       ORDER BY sort_order ASC, label ASC
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
     params.push(limit, offset);
@@ -90,7 +103,7 @@ class MenuRepository {
     try {
       const results = await Promise.all([
         connection.query(dataQuery, params),
-        connection.query(`SELECT COUNT(*) as total FROM menus ${countClause}`, search || parentMenuId ? params.slice(0, -2) : [])
+        connection.query(`SELECT COUNT(*) as total FROM menus ${countClause}`, params.slice(0, -2))
       ]);
 
       const dataResult = results[0];

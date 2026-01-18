@@ -14,13 +14,13 @@ class RoleController {
    */
   async createRole(req, res, next) {
     try {
-      const { code, description, status, level } = req.body;
+      const { code, label, description, level } = req.body;
       const createdBy = req.user?.id;
 
       const role = await roleService.createRole({
         code,
+        label,
         description,
-        status,
         level,
         createdBy
       });
@@ -47,7 +47,6 @@ class RoleController {
         page = 1,
         limit = 10,
         search,
-        status,
         sortBy = 'created_at',
         sortOrder = 'DESC'
       } = req.query;
@@ -56,7 +55,6 @@ class RoleController {
         page: parseInt(page),
         limit: parseInt(limit),
         search,
-        status,
         sortBy,
         sortOrder
       };

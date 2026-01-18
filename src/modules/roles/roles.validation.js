@@ -42,25 +42,20 @@ const validateCreateRole = [
     .notEmpty()
     .withMessage('Le code du rôle est requis')
     .isLength({ min: 2, max: 50 })
-    .withMessage('Le nom du rôle doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-zA-Z0-9_\-\s]+$/)
-    .withMessage('Le nom du rôle ne peut contenir que des lettres, chiffres, underscores, tirets et espaces'),
+    .withMessage('Le code du rôle doit contenir entre 2 et 50 caractères')
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage('Le code du rôle ne peut contenir que des lettres, chiffres et underscores'),
     
   body('label')
-    .optional()
+    .notEmpty()
+    .withMessage('Le label est requis')
     .isObject()
     .withMessage('Le label doit être un objet JSON'),
     
   body('description')
     .optional()
-    .trim()
-    .isLength({ max: 255 })
-    .withMessage('La description ne peut pas dépasser 255 caractères'),
-    
-  body('status')
-    .optional()
-    .isIn(['active', 'inactive'])
-    .withMessage('Le statut doit être "active" ou "inactive"'),
+    .isObject()
+    .withMessage('La description doit être un objet JSON'),
     
   body('level')
     .optional()
@@ -93,14 +88,8 @@ const validateUpdateRole = [
     
   body('description')
     .optional()
-    .trim()
-    .isLength({ max: 255 })
-    .withMessage('La description ne peut pas dépasser 255 caractères'),
-    
-  body('status')
-    .optional()
-    .isIn(['active', 'inactive'])
-    .withMessage('Le statut doit être "active" ou "inactive"'),
+    .isObject()
+    .withMessage('La description doit être un objet JSON'),
     
   body('level')
     .optional()
@@ -141,14 +130,9 @@ const validateGetRoles = [
     .isLength({ max: 100 })
     .withMessage('Le terme de recherche ne peut pas dépasser 100 caractères'),
     
-  query('status')
-    .optional()
-    .isIn(['active', 'inactive', 'deleted'])
-    .withMessage('Le statut de filtre doit être "active", "inactive" ou "deleted"'),
-    
   query('sortBy')
     .optional()
-    .isIn(['code', 'description', 'status', 'level', 'created_at', 'updated_at'])
+    .isIn(['code', 'label', 'description', 'level', 'is_system', 'created_at', 'updated_at'])
     .withMessage('Le champ de tri est invalide'),
     
   query('sortOrder')

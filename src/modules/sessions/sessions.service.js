@@ -333,34 +333,24 @@ class SessionService {
     const newAccessToken = this.generateAccessToken(user, { expiresIn: `${expiresIn}s` });
     const newRefreshToken = this.generateRefreshToken(user);
 
-    // Mettre à jour la session
-    const updatedSession = await sessionRepository.update(session.id, {
+    // Créer une nouvelle session avec le nouveau token
+    const newSession = await sessionRepository.create({
       accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
+      userId: user.id,
+      deviceInfo: 'Refreshed Session',
+      ipAddress: session.ip_address,
+      userAgent: session.user_agent,
       expiresIn
     });
 
-    // Blacklister l'ancien refresh token
-    await sessionRepository.blacklistToken({
-      token: refreshToken,
-      userId: user.id,
-      reason: 'refresh',
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h
-    });
+    // Supprimer l'ancienne session
+    await sessionRepository.delete(session.id);
 
     return {
-      session: {
-        id: updatedSession.id,
-        userId: updatedSession.user_id,
-        expiresAt: updatedSession.expires_at,
-        updatedAt: updatedSession.updated_at
-      },
-      tokens: {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-        expiresIn,
-        tokenType: 'Bearer'
-      }
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      expiresIn,
+      tokenType: 'Bearer'
     };
   }
 
