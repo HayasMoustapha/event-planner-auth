@@ -178,7 +178,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/sessions/monitoring', sessionMonitoringRoutes);
 
 // Routes de monitoring et santé
-app.use('/', healthRoutes);
+app.use('/health', healthRoutes);
 app.use('/metrics', metricsRoutes);
 
 // Routes de documentation API

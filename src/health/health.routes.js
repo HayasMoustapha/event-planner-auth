@@ -10,10 +10,10 @@ const router = express.Router();
  */
 
 // Health check basique (publique)
-router.get('/health', healthController.basicHealth);
+router.get('/', healthController.basicHealth);
 
 // Health check détaillé (publique)
-router.get('/health/detailed', healthController.detailedHealth);
+router.get('/detailed', healthController.detailedHealth);
 
 // Readiness probe (Kubernetes)
 router.get('/ready', healthController.readiness);
@@ -22,13 +22,13 @@ router.get('/ready', healthController.readiness);
 router.get('/live', healthController.liveness);
 
 // Health check avec authentification (protégée)
-router.get('/health/authenticated', 
+router.get('/authenticated', 
   authenticate, 
   healthController.detailedHealth
 );
 
 // Health check admin (requiert permissions admin)
-router.get('/health/admin', 
+router.get('/admin', 
   authenticate, 
   requirePermission('admin.health.read'),
   healthController.detailedHealth
