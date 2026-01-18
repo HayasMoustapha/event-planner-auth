@@ -226,34 +226,6 @@ class MenuController {
   }
 
   /**
-   * Active ou désactive un menu
-   * @param {Object} req - Requête Express
-   * @param {Object} res - Réponse Express
-   * @param {Function} next - Middleware suivant
-   */
-  async updateMenuStatus(req, res, next) {
-    try {
-      const { id } = req.params;
-      const { status } = req.body;
-      const updatedBy = req.user?.id;
-
-      const result = await menuService.updateMenuStatus(
-        parseInt(id),
-        status,
-        updatedBy
-      );
-
-      res.status(200).json(createResponse(
-        true,
-        result.message,
-        result
-      ));
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
    * Récupère les menus accessibles à un utilisateur
    * @param {Object} req - Requête Express
    * @param {Object} res - Réponse Express

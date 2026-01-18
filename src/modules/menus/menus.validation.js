@@ -196,21 +196,6 @@ const validateGetMenus = [
 ];
 
 /**
- * Validation pour la mise à jour du statut de menu
- */
-const validateUpdateMenuStatus = [
-  param('id')
-    .isInt({ min: 1 })
-    .withMessage('L\'ID du menu doit être un entier positif'),
-    
-  body('status')
-    .isIn(['active', 'inactive'])
-    .withMessage('Le statut doit être "active" ou "inactive"'),
-    
-  handleValidationErrors
-];
-
-/**
  * Validation pour la récupération des menus utilisateur
  */
 const validateGetUserMenus = [
@@ -306,7 +291,6 @@ module.exports = {
   validateUpdateMenu,
   validateGetMenuById,
   validateGetMenus,
-  validateUpdateMenuStatus,
   validateGetUserMenus,
   validateCheckUserMenuAccess,
   validateAssignMenuPermissions,

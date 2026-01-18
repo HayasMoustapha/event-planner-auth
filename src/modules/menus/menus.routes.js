@@ -81,13 +81,6 @@ router.delete('/:id',
   menuController.deleteMenu
 );
 
-// Activer ou désactiver un menu
-router.patch('/:id/status', 
-  rbacMiddleware.requirePermission('menus.update'),
-  menuValidation.validateUpdateMenuStatus,
-  menuController.updateMenuStatus
-);
-
 // Dupliquer un menu
 router.post('/:id/duplicate', 
   rbacMiddleware.requirePermission('menus.create'),

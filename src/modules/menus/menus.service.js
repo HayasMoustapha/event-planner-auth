@@ -319,42 +319,6 @@ class MenuService {
   }
 
   /**
-   * Active ou désactive un menu
-   * @param {number} id - ID du menu
-   * @param {string} status - Nouveau statut
-   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
-   * @returns {Promise<Object>} Résultat de la mise à jour
-   */
-  async updateMenuStatus(id, status, updatedBy = null) {
-    if (!id || id <= 0) {
-      throw new Error('ID de menu invalide');
-    }
-
-    const validStatuses = ['active', 'inactive'];
-    if (!validStatuses.includes(status)) {
-      throw new Error('Le statut doit être "active" ou "inactive"');
-    }
-
-    const menu = await menuRepository.findById(id);
-    if (!menu) {
-      throw new Error('Menu non trouvé');
-    }
-
-    const updated = await menuRepository.updateStatus(id, status, updatedBy);
-    
-    if (updated) {
-      console.log(`🔄 Menu ${status === 'active' ? 'activé' : 'désactivé'}: ${menu.label} (ID: ${id})`);
-    }
-    
-    return {
-      updated,
-      menuId: id,
-      status,
-      message: `Menu ${status === 'active' ? 'activé' : 'désactivé'} avec succès`
-    };
-  }
-
-  /**
    * Récupère les menus accessibles à un utilisateur
    * @param {number} userId - ID de l'utilisateur
    * @returns {Promise<Array>} Menus accessibles
