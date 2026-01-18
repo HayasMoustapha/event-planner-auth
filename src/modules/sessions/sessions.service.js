@@ -218,11 +218,15 @@ class SessionService {
       throw new Error(`Limite de sessions atteinte: ${limitsCheck.activeSessions}/${limitsCheck.maxActiveSessions} sessions actives`);
     }
 
-    // Créer la session en base de données avec le token existant
+    // Générer un refresh token
+    const refreshToken = this.generateRefreshToken({ id: userId });
+
+    // Créer la session en base de données avec les tokens
     try {
       console.log('🔍 Debug createSession - Création en base...');
       const session = await sessionRepository.create({
         accessToken,
+        refreshToken,
         userId,
         deviceInfo,
         ipAddress,
@@ -234,8 +238,15 @@ class SessionService {
 
       return {
         success: true,
-        session,
-        accessToken
+        session: {
+          ...session,
+          tokens: {
+            accessToken,
+            refreshToken,
+            expiresIn,
+            tokenType: 'Bearer'
+          }
+        }
       };
     } catch (error) {
       console.log('🔍 Debug createSession - Erreur création:', error.message);

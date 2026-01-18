@@ -60,6 +60,7 @@ class AuthService {
     console.log('🔍 Debug authenticate - User ID:', user.id);
 
     // Créer une session pour le token
+    let sessionData = null;
     try {
       console.log('🔍 Debug authenticate - Création session...');
       const sessionResult = await sessionService.createSession({
@@ -72,6 +73,7 @@ class AuthService {
       console.log('🔍 Debug authenticate - Session créée:', sessionResult.success);
       if (sessionResult.success) {
         console.log('🔍 Debug authenticate - Session ID:', sessionResult.session?.id?.substring(0, 20) + '...');
+        sessionData = sessionResult.session;
       }
     } catch (sessionError) {
       console.log('🔍 Debug authenticate - Erreur création session:', sessionError.message);
@@ -86,13 +88,20 @@ class AuthService {
     const userResponse = { ...user };
     delete userResponse.password;
 
+    const responseData = {
+      user: userResponse,
+      token: token
+    };
+
+    // Ajouter les tokens de session si disponibles
+    if (sessionData && sessionData.tokens) {
+      responseData.tokens = sessionData.tokens;
+    }
+
     return {
       success: true,
       message: 'Connexion réussie',
-      data: {
-        user: userResponse,
-        token: token
-      },
+      data: responseData,
       timestamp: new Date().toISOString()
     };
   }
