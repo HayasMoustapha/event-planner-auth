@@ -138,11 +138,6 @@ const validateGetPermissions = [
     .isLength({ max: 100 })
     .withMessage('Le terme de recherche ne peut pas dépasser 100 caractères'),
     
-  query('status')
-    .optional()
-    .isIn(['active', 'inactive', 'deleted'])
-    .withMessage('Le statut de filtre doit être "active", "inactive" ou "deleted"'),
-    
   query('resource')
     .optional()
     .trim()
@@ -155,30 +150,21 @@ const validateGetPermissions = [
     .isLength({ min: 2, max: 50 })
     .withMessage('L\'action doit contenir entre 2 et 50 caractères'),
     
+  query('group')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Le groupe doit contenir entre 2 et 50 caractères'),
+    
   query('sortBy')
     .optional()
-    .isIn(['code', 'description', 'group', 'status', 'created_at', 'updated_at'])
+    .isIn(['code', 'description', 'group', 'created_at', 'updated_at'])
     .withMessage('Le champ de tri est invalide'),
     
   query('sortOrder')
     .optional()
     .isIn(['ASC', 'DESC'])
     .withMessage('L\'ordre de tri doit être ASC ou DESC'),
-    
-  handleValidationErrors
-];
-
-/**
- * Validation pour la mise à jour du statut de permission
- */
-const validateUpdatePermissionStatus = [
-  param('id')
-    .isInt({ min: 1 })
-    .withMessage('L\'ID de la permission doit être un entier positif'),
-    
-  body('status')
-    .isIn(['active', 'inactive'])
-    .withMessage('Le statut doit être "active" ou "inactive"'),
     
   handleValidationErrors
 ];
@@ -293,7 +279,6 @@ module.exports = {
   validateUpdatePermission,
   validateGetPermissionById,
   validateGetPermissions,
-  validateUpdatePermissionStatus,
   validateGetUserPermissions,
   validateCheckUserPermission,
   validateGetRolePermissions,

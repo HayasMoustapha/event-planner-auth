@@ -273,8 +273,8 @@ class PermissionRepository {
   async delete(id, deletedBy = null) {
     const query = `
       UPDATE permissions
-      SET status = 'deleted', deleted_by = $2, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND status != 'deleted'
+      SET deleted_at = CURRENT_TIMESTAMP, deleted_by = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND deleted_at IS NULL
     `;
 
     try {
@@ -311,10 +311,10 @@ class PermissionRepository {
    */
   async getRolePermissions(roleId) {
     const query = `
-      SELECT p.id, p.code, p.label, p."group", p.description, p.status
+      SELECT p.id, p.code, p.label, p."group", p.description
       FROM permissions p
       INNER JOIN authorizations a ON p.id = a.permission_id
-      WHERE a.role_id = $1 AND a.permission_id = p.id AND p.status = 'active'
+      WHERE a.role_id = $1 AND a.permission_id = p.id AND p.deleted_at IS NULL
       ORDER BY p."group" ASC, p.code ASC
     `;
 
@@ -333,14 +333,14 @@ class PermissionRepository {
    */
   async getUserPermissions(userId) {
     const query = `
-      SELECT DISTINCT p.id, p.code, p.label, p."group", p.description, p.status
+      SELECT DISTINCT p.id, p.code, p.label, p."group", p.description
       FROM permissions p
       INNER JOIN authorizations a ON p.id = a.permission_id
       INNER JOIN accesses acc ON a.role_id = acc.role_id
       WHERE acc.user_id = $1 
         AND acc.status = 'active' 
         AND a.permission_id = p.id
-        AND p.status = 'active'
+        AND p.deleted_at IS NULL
       ORDER BY p."group" ASC, p.code ASC
     `;
 
@@ -368,7 +368,7 @@ class PermissionRepository {
         AND p.code = $2
         AND acc.status = 'active' 
         AND a.permission_id = p.id
-        AND p.status = 'active'
+        AND p.deleted_at IS NULL
       LIMIT 1
     `;
 
@@ -442,33 +442,6 @@ class PermissionRepository {
       return result.rows[0];
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);
-    }
-  }
-
-  /**
-   * Active ou désactive une permission
-   * @param {number} id - ID de la permission
-   * @param {string} status - Nouveau statut
-   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
-   * @returns {Promise<boolean>} True si mise à jour
-   */
-  async updateStatus(id, status, updatedBy = null) {
-    const validStatuses = ['active', 'inactive', 'deleted'];
-    if (!validStatuses.includes(status)) {
-      throw new Error('Statut invalide');
-    }
-
-    const query = `
-      UPDATE permissions
-      SET status = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1
-    `;
-
-    try {
-      const result = await connection.query(query, [id, status, updatedBy]);
-      return result.rowCount > 0;
-    } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour du statut: ${error.message}`);
     }
   }
 

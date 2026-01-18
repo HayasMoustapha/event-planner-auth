@@ -79,7 +79,6 @@ class PermissionService {
       page = 1,
       limit = 10,
       search,
-      status,
       resource,
       action,
       sortBy = 'created_at',
@@ -95,7 +94,7 @@ class PermissionService {
       throw new Error('La limite doit être entre 1 et 100');
     }
 
-    if (sortBy && !['code', 'description', 'group', 'status', 'created_at', 'updated_at'].includes(sortBy)) {
+    if (sortBy && !['code', 'description', 'group', 'created_at', 'updated_at'].includes(sortBy)) {
       throw new Error('Le champ de tri est invalide');
     }
 
@@ -103,20 +102,17 @@ class PermissionService {
       throw new Error('L\'ordre de tri doit être ASC ou DESC');
     }
 
-    if (status && !['active', 'inactive', 'deleted'].includes(status)) {
-      throw new Error('Le statut de filtre est invalide');
-    }
-
-    return await permissionRepository.findAll({
+    const searchOptions = {
       page,
       limit,
       search: search?.trim(),
-      status,
       resource,
       action,
       sortBy,
       sortOrder
-    });
+    };
+
+    return await permissionRepository.findAll(searchOptions);
   }
 
   /**
@@ -246,42 +242,6 @@ class PermissionService {
     }
     
     return deleted;
-  }
-
-  /**
-   * Active ou désactive une permission
-   * @param {number} id - ID de la permission
-   * @param {string} status - Nouveau statut
-   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
-   * @returns {Promise<Object>} Résultat de la mise à jour
-   */
-  async updatePermissionStatus(id, status, updatedBy = null) {
-    if (!id || id <= 0) {
-      throw new Error('ID de permission invalide');
-    }
-
-    const validStatuses = ['active', 'inactive'];
-    if (!validStatuses.includes(status)) {
-      throw new Error('Le statut doit être "active" ou "inactive"');
-    }
-
-    const permission = await permissionRepository.findById(id);
-    if (!permission) {
-      throw new Error('Permission non trouvée');
-    }
-
-    const updated = await permissionRepository.updateStatus(id, status, updatedBy);
-    
-    if (updated) {
-      console.log(`🔄 Permission ${status === 'active' ? 'activée' : 'désactivée'}: ${permission.code} (ID: ${id})`);
-    }
-    
-    return {
-      updated,
-      permissionId: id,
-      status,
-      message: `Permission ${status === 'active' ? 'activée' : 'désactivée'} avec succès`
-    };
   }
 
   /**

@@ -47,7 +47,6 @@ class PermissionController {
         page = 1,
         limit = 10,
         search,
-        status,
         group,
         sortBy = 'created_at',
         sortOrder = 'DESC'
@@ -57,7 +56,6 @@ class PermissionController {
         page: parseInt(page),
         limit: parseInt(limit),
         search,
-        status,
         group,
         sortBy,
         sortOrder
@@ -150,34 +148,6 @@ class PermissionController {
           'Permission non trouvée ou déjà supprimée'
         ));
       }
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Active ou désactive une permission
-   * @param {Object} req - Requête Express
-   * @param {Object} res - Réponse Express
-   * @param {Function} next - Middleware suivant
-   */
-  async updatePermissionStatus(req, res, next) {
-    try {
-      const { id } = req.params;
-      const { status } = req.body;
-      const updatedBy = req.user?.id;
-
-      const result = await permissionService.updatePermissionStatus(
-        parseInt(id),
-        status,
-        updatedBy
-      );
-
-      res.status(200).json(createResponse(
-        true,
-        result.message,
-        result
-      ));
     } catch (error) {
       next(error);
     }

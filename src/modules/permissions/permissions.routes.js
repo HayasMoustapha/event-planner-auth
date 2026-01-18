@@ -82,13 +82,6 @@ router.delete('/:id',
   permissionController.deletePermission
 );
 
-// Activer ou désactiver une permission
-router.patch('/:id/status', 
-  rbacMiddleware.requirePermission('permissions.update'),
-  permissionValidation.validateUpdatePermissionStatus,
-  permissionController.updatePermissionStatus
-);
-
 // Générer les permissions de base pour une ressource
 router.post('/generate', 
   rbacMiddleware.requirePermission('permissions.create'),
