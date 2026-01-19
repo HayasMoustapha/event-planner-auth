@@ -367,8 +367,14 @@ class MenuService {
       throw new Error('Les IDs de permissions doivent être un tableau');
     }
 
+    // Si le tableau est vide, supprimer toutes les permissions du menu
     if (permissionIds.length === 0) {
-      return { assigned: 0, message: 'Aucune permission à associer' };
+      const deleted = await menuRepository.removeAllPermissions(menuId);
+      return { 
+        assigned: 0, 
+        removed: deleted,
+        message: 'Toutes les permissions ont été supprimées du menu' 
+      };
     }
 
     // Vérifier si le menu existe

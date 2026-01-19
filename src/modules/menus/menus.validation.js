@@ -248,8 +248,8 @@ const validateAssignMenuPermissions = [
     .withMessage('L\'ID du menu doit être un entier positif'),
 
   body('permissionIds')
-    .isArray({ min: 1 })
-    .withMessage('Les IDs de permissions doivent être un tableau non vide'),
+    .isArray()
+    .withMessage('Les IDs de permissions doivent être un tableau'),
 
   body('permissionIds.*')
     .isInt({ min: 1 })

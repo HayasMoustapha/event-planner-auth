@@ -163,9 +163,34 @@ class RoleController {
       const { permissionIds } = req.body;
       const createdBy = req.user?.id;
 
+      // Validation et conversion de permissionIds
+      let processedPermissionIds;
+      if (Array.isArray(permissionIds)) {
+        processedPermissionIds = permissionIds;
+      } else if (permissionIds === undefined || permissionIds === null) {
+        processedPermissionIds = [];
+      } else if (typeof permissionIds === 'string') {
+        // Si c'est une chaîne JSON, essayer de la parser
+        try {
+          processedPermissionIds = JSON.parse(permissionIds);
+        } catch {
+          // Si ce n'est pas du JSON, traiter comme une seule valeur
+          processedPermissionIds = [permissionIds];
+        }
+      } else {
+        // Pour tout autre type, le convertir en tableau
+        processedPermissionIds = [permissionIds];
+      }
+
+      // S'assurer que tous les IDs sont des entiers
+      processedPermissionIds = processedPermissionIds.map(id => {
+        const numId = parseInt(id);
+        return isNaN(numId) ? null : numId;
+      }).filter(id => id !== null);
+
       const result = await roleService.assignPermissions(
         parseInt(id),
-        permissionIds,
+        processedPermissionIds,
         createdBy
       );
 

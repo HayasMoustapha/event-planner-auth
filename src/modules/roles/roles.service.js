@@ -271,8 +271,14 @@ class RoleService {
       throw new Error('Les IDs de permissions doivent être un tableau');
     }
 
+    // Si le tableau est vide, supprimer toutes les permissions du rôle
     if (permissionIds.length === 0) {
-      return { assigned: 0, message: 'Aucune permission à associer' };
+      const deleted = await roleRepository.removeAllPermissions(roleId);
+      return { 
+        assigned: 0, 
+        removed: deleted,
+        message: 'Toutes les permissions ont été supprimées du rôle' 
+      };
     }
 
     // Vérifier si le rôle existe
