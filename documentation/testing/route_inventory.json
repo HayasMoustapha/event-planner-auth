@@ -1,0 +1,3234 @@
+{
+  "total_routes": 183,
+  "total_folders": 14,
+  "folders": {
+    "🏠 Health & System": 6,
+    "📊 Metrics & Monitoring": 3,
+    "📈 Dashboard": 4,
+    "📚 Documentation": 5,
+    "🔐 Authentification & OTP (28 routes)": 30,
+    "👥 Users Management (15 routes)": 16,
+    "👤 People Management (11 routes)": 11,
+    "🎭 Roles Management (14 routes)": 14,
+    "🔑 Permissions Management (14 routes)": 14,
+    "📋 Menus Management (14 routes)": 15,
+    "🛡️ Authorizations Management (14 routes)": 14,
+    "🔄 Sessions Management (12 routes)": 12,
+    "🔍 Session Monitoring (8 routes)": 8,
+    "🔧 Advanced & System Routes (23 routes)": 31
+  },
+  "routes": [
+    {
+      "name": "Health Check",
+      "folder": "🏠 Health & System",
+      "method": "GET",
+      "path": "health",
+      "full_path": "GET /health",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Health Check Détaillé",
+      "folder": "🏠 Health & System",
+      "method": "GET",
+      "path": "health/detailed",
+      "full_path": "GET /health/detailed",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Readiness Probe",
+      "folder": "🏠 Health & System",
+      "method": "GET",
+      "path": "health/ready",
+      "full_path": "GET /health/ready",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Liveness Probe",
+      "folder": "🏠 Health & System",
+      "method": "GET",
+      "path": "health/live",
+      "full_path": "GET /health/live",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Health Authentifié",
+      "folder": "🏠 Health & System",
+      "method": "GET",
+      "path": "health/authenticated",
+      "full_path": "GET /health/authenticated",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Health Admin",
+      "folder": "🏠 Health & System",
+      "method": "GET",
+      "path": "health/admin",
+      "full_path": "GET /health/admin",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Métriques Prometheus",
+      "folder": "📊 Metrics & Monitoring",
+      "method": "GET",
+      "path": "metrics",
+      "full_path": "GET /metrics",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Info Métriques",
+      "folder": "📊 Metrics & Monitoring",
+      "method": "GET",
+      "path": "metrics/info",
+      "full_path": "GET /metrics/info",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Reset Métriques",
+      "folder": "📊 Metrics & Monitoring",
+      "method": "POST",
+      "path": "metrics/reset",
+      "full_path": "POST /metrics/reset",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Page Dashboard",
+      "folder": "📈 Dashboard",
+      "method": "GET",
+      "path": "dashboard",
+      "full_path": "GET /dashboard",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Données Dashboard",
+      "folder": "📈 Dashboard",
+      "method": "GET",
+      "path": "dashboard/api/data",
+      "full_path": "GET /dashboard/api/data",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Alertes Sécurité",
+      "folder": "📈 Dashboard",
+      "method": "GET",
+      "path": "dashboard/api/security-alerts",
+      "full_path": "GET /dashboard/api/security-alerts",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Données Temps Réel",
+      "folder": "📈 Dashboard",
+      "method": "GET",
+      "path": "dashboard/api/realtime",
+      "full_path": "GET /dashboard/api/realtime",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Swagger UI",
+      "folder": "📚 Documentation",
+      "method": "GET",
+      "path": "docs",
+      "full_path": "GET /docs",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "OpenAPI JSON",
+      "folder": "📚 Documentation",
+      "method": "GET",
+      "path": "docs/json",
+      "full_path": "GET /docs/json",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "OpenAPI YAML",
+      "folder": "📚 Documentation",
+      "method": "GET",
+      "path": "docs/yaml",
+      "full_path": "GET /docs/yaml",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Documentation Développeur",
+      "folder": "📚 Documentation",
+      "method": "GET",
+      "path": "docs/developer",
+      "full_path": "GET /docs/developer",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Exemples API",
+      "folder": "📚 Documentation",
+      "method": "GET",
+      "path": "docs/examples",
+      "full_path": "GET /docs/examples",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Login",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/login",
+      "full_path": "POST /api/auth/login",
+      "body": {
+        "email": "{{userEmail}}",
+        "password": "Password123!"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Login Remember",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/login-remember",
+      "full_path": "POST /api/auth/login-remember",
+      "body": {
+        "email": "{{userEmail}}",
+        "password": "Password123!"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Login OTP",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/login-otp",
+      "full_path": "POST /api/auth/login-otp",
+      "body": {
+        "email": "{{userEmail}}",
+        "otpCode": "{{otpCode}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Refresh Token",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/refresh-token",
+      "full_path": "POST /api/auth/refresh-token",
+      "body": {
+        "refreshToken": "your_refresh_token_here"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Refresh Token (Alias)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/refresh",
+      "full_path": "POST /api/auth/refresh",
+      "body": {
+        "refreshToken": "your_refresh_token_here"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Validate Token",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/validate-token",
+      "full_path": "POST /api/auth/validate-token",
+      "body": {
+        "token": "{{authToken}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Register",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/register",
+      "full_path": "POST /api/auth/register",
+      "body": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john.doe{{$randomInt}}@example.com",
+        "phone": "+1234567890",
+        "username": "johndoe{{$randomInt}}",
+        "password": "Password123!"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const responseJson = pm.response.json();",
+              "    pm.collectionVariables.set('userEmail', responseJson.data.person.email);",
+              "    pm.collectionVariables.set('createdUserId', responseJson.data.user.id);",
+              "    pm.collectionVariables.set('createdPersonId', responseJson.data.person.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Verify Email",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/verify-email",
+      "full_path": "POST /api/auth/verify-email",
+      "body": {
+        "email": "{{userEmail}}",
+        "otpCode": "{{otpCode}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Resend OTP",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/resend-otp",
+      "full_path": "POST /api/auth/resend-otp",
+      "body": {
+        "email": "{{userEmail}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Login After Verification",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/login-after-verification",
+      "full_path": "POST /api/auth/login-after-verification",
+      "body": {
+        "email": "{{userEmail}}",
+        "password": "Password123!"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const responseJson = pm.response.json();",
+              "    pm.collectionVariables.set('authToken', responseJson.data.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Check Email",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "GET",
+      "path": "api/auth/check-email/{{userEmail}}",
+      "full_path": "GET /api/auth/check-email/{{userEmail}}",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check Username",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "GET",
+      "path": "api/auth/check-username/johndoe",
+      "full_path": "GET /api/auth/check-username/johndoe",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Logout",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/logout",
+      "full_path": "POST /api/auth/logout",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Profile",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "GET",
+      "path": "api/auth/profile",
+      "full_path": "GET /api/auth/profile",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Me (Profile Alias)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "GET",
+      "path": "api/auth/me",
+      "full_path": "GET /api/auth/me",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Change Password (POST)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/change-password",
+      "full_path": "POST /api/auth/change-password",
+      "body": {
+        "currentPassword": "Password123!",
+        "newPassword": "NewPassword123!"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Change Password (PUT)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "PUT",
+      "path": "api/auth/change-password",
+      "full_path": "PUT /api/auth/change-password",
+      "body": {
+        "currentPassword": "Password123!",
+        "newPassword": "NewPassword123!"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Générer OTP Email",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/otp/email/generate",
+      "full_path": "POST /api/auth/otp/email/generate",
+      "body": {
+        "email": "{{userEmail}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Générer OTP Téléphone",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/otp/phone/generate",
+      "full_path": "POST /api/auth/otp/phone/generate",
+      "body": {
+        "phone": "+1234567890"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Vérifier OTP Email",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/otp/email/verify",
+      "full_path": "POST /api/auth/otp/email/verify",
+      "body": {
+        "email": "{{userEmail}}",
+        "code": "{{otpCode}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Vérifier OTP Téléphone",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/otp/phone/verify",
+      "full_path": "POST /api/auth/otp/phone/verify",
+      "body": {
+        "phone": "+1234567890",
+        "code": "{{otpCode}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Générer OTP Reset MDP",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/otp/password-reset/generate",
+      "full_path": "POST /api/auth/otp/password-reset/generate",
+      "body": {
+        "email": "{{userEmail}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Forgot Password (Alias)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/forgot-password",
+      "full_path": "POST /api/auth/forgot-password",
+      "body": {
+        "email": "{{userEmail}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Reset Password with OTP",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/otp/password-reset/verify",
+      "full_path": "POST /api/auth/otp/password-reset/verify",
+      "body": {
+        "email": "{{userEmail}}",
+        "code": "{{otpCode}}",
+        "newPassword": "ResetPassword123!"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Reset Password (Alias)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/reset-password",
+      "full_path": "POST /api/auth/reset-password",
+      "body": {
+        "email": "{{userEmail}}",
+        "code": "{{otpCode}}",
+        "newPassword": "ResetPassword123!"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User OTPs (Admin)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "GET",
+      "path": "api/auth/otp/person/{{createdPersonId}}",
+      "full_path": "GET /api/auth/otp/person/{{createdPersonId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Invalidate User OTPs (Admin)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/otp/person/{{createdPersonId}}/invalidate",
+      "full_path": "POST /api/auth/otp/person/{{createdPersonId}}/invalidate",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Has Active OTP (Admin)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "GET",
+      "path": "api/auth/otp/person/{{createdPersonId}}/active",
+      "full_path": "GET /api/auth/otp/person/{{createdPersonId}}/active",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Cleanup Expired OTPs (Admin)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "POST",
+      "path": "api/auth/otp/cleanup",
+      "full_path": "POST /api/auth/otp/cleanup",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "OTP Stats (Admin)",
+      "folder": "🔐 Authentification & OTP (28 routes)",
+      "method": "GET",
+      "path": "api/auth/otp/stats",
+      "full_path": "GET /api/auth/otp/stats",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check Username Availability",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "GET",
+      "path": "api/users/check/username/johndoe",
+      "full_path": "GET /api/users/check/username/johndoe",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check Email Availability",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "GET",
+      "path": "api/users/check/email/test@example.com",
+      "full_path": "GET /api/users/check/email/test@example.com",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Authenticate User",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "POST",
+      "path": "api/users/authenticate",
+      "full_path": "POST /api/users/authenticate",
+      "body": {
+        "email": "{{userEmail}}",
+        "password": "Password123!"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "List All Users",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "GET",
+      "path": "api/users",
+      "full_path": "GET /api/users",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Users Stats",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "GET",
+      "path": "api/users/stats",
+      "full_path": "GET /api/users/stats",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User by ID",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "GET",
+      "path": "api/users/{{createdUserId}}",
+      "full_path": "GET /api/users/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User by Email",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "GET",
+      "path": "api/users/email/{{userEmail}}",
+      "full_path": "GET /api/users/email/{{userEmail}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User by Username",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "GET",
+      "path": "api/users/username/johndoe",
+      "full_path": "GET /api/users/username/johndoe",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Create User",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "POST",
+      "path": "api/users",
+      "full_path": "POST /api/users",
+      "body": "{\n  \"person_id\": {{createdPersonId}},\n  \"username\": \"newuser{{$randomInt}}\",\n  \"email\": \"newuser{{$randomInt}}@example.com\",\n  \"password\": \"Password123!\",\n  \"user_code\": \"USER{{$randomInt}}\",\n  \"phone\": \"+1234567890\"\n}",
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const responseJson = pm.response.json();",
+              "    pm.collectionVariables.set('createdUserId', responseJson.data.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update User",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "PUT",
+      "path": "api/users/{{createdUserId}}",
+      "full_path": "PUT /api/users/{{createdUserId}}",
+      "body": {
+        "username": "updateduser{{$randomInt}}",
+        "email": "updateduser{{$randomInt}}@example.com",
+        "phone": "+1234567890"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Delete User",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "DELETE",
+      "path": "api/users/{{createdUserId}}",
+      "full_path": "DELETE /api/users/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Update User Password",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "PATCH",
+      "path": "api/users/{{createdUserId}}/password",
+      "full_path": "PATCH /api/users/{{createdUserId}}/password",
+      "body": {
+        "password": "NewPassword123!"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Update User Status",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "PATCH",
+      "path": "api/users/{{createdUserId}}/status",
+      "full_path": "PATCH /api/users/{{createdUserId}}/status",
+      "body": {
+        "status": "active"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check User Exists",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "GET",
+      "path": "api/users/{{createdUserId}}/exists",
+      "full_path": "GET /api/users/{{createdUserId}}/exists",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Reset User Password",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "POST",
+      "path": "api/users/reset-password",
+      "full_path": "POST /api/users/reset-password",
+      "body": {
+        "newPassword": "ResetPassword123!"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Search Users",
+      "folder": "👥 Users Management (15 routes)",
+      "method": "GET",
+      "path": "api/users/search",
+      "full_path": "GET /api/users/search",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Search People",
+      "folder": "👤 People Management (11 routes)",
+      "method": "GET",
+      "path": "api/people/search",
+      "full_path": "GET /api/people/search",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Person by Email",
+      "folder": "👤 People Management (11 routes)",
+      "method": "GET",
+      "path": "api/people/email/{{userEmail}}",
+      "full_path": "GET /api/people/email/{{userEmail}}",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Person by Phone",
+      "folder": "👤 People Management (11 routes)",
+      "method": "GET",
+      "path": "api/people/phone/+1234567890",
+      "full_path": "GET /api/people/phone/+1234567890",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check Person Exists",
+      "folder": "👤 People Management (11 routes)",
+      "method": "GET",
+      "path": "api/people/exists/{{createdPersonId}}",
+      "full_path": "GET /api/people/exists/{{createdPersonId}}",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "List All People",
+      "folder": "👤 People Management (11 routes)",
+      "method": "GET",
+      "path": "api/people",
+      "full_path": "GET /api/people",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Person by ID",
+      "folder": "👤 People Management (11 routes)",
+      "method": "GET",
+      "path": "api/people/{{createdPersonId}}",
+      "full_path": "GET /api/people/{{createdPersonId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Create Person",
+      "folder": "👤 People Management (11 routes)",
+      "method": "POST",
+      "path": "api/people",
+      "full_path": "POST /api/people",
+      "body": {
+        "first_name": "Jane",
+        "last_name": "Smith",
+        "email": "jane.smith{{$randomInt}}@example.com",
+        "phone": "+1234567890",
+        "address": "123 Main St, City, Country",
+        "photo": "https://example.com/photo.jpg",
+        "status": "active"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const responseJson = pm.response.json();",
+              "    pm.collectionVariables.set('createdPersonId', responseJson.data.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Person",
+      "folder": "👤 People Management (11 routes)",
+      "method": "PUT",
+      "path": "api/people/{{createdPersonId}}",
+      "full_path": "PUT /api/people/{{createdPersonId}}",
+      "body": {
+        "first_name": "Jane Updated",
+        "last_name": "Smith Updated",
+        "email": "jane.updated{{$randomInt}}@example.com",
+        "phone": "+1234567890",
+        "address": "456 Updated St, New City, Country"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Delete Person",
+      "folder": "👤 People Management (11 routes)",
+      "method": "DELETE",
+      "path": "api/people/{{createdPersonId}}",
+      "full_path": "DELETE /api/people/{{createdPersonId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Update Person Status",
+      "folder": "👤 People Management (11 routes)",
+      "method": "PATCH",
+      "path": "api/people/{{createdPersonId}}/status",
+      "full_path": "PATCH /api/people/{{createdPersonId}}/status",
+      "body": {
+        "status": "inactive"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get People Stats",
+      "folder": "👤 People Management (11 routes)",
+      "method": "GET",
+      "path": "api/people/stats",
+      "full_path": "GET /api/people/stats",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "List All Roles",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "GET",
+      "path": "api/roles",
+      "full_path": "GET /api/roles",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Role by ID",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "GET",
+      "path": "api/roles/{{createdRoleId}}",
+      "full_path": "GET /api/roles/{{createdRoleId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Role with Permissions",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "GET",
+      "path": "api/roles/{{createdRoleId}}/permissions",
+      "full_path": "GET /api/roles/{{createdRoleId}}/permissions",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Role with Users",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "GET",
+      "path": "api/roles/{{createdRoleId}}/users",
+      "full_path": "GET /api/roles/{{createdRoleId}}/users",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User Roles",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "GET",
+      "path": "api/roles/user/{{createdUserId}}",
+      "full_path": "GET /api/roles/user/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User Highest Role",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "GET",
+      "path": "api/roles/user/{{createdUserId}}/highest",
+      "full_path": "GET /api/roles/user/{{createdUserId}}/highest",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check User Role",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "GET",
+      "path": "api/roles/user/{{createdUserId}}/check/admin",
+      "full_path": "GET /api/roles/user/{{createdUserId}}/check/admin",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Create Role",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "POST",
+      "path": "api/roles",
+      "full_path": "POST /api/roles",
+      "body": {
+        "code": "MANAGER{{$randomInt}}",
+        "label": {
+          "fr": "Manager",
+          "en": "Manager"
+        },
+        "description": {
+          "fr": "Rôle de manager",
+          "en": "Manager role"
+        },
+        "level": 2,
+        "is_system": false
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const responseJson = pm.response.json();",
+              "    pm.collectionVariables.set('createdRoleId', responseJson.data.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Role",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "PUT",
+      "path": "api/roles/{{createdRoleId}}",
+      "full_path": "PUT /api/roles/{{createdRoleId}}",
+      "body": {
+        "label": {
+          "fr": "Manager Senior",
+          "en": "Senior Manager"
+        },
+        "description": {
+          "fr": "Rôle de manager senior",
+          "en": "Senior manager role"
+        },
+        "level": 3
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Delete Role",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "DELETE",
+      "path": "api/roles/{{createdRoleId}}",
+      "full_path": "DELETE /api/roles/{{createdRoleId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Duplicate Role",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "POST",
+      "path": "api/roles/{{createdRoleId}}/duplicate",
+      "full_path": "POST /api/roles/{{createdRoleId}}/duplicate",
+      "body": {
+        "code": "MANAGER_COPY{{$randomInt}}",
+        "label": {
+          "fr": "Manager Copie",
+          "en": "Manager Copy"
+        }
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Assign Permission to Role",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "POST",
+      "path": "api/roles/{{createdRoleId}}/permissions",
+      "full_path": "POST /api/roles/{{createdRoleId}}/permissions",
+      "body": "{\n  \"permission_id\": {{createdPermissionId}}\n}",
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Remove Permission from Role",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "DELETE",
+      "path": "api/roles/{{createdRoleId}}/permissions/{{createdPermissionId}}",
+      "full_path": "DELETE /api/roles/{{createdRoleId}}/permissions/{{createdPermissionId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Role Stats",
+      "folder": "🎭 Roles Management (14 routes)",
+      "method": "GET",
+      "path": "api/roles/stats",
+      "full_path": "GET /api/roles/stats",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "List All Permissions",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions",
+      "full_path": "GET /api/permissions",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Permission by ID",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions/{{createdPermissionId}}",
+      "full_path": "GET /api/permissions/{{createdPermissionId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User Permissions",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions/user/{{createdUserId}}",
+      "full_path": "GET /api/permissions/user/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Role Permissions",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions/role/{{createdRoleId}}",
+      "full_path": "GET /api/permissions/role/{{createdRoleId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Resources",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions/resources",
+      "full_path": "GET /api/permissions/resources",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Actions by Resource",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions/resources/users/actions",
+      "full_path": "GET /api/permissions/resources/users/actions",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check User Permission",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions/user/{{createdUserId}}/check/users.create",
+      "full_path": "GET /api/permissions/user/{{createdUserId}}/check/users.create",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check User Any Permission",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions/user/{{createdUserId}}/any/users.create,users.read",
+      "full_path": "GET /api/permissions/user/{{createdUserId}}/any/users.create,users.read",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check User All Permissions",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions/user/{{createdUserId}}/all/users.create,users.read",
+      "full_path": "GET /api/permissions/user/{{createdUserId}}/all/users.create,users.read",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Create Permission",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "POST",
+      "path": "api/permissions",
+      "full_path": "POST /api/permissions",
+      "body": {
+        "code": "edit_users{{$randomInt}}",
+        "label": {
+          "fr": "Éditer les utilisateurs",
+          "en": "Edit users"
+        },
+        "description": "Permission to edit users",
+        "group": "users"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const responseJson = pm.response.json();",
+              "    pm.collectionVariables.set('createdPermissionId', responseJson.data.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Permission",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "PUT",
+      "path": "api/permissions/{{createdPermissionId}}",
+      "full_path": "PUT /api/permissions/{{createdPermissionId}}",
+      "body": {
+        "label": {
+          "fr": "Éditer les utilisateurs (avancé)",
+          "en": "Edit users (advanced)"
+        },
+        "description": "Advanced permission to edit users"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Delete Permission",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "DELETE",
+      "path": "api/permissions/{{createdPermissionId}}",
+      "full_path": "DELETE /api/permissions/{{createdPermissionId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Generate Resource Permissions",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "POST",
+      "path": "api/permissions/generate",
+      "full_path": "POST /api/permissions/generate",
+      "body": {
+        "resource": "reports",
+        "actions": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Permission Stats",
+      "folder": "🔑 Permissions Management (14 routes)",
+      "method": "GET",
+      "path": "api/permissions/stats",
+      "full_path": "GET /api/permissions/stats",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "List All Menus",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "GET",
+      "path": "api/menus",
+      "full_path": "GET /api/menus",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Menu Tree",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "GET",
+      "path": "api/menus/tree",
+      "full_path": "GET /api/menus/tree",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Root Menus",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "GET",
+      "path": "api/menus/root",
+      "full_path": "GET /api/menus/root",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Menu by ID",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "GET",
+      "path": "api/menus/{{createdMenuId}}",
+      "full_path": "GET /api/menus/{{createdMenuId}}",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Menu Permissions",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "GET",
+      "path": "api/menus/{{createdMenuId}}/permissions",
+      "full_path": "GET /api/menus/{{createdMenuId}}/permissions",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User Menus",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "GET",
+      "path": "api/menus/user/{{createdUserId}}",
+      "full_path": "GET /api/menus/user/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check Menu Access",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "GET",
+      "path": "api/menus/{{createdMenuId}}/access",
+      "full_path": "GET /api/menus/{{createdMenuId}}/access",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Create Menu",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "POST",
+      "path": "api/menus",
+      "full_path": "POST /api/menus",
+      "body": {
+        "name": "Reports{{$randomInt}}",
+        "description": "Reports section",
+        "icon": "fas fa-chart-bar",
+        "route": "/reports",
+        "sortOrder": 10,
+        "isVisible": true,
+        "status": "active"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const responseJson = pm.response.json();",
+              "    pm.collectionVariables.set('createdMenuId', responseJson.data.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Menu",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "PUT",
+      "path": "api/menus/{{createdMenuId}}",
+      "full_path": "PUT /api/menus/{{createdMenuId}}",
+      "body": {
+        "name": "Advanced Reports",
+        "description": "Advanced reports section",
+        "icon": "fas fa-chart-line",
+        "sortOrder": 11
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Delete Menu",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "DELETE",
+      "path": "api/menus/{{createdMenuId}}",
+      "full_path": "DELETE /api/menus/{{createdMenuId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Duplicate Menu",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "POST",
+      "path": "api/menus/{{createdMenuId}}/duplicate",
+      "full_path": "POST /api/menus/{{createdMenuId}}/duplicate",
+      "body": {
+        "name": "Reports Copy",
+        "description": "Reports section copy"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Reorder Menus",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "POST",
+      "path": "api/menus/reorder",
+      "full_path": "POST /api/menus/reorder",
+      "body": "{\n  \"menus\": [\n    {\"id\": {{createdMenuId}}, \"sortOrder\": 1},\n    {\"id\": 2, \"sortOrder\": 2}\n  ]\n}",
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Assign Permission to Menu",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "POST",
+      "path": "api/menus/{{createdMenuId}}/permissions",
+      "full_path": "POST /api/menus/{{createdMenuId}}/permissions",
+      "body": "{\n  \"permission_id\": {{createdPermissionId}}\n}",
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Remove Permission from Menu",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "DELETE",
+      "path": "api/menus/{{createdMenuId}}/permissions/{{createdPermissionId}}",
+      "full_path": "DELETE /api/menus/{{createdMenuId}}/permissions/{{createdPermissionId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Menu Stats",
+      "folder": "📋 Menus Management (14 routes)",
+      "method": "GET",
+      "path": "api/menus/stats",
+      "full_path": "GET /api/menus/stats",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Verify User Permission",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/verify/users.create",
+      "full_path": "GET /api/authorizations/verify/users.create",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Verify User Any Permission",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/verify/any/users.create,users.read",
+      "full_path": "GET /api/authorizations/verify/any/users.create,users.read",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Verify User All Permissions",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/verify/all/users.create,users.read",
+      "full_path": "GET /api/authorizations/verify/all/users.create,users.read",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Verify User Role",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/verify/role/admin",
+      "full_path": "GET /api/authorizations/verify/role/admin",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Verify User Any Role",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/verify/role/any/admin,manager",
+      "full_path": "GET /api/authorizations/verify/role/any/admin,manager",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Verify User All Roles",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/verify/role/all/admin,manager",
+      "full_path": "GET /api/authorizations/verify/role/all/admin,manager",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Verify Menu Access",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/verify/menu/{{createdMenuId}}",
+      "full_path": "GET /api/authorizations/verify/menu/{{createdMenuId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Verify Resource Access",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/verify/resource/users",
+      "full_path": "GET /api/authorizations/verify/resource/users",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User Authorizations",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/user/{{createdUserId}}",
+      "full_path": "GET /api/authorizations/user/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User Highest Role",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/user/{{createdUserId}}/highest-role",
+      "full_path": "GET /api/authorizations/user/{{createdUserId}}/highest-role",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check if User is Admin",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "GET",
+      "path": "api/authorizations/user/{{createdUserId}}/is-admin",
+      "full_path": "GET /api/authorizations/user/{{createdUserId}}/is-admin",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Complex Policy Check",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "POST",
+      "path": "api/authorizations/policy",
+      "full_path": "POST /api/authorizations/policy",
+      "body": "{\n  \"policy\": \"user_can_manage_own_profile\",\n  \"context\": {\n    \"user_id\": {{createdUserId}},\n    \"target_user_id\": {{createdUserId}}\n  }\n}",
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Create Authorization Cache",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "POST",
+      "path": "api/authorizations/cache/create",
+      "full_path": "POST /api/authorizations/cache/create",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Invalidate Authorization Cache",
+      "folder": "🛡️ Authorizations Management (14 routes)",
+      "method": "POST",
+      "path": "api/authorizations/cache/invalidate",
+      "full_path": "POST /api/authorizations/cache/invalidate",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Create Session",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "POST",
+      "path": "api/sessions",
+      "full_path": "POST /api/sessions",
+      "body": {
+        "email": "{{userEmail}}",
+        "password": "Password123!"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Refresh Session",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "POST",
+      "path": "api/sessions/refresh",
+      "full_path": "POST /api/sessions/refresh",
+      "body": {
+        "refreshToken": "your_refresh_token_here"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Validate Session",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "POST",
+      "path": "api/sessions/validate",
+      "full_path": "POST /api/sessions/validate",
+      "body": {
+        "token": "{{authToken}}"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Generate Password Reset Token",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "POST",
+      "path": "api/sessions/password-reset/generate",
+      "full_path": "POST /api/sessions/password-reset/generate",
+      "body": {
+        "email": "{{userEmail}}"
+      },
+      "headers": [
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Current Session",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "GET",
+      "path": "api/sessions/current",
+      "full_path": "GET /api/sessions/current",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Logout (Single Session)",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "POST",
+      "path": "api/sessions/logout",
+      "full_path": "POST /api/sessions/logout",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Logout (All Sessions)",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "POST",
+      "path": "api/sessions/logout-all",
+      "full_path": "POST /api/sessions/logout-all",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User Sessions",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "GET",
+      "path": "api/sessions/user/{{createdUserId}}",
+      "full_path": "GET /api/sessions/user/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Login History",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "GET",
+      "path": "api/sessions/history/{{createdUserId}}",
+      "full_path": "GET /api/sessions/history/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Session Stats",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "GET",
+      "path": "api/sessions/stats",
+      "full_path": "GET /api/sessions/stats",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Revoke Token",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "POST",
+      "path": "api/sessions/revoke",
+      "full_path": "POST /api/sessions/revoke",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Revoke All User Tokens",
+      "folder": "🔄 Sessions Management (12 routes)",
+      "method": "POST",
+      "path": "api/sessions/revoke-all/{{createdUserId}}",
+      "full_path": "POST /api/sessions/revoke-all/{{createdUserId}}",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Session Statistics",
+      "folder": "🔍 Session Monitoring (8 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/stats",
+      "full_path": "GET /api/session-monitoring/stats",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Active Sessions",
+      "folder": "🔍 Session Monitoring (8 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/active",
+      "full_path": "GET /api/session-monitoring/active",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get User Sessions",
+      "folder": "🔍 Session Monitoring (8 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/user/{{createdUserId}}",
+      "full_path": "GET /api/session-monitoring/user/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Blacklisted Tokens",
+      "folder": "🔍 Session Monitoring (8 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/blacklisted",
+      "full_path": "GET /api/session-monitoring/blacklisted",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Revoke User Sessions",
+      "folder": "🔍 Session Monitoring (8 routes)",
+      "method": "POST",
+      "path": "api/session-monitoring/revoke/{{createdUserId}}",
+      "full_path": "POST /api/session-monitoring/revoke/{{createdUserId}}",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Cleanup Expired Sessions",
+      "folder": "🔍 Session Monitoring (8 routes)",
+      "method": "POST",
+      "path": "api/session-monitoring/cleanup",
+      "full_path": "POST /api/session-monitoring/cleanup",
+      "body": {},
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Check Session Limits",
+      "folder": "🔍 Session Monitoring (8 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/limits/{{createdUserId}}",
+      "full_path": "GET /api/session-monitoring/limits/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Get Suspicious Sessions",
+      "folder": "🔍 Session Monitoring (8 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/suspicious",
+      "full_path": "GET /api/session-monitoring/suspicious",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Users Search (Advanced)",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/users/search",
+      "full_path": "GET /api/users/search",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "People Search (Advanced)",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/people/search",
+      "full_path": "GET /api/people/search",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "People by Status",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/people/status/active",
+      "full_path": "GET /api/people/status/active",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Roles by Level",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/roles/level/2",
+      "full_path": "GET /api/roles/level/2",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "System Roles",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/roles/system",
+      "full_path": "GET /api/roles/system",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Non-System Roles",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/roles/non-system",
+      "full_path": "GET /api/roles/non-system",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Permissions by Group",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/permissions/group/users",
+      "full_path": "GET /api/permissions/group/users",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "System Permissions",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/permissions/system",
+      "full_path": "GET /api/permissions/system",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Custom Permissions",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/permissions/custom",
+      "full_path": "GET /api/permissions/custom",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Menus by Parent",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/menus/parent/{{createdMenuId}}",
+      "full_path": "GET /api/menus/parent/{{createdMenuId}}",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Root Menus Only",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/menus/root-only",
+      "full_path": "GET /api/menus/root-only",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Visible Menus",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/menus/visible",
+      "full_path": "GET /api/menus/visible",
+      "body": null,
+      "headers": [],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Hidden Menus",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/menus/hidden",
+      "full_path": "GET /api/menus/hidden",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Menus by Status",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/menus/status/active",
+      "full_path": "GET /api/menus/status/active",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "User Effective Permissions",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/authorizations/user/{{createdUserId}}/effective",
+      "full_path": "GET /api/authorizations/user/{{createdUserId}}/effective",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Role Hierarchy",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/authorizations/roles/hierarchy",
+      "full_path": "GET /api/authorizations/roles/hierarchy",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Permission Dependencies",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/authorizations/permissions/dependencies",
+      "full_path": "GET /api/authorizations/permissions/dependencies",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Active Sessions Count",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/sessions/active/count",
+      "full_path": "GET /api/sessions/active/count",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Sessions by IP",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/sessions/ip/192.168.1.1",
+      "full_path": "GET /api/sessions/ip/192.168.1.1",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Sessions by Device",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/sessions/device/mobile",
+      "full_path": "GET /api/sessions/device/mobile",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Expired Sessions",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/sessions/expired",
+      "full_path": "GET /api/sessions/expired",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Session Activity Log",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/activity/{{createdUserId}}",
+      "full_path": "GET /api/session-monitoring/activity/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Concurrent Sessions",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/concurrent/{{createdUserId}}",
+      "full_path": "GET /api/session-monitoring/concurrent/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Session Anomalies",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/anomalies",
+      "full_path": "GET /api/session-monitoring/anomalies",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Session Geolocation",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/session-monitoring/geolocation/{{createdUserId}}",
+      "full_path": "GET /api/session-monitoring/geolocation/{{createdUserId}}",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "System Info",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/system/info",
+      "full_path": "GET /api/system/info",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "System Status",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/system/status",
+      "full_path": "GET /api/system/status",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "System Config",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/system/config",
+      "full_path": "GET /api/system/config",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Database Status",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/system/database",
+      "full_path": "GET /api/system/database",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Cache Status",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "GET",
+      "path": "api/system/cache",
+      "full_path": "GET /api/system/cache",
+      "body": null,
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    },
+    {
+      "name": "Test Password Strength",
+      "folder": "🔧 Advanced & System Routes (23 routes)",
+      "method": "POST",
+      "path": "api/test/password-strength",
+      "full_path": "POST /api/test/password-strength",
+      "body": {
+        "password": "TestPassword123!"
+      },
+      "headers": [
+        {
+          "Authorization": "Bearer {{authToken}}"
+        },
+        {
+          "Content-Type": "application/json"
+        }
+      ],
+      "auth": {},
+      "description": "",
+      "events": []
+    }
+  ],
+  "route_files": [
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/sessions/sessions.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/sessions/session-monitoring.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/users/users.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/people/people.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/authorizations/authorizations.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/menus/menus.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/auth/registration.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/auth/auth.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/permissions/permissions.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/modules/roles/roles.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/metrics/metrics.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/dashboard/dashboard.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/docs/docs.routes.js",
+    "/home/hbelkassim/dev/ginutech/web_dev/event-planner-auth/src/health/health.routes.js"
+  ]
+}
