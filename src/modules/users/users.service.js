@@ -111,10 +111,16 @@ class UsersService {
       userCode = null,
       phone = null,
       status = 'active',
-      personId = null,
+      person_id ,  // Ajout pour supporter person_id
       firstName = null,
       lastName = null
     } = userData;
+
+    
+    // Gestion obligatoire de person_id (contrainte NOT NULL)
+    if (!person_id) {
+      throw new Error('La personne est obligatoire');
+    }
 
     // Validation des champs obligatoires
     if (!username || !username.trim()) {
@@ -131,10 +137,8 @@ class UsersService {
     }
 
     // Gestion obligatoire de person_id (contrainte NOT NULL)
-    let finalPersonId = personId;
-    
-    if (!personId) {
-      // Si personId n'est pas fourni, créer une personne automatiquement
+    if (!person_id) {
+      // Si finalPersonId n'est pas fourni, créer une personne automatiquement
       try {
         const peopleRepository = require('../people/people.repository');
         
@@ -144,9 +148,11 @@ class UsersService {
         const defaultEmail = email || `user_${Date.now()}@system.local`;
         
         console.log(' Création automatique de personne pour utilisateur:', {
-          firstName: defaultFirstName,
-          lastName: defaultLastName,
-          email: defaultEmail
+          firstName: defaultFirstName.trim(),
+          lastName: defaultLastName.trim(),
+          email: defaultEmail,
+          phone: phone || null,
+          createdBy
         });
         
         const person = await peopleRepository.create({
@@ -157,8 +163,7 @@ class UsersService {
           createdBy
         });
         
-        finalPersonId = person.id;
-        console.log(' Personne créée avec ID:', finalPersonId);
+        console.log(' Personne créée avec ID:', person_id);
         
       } catch (error) {
         console.error(' Erreur création personne:', error.message);
@@ -168,13 +173,13 @@ class UsersService {
       // Valider que la personne existe
       try {
         const peopleRepository = require('../people/people.repository');
-        const existingPerson = await peopleRepository.findById(personId);
+        const existingPerson = await peopleRepository.findById(person_id);
         
         if (!existingPerson) {
-          throw new Error(`La personne avec ID ${personId} n'existe pas`);
+          throw new Error(`La personne avec ID ${person_id} n'existe pas`);
         }
         
-        console.log(' Personne existante utilisée:', finalPersonId);
+        console.log(' Personne existante utilisée:', person_id  );
         
       } catch (error) {
         console.error(' Erreur validation personne:', error.message);
@@ -211,7 +216,7 @@ class UsersService {
       userCode: userCode.trim(),
       phone: phone ? phone.trim() : null,
       status,
-      personId: finalPersonId,  // Utiliser le personId final (créé ou fourni)
+      person_id: person_id.trim(),  // Utiliser le personId final (créé ou fourni)
       createdBy
     };
 
@@ -227,8 +232,8 @@ class UsersService {
     }
 
     // Validation de la personne si spécifiée
-    if (personId) {
-      const personExists = await this.checkPersonExists(personId);
+    if (person_id) {
+      const personExists = await this.checkPersonExists(person_id);
       if (!personExists) {
         throw new Error('La personne spécifiée n\'existe pas');
       }
@@ -262,7 +267,7 @@ class UsersService {
       userCode,
       phone,
       status,
-      personId
+      person_id
     } = updateData;
 
     // Validation des formats si fournis
@@ -292,7 +297,7 @@ class UsersService {
     if (userCode !== undefined) cleanData.userCode = userCode.trim();
     if (phone !== undefined) cleanData.phone = phone ? phone.trim() : null;
     if (status !== undefined) cleanData.status = status;
-    if (personId !== undefined) cleanData.personId = personId;
+    if (person_id !== undefined) cleanData.person_id = person_id;
     cleanData.updatedBy = updatedBy;
 
     // Vérification des doublons si email/username modifié
@@ -322,7 +327,7 @@ class UsersService {
   }
 
   /**
-   * Supprime logiquement un utilisateur
+   * Supprime un utilisateur
    * @param {number} id - ID de l'utilisateur
    * @param {number} deletedBy - ID de l'utilisateur qui supprime
    * @returns {Promise<boolean>} Succès de l'opération

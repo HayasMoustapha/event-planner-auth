@@ -543,6 +543,302 @@ class MenuRepository {
       throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);
     }
   }
+
+  /**
+   * Construit l'arborescence des menus
+   * @param {Array} menus - Liste des menus
+   * @returns {Array} Arborescence des menus
+   */
+  buildMenuTree(menus) {
+    const menuMap = new Map();
+    const rootMenus = [];
+
+    // Créer une map de tous les menus
+    menus.forEach(menu => {
+      menuMap.set(menu.id, { ...menu, children: [] });
+    });
+
+    // Construire l'arborescence
+    menus.forEach(menu => {
+      if (menu.parent_id === null) {
+        rootMenus.push(menuMap.get(menu.id));
+      } else {
+        const parent = menuMap.get(menu.parent_id);
+        if (parent) {
+          parent.children.push(menuMap.get(menu.id));
+        }
+      }
+    });
+
+    return rootMenus;
+  }
+
+  /**
+   * Récupère l'arborescence complète des menus
+   * @param {Object} options - Options de filtre
+   * @returns {Promise<Array>} Arborescence des menus
+   */
+  async getMenuTree() {
+    const query = `
+      SELECT id, parent_id, label, icon, route, component, parent_path, 
+             menu_group, sort_order, depth, description, 
+             created_by, created_at, updated_at
+      FROM menus
+      WHERE deleted_at IS NULL
+      ORDER BY sort_order ASC, label ASC
+    `;
+
+try {
+      const result = await connection.query(query);
+      const menus = result.rows;
+
+      // Construire l'arborescence
+      return this.buildMenuTree(menus);
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération de l'arborescence: ${error.message}`);
+    }
+  }
+
+/**
+* Récupère les menus accessibles à un utilisateur
+* @param {number} userId - ID de l'utilisateur
+* @returns {Promise<Array>} Menus accessibles
+*/
+async getUserMenus(userId) {
+    const query = `
+      SELECT DISTINCT m.id, m.parent_id, m.label, m.icon, m.route, m.component, m.parent_path, 
+             m.menu_group, m.sort_order, m.depth, m.description, 
+             m.created_by, m.created_at, m.updated_at
+      FROM menus m
+      INNER JOIN authorizations a ON m.id = a.menu_id
+      INNER JOIN accesses acc ON a.role_id = acc.role_id
+      WHERE acc.user_id = $1 AND acc.status = 'active' AND m.deleted_at IS NULL
+      ORDER BY m.sort_order ASC, m.label ASC
+    `;
+
+try {
+      const result = await connection.query(query, [userId]);
+      const menus = result.rows;
+
+      // Construire l'arborescence
+      return this.buildMenuTree(menus);
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des menus utilisateur: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère les permissions associées à un menu
+   * @param {number} menuId - ID du menu
+   * @returns {Promise<Array>} Liste des permissions
+   */
+  async getMenuPermissions(menuId) {
+    const query = `
+      SELECT DISTINCT p.id, p.code, p.label, p."group", p.description
+      FROM permissions p
+      INNER JOIN authorizations a ON p.id = a.permission_id
+      WHERE a.menu_id = $1
+      ORDER BY p."group" ASC, p.code ASC
+    `;
+
+try {
+      const result = await connection.query(query, [menuId]);
+      return result.rows;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des permissions du menu: ${error.message}`);
+    }
+  }
+
+  /**
+   * Supprime toutes les permissions d'un menu
+   * @param {number} menuId - ID du menu
+   * @returns {Promise<number>} Nombre de permissions supprimées
+   */
+  async removeAllPermissions(menuId) {
+    const query = `
+      DELETE FROM authorizations
+      WHERE menu_id = $1
+    `;
+
+try {
+      const result = await connection.query(query, [menuId]);
+      return result.rowCount;
+    } catch (error) {
+      throw new Error(`Erreur lors de la suppression des permissions du menu: ${error.message}`);
+    }
+  }
+
+  /**
+   * Vérifie si un utilisateur a accès à un menu
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number} menuId - ID du menu
+   * @returns {Promise<boolean>} True si l'accès est autorisé
+   */
+  async userHasMenuAccess(userId, menuId) {
+    const query = `
+      SELECT COUNT(*) as count
+      FROM authorizations a
+      INNER JOIN accesses acc ON a.role_id = acc.role_id
+      WHERE acc.user_id = $1 AND a.menu_id = $2 AND acc.status = 'active'
+    `;
+
+try {
+      const result = await connection.query(query, [userId, menuId]);
+      return parseInt(result.rows[0].count) > 0;
+    } catch (error) {
+      throw new Error(`Erreur lors de la vérification de l'accès au menu: ${error.message}`);
+    }
+  }
+
+  /**
+   * Associe des permissions à un menu (pour le rôle super_admin par défaut)
+   * @param {number} menuId - ID du menu
+   * @param {Array<number>} permissionIds - IDs des permissions
+   * @param {number} createdBy - ID de l'utilisateur qui effectue l'association
+   * @returns {Promise<number>} Nombre d'associations créées
+   */
+  async assignPermissions(menuId, permissionIds, createdBy = null) {
+    if (!Array.isArray(permissionIds) || permissionIds.length === 0) {
+      return 0;
+    }
+
+    let count = 0;
+    // Note: Utilise le rôle super_admin (1) par défaut car l'API ne spécifie pas de rôle
+    for (const permissionId of permissionIds) {
+      const query = `
+        INSERT INTO authorizations (role_id, permission_id, menu_id, created_by, created_at, updated_at)
+        VALUES (1, $1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ON CONFLICT (role_id, permission_id, menu_id) DO NOTHING
+      `;
+      try {
+        const res = await connection.query(query, [permissionId, menuId, createdBy]);
+        count += res.rowCount;
+      } catch (error) {
+        console.error(`Erreur lors de l'association permission ${permissionId} au menu ${menuId}:`, error);
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Réorganise l'ordre des menus
+   * @param {Array<Object>} menuOrders - Liste des menus et leur ordre
+   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
+   * @returns {Promise<number>} Nombre de menus mis à jour
+   */
+  async reorderMenus(menuOrders, updatedBy = null) {
+    if (!Array.isArray(menuOrders) || menuOrders.length === 0) {
+      return 0;
+    }
+
+    await connection.query('BEGIN');
+    try {
+      let count = 0;
+      for (const order of menuOrders) {
+        const query = `
+          UPDATE menus 
+      SET sort_order = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP 
+          WHERE id = $1
+        `;
+        const res = await connection.query(query, [order.menuId, order.sortOrder, updatedBy]);
+        count += res.rowCount;
+      }
+      await connection.query('COMMIT');
+      return count;
+    } catch (error) {
+      await connection.query('ROLLBACK');
+  throw new Error(`Erreur lors de la réorganisation des menus: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère les statistiques des menus
+   * @returns {Promise<Object>} Statistiques
+   */
+  async getStats() {
+    const query = `
+      SELECT 
+        COUNT(CASE WHEN deleted_at IS NOT NULL THEN 1 END) as deleted_menus,
+        COUNT(*) as total_menus
+      FROM menus
+    `;
+
+try {
+      const result = await connection.query(query);
+      return {
+        deletedMenus: parseInt(result.rows[0].deleted_menus),
+        totalMenus: parseInt(result.rows[0].total_menus),
+        activeMenus: parseInt(result.rows[0].total_menus) - parseInt(result.rows[0].deleted_menus)
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère tous les menus avec pagination et filtres
+   * @param {Object} options - Options de pagination et recherche
+   * @returns {Promise<Object>} Données paginées
+   */
+  async getMenus(options = {}) {
+    const { page = 1, limit = 10, search, parentMenuId } = options;
+    const offset = (page - 1) * limit;
+
+    let whereClause = 'WHERE deleted_at IS NULL';
+    let countClause = 'WHERE deleted_at IS NULL';
+    const params = [];
+    let paramIndex = 1;
+
+    // Filtre de recherche
+    if (search) {
+      whereClause += ` AND (label::text ILIKE $${paramIndex} OR description::text ILIKE $${paramIndex})`;
+      countClause += ` AND (label::text ILIKE $${paramIndex} OR description::text ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    // Filtre de menu parent
+    if (parentMenuId !== null) {
+      whereClause += ` AND parent_id = $${paramIndex}`;
+      countClause += ` AND parent_id = $${paramIndex}`;
+  params.push(parentMenuId);
+      paramIndex++;
+    }
+
+    // Tri et pagination
+    const dataQuery = `
+      SELECT id, parent_id, label, icon, route, component, parent_path, 
+             menu_group, sort_order, depth, description, 
+             created_by, created_at, updated_at
+      FROM menus
+      ${whereClause}
+      ORDER BY sort_order ASC, label ASC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    params.push(limit, offset);
+    try {
+      const results = await Promise.all([
+        connection.query(dataQuery, params),
+        connection.query(`SELECT COUNT(*) as total FROM menus ${countClause}`, params.slice(0, -2))
+  ]);
+
+      const dataResult = results[0];
+      const countResult = results[1];
+
+      return {
+        data: dataResult.rows,
+        pagination: {
+          page,
+          limit,
+          total: parseInt(countResult.rows[0].total),
+          pages: Math.ceil(countResult.rows[0].total / limit)
+        }
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des menus: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new MenuRepository();

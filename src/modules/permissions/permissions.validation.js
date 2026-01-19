@@ -91,13 +91,25 @@ const validateUpdatePermission = [
     .isInt({ min: 1 })
     .withMessage('L\'ID de la permission doit être un entier positif'),
 
-  body('code')
+  body('name')
     .optional()
-    .trim()
-    .isLength({ min: 3, max: 100 })
-    .withMessage('Le code de la permission doit contenir entre 3 et 100 caractères')
-    .matches(/^[a-z0-9._]+[a-z0-9._]*$/)   
-    .withMessage('Le code doit être en minuscules avec underscores et/ou points (ex: users.read, user.read)'),
+    .custom((value) => {
+      try {
+        // Accepter les chaînes qui ressemblent à du JSON
+        if (typeof value === 'string') {
+          // Vérifier si la chaîne peut être du JSON valide
+          const trimmed = value.trim();
+          if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || 
+              (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+            return true;
+          }
+        }
+        return false;
+      } catch (error) {
+        return false;
+      }
+    })
+    .withMessage('Le name doit être un objet JSON ou une chaîne JSON valide'),
 
   body('label')
     .optional()

@@ -163,7 +163,7 @@ class UsersRepository {
       userCode = null,
       phone = null,
       status = 'active',
-      personId = null,
+      personId ,
       createdBy = null
     } = userData;
 
@@ -171,14 +171,14 @@ class UsersRepository {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const query = `
-      INSERT INTO users (username, email, password, user_code, phone, status, person_id, created_by, created_at, updated_at)
+      INSERT INTO users (person_id, username, email, password, user_code, phone, status, person_id, created_by, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, username, email, user_code, phone, status, person_id, created_at, updated_at
+      RETURNING id, person_id, username, email, user_code, phone, status, person_id, created_at, updated_at
     `;
 
     try {
       const result = await connection.query(query, [
-        username,
+        personId,
         email,
         hashedPassword,
         userCode,
@@ -214,6 +214,7 @@ class UsersRepository {
    */
   async update(id, updateData) {
     const {
+      person_id,
       username,
       email,
       password,
@@ -228,6 +229,11 @@ class UsersRepository {
     const updates = [];
     const values = [];
     let paramIndex = 1;
+
+    if (person_id !== undefined) {
+      updates.push(`person_id = $${paramIndex++}`);
+      values.push(person_id);
+    }
 
     if (username !== undefined) {
       updates.push(`username = $${paramIndex++}`);
@@ -274,7 +280,7 @@ class UsersRepository {
       UPDATE users 
       SET ${updates.join(', ')}
       WHERE id = $${paramIndex} AND deleted_at IS NULL
-      RETURNING id, username, email, user_code, phone, status, person_id, created_at, updated_at
+      RETURNING id, person_id, username, email, user_code, phone, status, created_at, updated_at
     `;
     values.push(id);
 
@@ -316,7 +322,7 @@ class UsersRepository {
       UPDATE users 
       SET password = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND deleted_at IS NULL
-      RETURNING id, username, email, user_code, phone, status, updated_at
+      RETURNING id, person_id,  username, email, user_code, phone, status, updated_at
     `;
 
     try {

@@ -35,14 +35,20 @@ const handleValidationErrors = (req, res, next) => {
     const bodyFields = Object.keys(req.body);
     const extraFields = bodyFields.filter(field => !Object.keys(validatedData).includes(field));
 
-    if (extraFields.length > 0) {
+    // Autoriser explicitement person_id même si non validé
+    const allowedExtraFields = ['person_id'];
+    const finalExtraFields = extraFields.filter(field => !allowedExtraFields.includes(field));
+
+    if (finalExtraFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: `Champs non autorisés dans le corps de la requête: ${extraFields.join(', ')}`,
+        message: `Champs non autorisés dans le corps de la requête: ${finalExtraFields.join(', ')}`,
         timestamp: new Date().toISOString()
       });
     }
   }
+
+  next();
 
   next();
 };
@@ -106,6 +112,11 @@ const validateCreate = [
     .withMessage('Le statut doit être active, inactive ou lock'),
 
   body('personId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID de la personne doit être un entier positif'),
+
+  body('person_id')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID de la personne doit être un entier positif'),
@@ -178,6 +189,11 @@ const validateUpdate = [
     .withMessage('Le statut doit être active, inactive ou lock'),
 
   body('personId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID de la personne doit être un entier positif'),
+
+  body('person_id')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID de la personne doit être un entier positif'),
