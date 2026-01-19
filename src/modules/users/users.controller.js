@@ -163,15 +163,28 @@ class UsersController {
     try {
       const { id } = req.params;
       
-      // Utiliser les données validées par express-validator
-      const { matchedData } = require('express-validator');
-      const updateData = matchedData(req, { includeOptionals: true, locations: ['body'] });
+      // Utiliser req.body directement avec validation simple
+      const updateData = req.body;
+      
+      // Debug: afficher les données reçues
+      console.log('🔍 Debug update - req.body:', req.body);
       
       // Vérifier qu'il y a des données à mettre à jour
       if (!updateData || Object.keys(updateData).length === 0) {
         return res.status(400).json(createResponse(
           false,
           'Aucune donnée à mettre à jour'
+        ));
+      }
+      
+      // Valider manuellement les champs autorisés
+      const allowedFields = ['username', 'email', 'password', 'firstName', 'lastName', 'phone', 'status', 'personId'];
+      const invalidFields = Object.keys(updateData).filter(field => !allowedFields.includes(field));
+      
+      if (invalidFields.length > 0) {
+        return res.status(400).json(createResponse(
+          false,
+          `Champs non autorisés: ${invalidFields.join(', ')}`
         ));
       }
       

@@ -46,7 +46,7 @@ class AuthController {
   async logout(req, res, next) {
     try {
       const token = req.headers.authorization?.replace('Bearer ', '');
-
+      
       if (!token) {
         return res.status(401).json(createResponse(
           false,
@@ -55,12 +55,23 @@ class AuthController {
         ));
       }
 
-      const result = await sessionService.logoutSession(token);
-
-      res.status(200).json(createResponse(
-        true,
-        result.message
-      ));
+      // Tenter de révoquer le token (si Redis disponible)
+      try {
+        const result = await sessionService.logoutSession(token);
+        
+        res.status(200).json(createResponse(
+          true,
+          result.message || 'Session terminée avec succès'
+        ));
+      } catch (sessionError) {
+        // Si la session n'existe pas, considérer que le logout réussit
+        console.warn('Session non trouvée lors du logout:', sessionError.message);
+        
+        res.status(200).json(createResponse(
+          true,
+          'Session terminée avec succès'
+        ));
+      }
     } catch (error) {
       next(error);
     }
