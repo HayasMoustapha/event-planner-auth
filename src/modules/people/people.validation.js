@@ -1,5 +1,4 @@
-const { body, param, query } = require('express-validator');
-const { validationResult } = require('express-validator');
+const { body, param, query, validationResult, matchedData } = require('express-validator');
 
 /**
  * Middleware de validation pour les entrées du module people
@@ -14,21 +13,37 @@ const { validationResult } = require('express-validator');
  */
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
       field: error.param,
       message: error.msg,
       value: error.value
     }));
-    
+
     return res.status(400).json({
       success: false,
       message: 'Erreur de validation',
-      errors: formattedErrors
+      errors: formattedErrors,
+      timestamp: new Date().toISOString()
     });
   }
-  
+
+  // Vérification des champs non autorisés (Hardening Rule 3)
+  const validatedData = matchedData(req, { includeOptionals: true, locations: ['body'] });
+  if (req.body && Object.keys(req.body).length > 0) {
+    const bodyFields = Object.keys(req.body);
+    const extraFields = bodyFields.filter(field => !Object.keys(validatedData).includes(field));
+
+    if (extraFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Champs non autorisés dans le corps de la requête: ${extraFields.join(', ')}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
   next();
 };
 
@@ -36,21 +51,38 @@ const handleValidationErrors = (req, res, next) => {
  * Validation pour la création d'une personne
  */
 const validateCreate = [
-  // Champs obligatoires
   body('first_name')
+    .optional()
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Le prénom doit contenir entre 2 et 100 caractères')
     .matches(/^[a-zA-Z\u00C0-\u017F\s'\-]+$/)
     .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
-    
+
+  body('firstName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Le prénom doit contenir entre 2 et 100 caractères')
+    .matches(/^[a-zA-Z\u00C0-\u017F\s'\-]+$/)
+    .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+
   body('last_name')
+    .optional()
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Le nom de famille doit contenir entre 2 et 100 caractères')
     .matches(/^[a-zA-Z\u00C0-\u017F\s'\-]+$/)
     .withMessage('Le nom de famille ne peut contenir que des lettres, espaces, tirets et apostrophes'),
-    
+
+  body('lastName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Le nom de famille doit contenir entre 2 et 100 caractères')
+    .matches(/^[a-zA-Z\u00C0-\u017F\s'\-]+$/)
+    .withMessage('Le nom de famille ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+
   body('email')
     .trim()
     .isEmail()
@@ -58,25 +90,25 @@ const validateCreate = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-  
+
   // Champs optionnels
   body('phone')
     .optional()
     .trim()
     .matches(/^(\+?[1-9]\d{1,3})?[0-9]{7,15}$/)
     .withMessage('Format de numéro de téléphone invalide'),
-    
+
   body('photo')
     .optional()
     .trim()
     .isURL()
     .withMessage('L\'URL de la photo est invalide'),
-    
+
   body('status')
     .optional()
     .isIn(['active', 'inactive'])
     .withMessage('Le statut doit être "active" ou "inactive"'),
-    
+
   handleValidationErrors
 ];
 
@@ -88,24 +120,32 @@ const validateUpdate = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID doit être un entier positif'),
-    
+
   // Champs optionnels pour la mise à jour
   body('first_name')
     .optional()
     .trim()
     .isLength({ min: 2, max: 100 })
-    .withMessage('Le prénom doit contenir entre 2 et 100 caractères')
-    .matches(/^[a-zA-Z\u00C0-\u017F\s'\-]+$/)
-    .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
-    
+    .withMessage('Le prénom doit contenir entre 2 et 100 caractères'),
+
+  body('firstName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Le prénom doit contenir entre 2 et 100 caractères'),
+
   body('last_name')
     .optional()
     .trim()
     .isLength({ min: 2, max: 100 })
-    .withMessage('Le nom de famille doit contenir entre 2 et 100 caractères')
-    .matches(/^[a-zA-Z\u00C0-\u017F\s'\-]+$/)
-    .withMessage('Le nom de famille ne peut contenir que des lettres, espaces, tirets et apostrophes'),
-    
+    .withMessage('Le nom de famille doit contenir entre 2 et 100 caractères'),
+
+  body('lastName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Le nom de famille doit contenir entre 2 et 100 caractères'),
+
   body('email')
     .optional()
     .trim()
@@ -114,24 +154,24 @@ const validateUpdate = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
+
   body('phone')
     .optional()
     .trim()
     .matches(/^(\+?[1-9]\d{1,3})?[0-9]{7,15}$/)
     .withMessage('Format de numéro de téléphone invalide'),
-    
+
   body('photo')
     .optional()
     .trim()
     .isURL()
     .withMessage('L\'URL de la photo est invalide'),
-    
+
   body('status')
     .optional()
     .isIn(['active', 'inactive'])
     .withMessage('Le statut doit être "active" ou "inactive"'),
-    
+
   handleValidationErrors
 ];
 
@@ -143,12 +183,12 @@ const validateStatusUpdate = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID doit être un entier positif'),
-    
+
   // Statut obligatoire
   body('status')
     .isIn(['active', 'inactive'])
     .withMessage('Le statut doit être "active" ou "inactive"'),
-    
+
   handleValidationErrors
 ];
 
@@ -160,23 +200,23 @@ const validateQueryParams = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('La page doit être un entier supérieur à 0'),
-    
+
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('La limite doit être un entier entre 1 et 100'),
-    
+
   query('search')
     .optional()
     .trim()
     .isLength({ min: 1, max: 100 })
     .withMessage('Le terme de recherche doit contenir entre 1 et 100 caractères'),
-    
+
   query('status')
     .optional()
     .isIn(['active', 'inactive'])
     .withMessage('Le statut doit être "active" ou "inactive"'),
-    
+
   handleValidationErrors
 ];
 
@@ -187,7 +227,7 @@ const validateIdParam = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -199,7 +239,7 @@ const validateEmailParam = [
     .isEmail()
     .withMessage('Format d\'email invalide')
     .normalizeEmail(),
-    
+
   handleValidationErrors
 ];
 
@@ -210,7 +250,7 @@ const validatePhoneParam = [
   param('phone')
     .matches(/^(\+?[1-9]\d{1,3})?[0-9]{7,15}$/)
     .withMessage('Format de numéro de téléphone invalide'),
-    
+
   handleValidationErrors
 ];
 

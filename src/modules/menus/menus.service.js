@@ -20,6 +20,7 @@ class MenuService {
       component,
       parentPath,
       menuGroup,
+      parentMenuId = null,
       sortOrder = 0,
       depth = 0,
       createdBy = null
@@ -47,13 +48,13 @@ class MenuService {
       if (parentMenuId <= 0) {
         throw new Error('L\'ID du menu parent doit être positif');
       }
-      
+
       // Vérifier si le menu parent existe
       const parentMenu = await menuRepository.findById(parentMenuId);
       if (!parentMenu) {
         throw new Error('Le menu parent spécifié n\'existe pas');
       }
-      
+
       // Empêcher la création de boucles dans l'arborescence
       if (parentMenuId === createdBy) {
         throw new Error('Un menu ne peut pas être son propre parent');
@@ -67,11 +68,11 @@ class MenuService {
       parentMenuId,
       status: 'active'
     });
-    
-    const duplicateLabel = existingMenus.menus.find(menu => 
+
+    const duplicateLabel = existingMenus.menus.find(menu =>
       JSON.stringify(menu.label).toLowerCase() === JSON.stringify(label).toLowerCase()
     );
-    
+
     if (duplicateLabel) {
       throw new Error('Un menu avec ce label existe déjà au même niveau');
     }
@@ -84,6 +85,7 @@ class MenuService {
       route: route?.trim() || null,
       component: component?.trim() || null,
       parentPath: parentPath?.trim() || null,
+      parentMenuId,
       menuGroup,
       sortOrder,
       depth,
@@ -91,7 +93,7 @@ class MenuService {
     });
 
     console.log(`📋 Menu créé: ${JSON.stringify(menu.label)} (ID: ${menu.id}) par l'utilisateur ${createdBy}`);
-    
+
     return menu;
   }
 
@@ -199,17 +201,17 @@ class MenuService {
       if (!label || typeof label !== 'object') {
         throw new Error('Le label du menu est requis et doit être un objet JSON');
       }
-      
+
       const existingMenus = await menuRepository.findAll({
         page: 1,
         limit: 100,
         parentMenuId
       });
-      
-      const duplicateLabel = existingMenus.menus.find(menu => 
+
+      const duplicateLabel = existingMenus.menus.find(menu =>
         JSON.stringify(menu.label).toLowerCase() === JSON.stringify(label).toLowerCase() && menu.id !== id
       );
-      
+
       if (duplicateLabel) {
         throw new Error('Un menu avec ce label existe déjà au même niveau');
       }
@@ -249,14 +251,14 @@ class MenuService {
       if (parentMenuId !== null && parentMenuId <= 0) {
         throw new Error('L\'ID du menu parent doit être positif');
       }
-      
+
       if (parentMenuId !== null) {
         // Vérifier si le menu parent existe
         const parentMenu = await menuRepository.findById(parentMenuId);
         if (!parentMenu) {
           throw new Error('Le menu parent spécifié n\'existe pas');
         }
-        
+
         // Empêcher la création de boucles dans l'arborescence
         if (parentMenuId === id) {
           throw new Error('Un menu ne peut pas être son propre parent');
@@ -275,7 +277,7 @@ class MenuService {
     }, updatedBy);
 
     console.log(`📋 Menu mis à jour: ${updatedMenu.label} (ID: ${updatedMenu.id}) par l'utilisateur ${updatedBy}`);
-    
+
     return updatedMenu;
   }
 
@@ -310,11 +312,11 @@ class MenuService {
 
     // Supprimer le menu
     const deleted = await menuRepository.delete(id, deletedBy);
-    
+
     if (deleted) {
       console.log(`🗑️ Menu supprimé: ${menu.label} (ID: ${menu.id}) par l'utilisateur ${deletedBy}`);
     }
-    
+
     return deleted;
   }
 
@@ -376,7 +378,7 @@ class MenuService {
     }
 
     // Valider les IDs de permissions
-    const validPermissionIds = permissionIds.filter(id => 
+    const validPermissionIds = permissionIds.filter(id =>
       id && typeof id === 'number' && id > 0
     );
 
@@ -386,13 +388,13 @@ class MenuService {
 
     // Associer les permissions
     const assignedCount = await menuRepository.assignPermissions(
-      menuId, 
-      validPermissionIds, 
+      menuId,
+      validPermissionIds,
       createdBy
     );
 
     console.log(`🔐 ${assignedCount} permissions associées au menu ${menu.label} (ID: ${menuId})`);
-    
+
     return {
       assigned: assignedCount,
       menuId,
@@ -417,9 +419,9 @@ class MenuService {
     }
 
     const removedCount = await menuRepository.removeAllPermissions(menuId);
-    
+
     console.log(`🗑️ ${removedCount} permissions supprimées du menu ${menu.label} (ID: ${menuId})`);
-    
+
     return {
       removed: removedCount,
       menuId,
@@ -451,20 +453,20 @@ class MenuService {
       if (!menuOrder.menuId || !menuOrder.sortOrder !== undefined) {
         throw new Error('Chaque entrée doit contenir menuId et sortOrder');
       }
-      
+
       if (menuOrder.menuId <= 0) {
         throw new Error('L\'ID du menu doit être positif');
       }
-      
+
       if (typeof menuOrder.sortOrder !== 'number' || menuOrder.sortOrder < 0) {
         throw new Error('L\'ordre de tri doit être un nombre positif');
       }
     }
 
     const updatedCount = await menuRepository.reorderMenus(menuOrders, updatedBy);
-    
+
     console.log(`🔄 ${updatedCount} menus réorganisés par l'utilisateur ${updatedBy}`);
-    
+
     return {
       updated: updatedCount,
       total: menuOrders.length,
@@ -494,26 +496,21 @@ class MenuService {
 
     // Créer le nouveau menu avec les mêmes propriétés
     const newMenu = await this.createMenu({
-      name: name || `${sourceMenu.name} (copie)`,
+      label: label || { fr: `${sourceMenu.label?.fr || ''} (copie)`, en: `${sourceMenu.label?.en || ''} (copy)` },
       description: description || sourceMenu.description,
       icon: sourceMenu.icon,
       route: sourceMenu.route,
-      parentMenuId: sourceMenu.parent_menu_id,
+      parentMenuId: sourceMenu.parent_id,
       sortOrder: sourceMenu.sort_order + 1,
-      isVisible: sourceMenu.is_visible,
-      status: sourceMenu.status,
+      menuGroup: sourceMenu.menu_group,
       createdBy
     });
 
-    // Copier les permissions
-    const permissions = await menuRepository.getMenuPermissions(sourceMenuId);
-    if (permissions.length > 0) {
-      const permissionIds = permissions.map(p => p.id);
-      await this.assignMenuPermissions(newMenu.id, permissionIds, createdBy);
-    }
+    // Copier les permissions (depuis authorizations)
+    // Note: this should be handled by a service that manages authorizations
 
-    console.log(`📋 Menu dupliqué: ${sourceMenu.name} → ${newMenu.name}`);
-    
+    console.log(`📋 Menu dupliqué: ${JSON.stringify(sourceMenu.label)} → ${JSON.stringify(newMenu.label)}`);
+
     return newMenu;
   }
 }

@@ -74,7 +74,7 @@ class RoleService {
     const role = await roleRepository.create(cleanData);
 
     console.log(`🔐 Rôle créé: ${role.code} (ID: ${role.id}) par l'utilisateur ${createdBy}`);
-    
+
     return role;
   }
 
@@ -135,7 +135,7 @@ class RoleService {
 
     // Récupérer les permissions associées
     const permissions = await roleRepository.getRolePermissions(id);
-    
+
     return {
       ...role,
       permissions
@@ -163,6 +163,7 @@ class RoleService {
     // Validation des données de mise à jour
     const {
       code,
+      label,
       description,
       status,
       level
@@ -183,11 +184,18 @@ class RoleService {
       }
     }
 
-    if (description !== undefined && description && description.length > 255) {
-      throw new Error('La description ne peut pas dépasser 255 caractères');
+    if (label !== undefined) {
+      if (typeof label !== 'object' || label === null) {
+        throw new Error('Le label doit être un objet JSON');
+      }
     }
 
-    
+    if (description !== undefined && description !== null) {
+      if (typeof description !== 'object') {
+        throw new Error('La description doit être un objet JSON');
+      }
+    }
+
     if (level !== undefined) {
       if (typeof level !== 'number' || level < 0 || level > 100) {
         throw new Error('Le niveau doit être un nombre entre 0 et 100');
@@ -197,13 +205,14 @@ class RoleService {
     // Mettre à jour le rôle
     const updatedRole = await roleRepository.update(id, {
       code: code?.trim(),
-      description: description?.trim(),
+      label,
+      description,
       status,
       level
     }, updatedBy);
 
     console.log(`🔐 Rôle mis à jour: ${updatedRole.code} (ID: ${updatedRole.id}) par l'utilisateur ${updatedBy}`);
-    
+
     return updatedRole;
   }
 
@@ -238,11 +247,11 @@ class RoleService {
 
     // Supprimer le rôle
     const deleted = await roleRepository.delete(id, deletedBy);
-    
+
     if (deleted) {
       console.log(`🗑️ Rôle supprimé: ${role.code} (ID: ${role.id}) par l'utilisateur ${deletedBy}`);
     }
-    
+
     return deleted;
   }
 
@@ -273,7 +282,7 @@ class RoleService {
     }
 
     // Valider les IDs de permissions
-    const validPermissionIds = permissionIds.filter(id => 
+    const validPermissionIds = permissionIds.filter(id =>
       id && typeof id === 'number' && id > 0
     );
 
@@ -283,13 +292,13 @@ class RoleService {
 
     // Associer les permissions
     const assignedCount = await roleRepository.assignPermissions(
-      roleId, 
-      validPermissionIds, 
+      roleId,
+      validPermissionIds,
       createdBy
     );
 
     console.log(`🔐 ${assignedCount} permissions associées au rôle ${role.code} (ID: ${roleId})`);
-    
+
     return {
       assigned: assignedCount,
       roleId,
@@ -314,9 +323,9 @@ class RoleService {
     }
 
     const removedCount = await roleRepository.removeAllPermissions(roleId);
-    
+
     console.log(`🗑️ ${removedCount} permissions supprimées du rôle ${role.code} (ID: ${roleId})`);
-    
+
     return {
       removed: removedCount,
       roleId,
@@ -414,7 +423,7 @@ class RoleService {
     }
 
     console.log(`📋 Rôle dupliqué: ${sourceRole.name} → ${newRole.name}`);
-    
+
     return newRole;
   }
 }

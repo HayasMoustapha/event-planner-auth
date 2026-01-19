@@ -1,5 +1,4 @@
-const { body, param, query } = require('express-validator');
-const { validationResult } = require('express-validator');
+const { body, param, query, validationResult, matchedData } = require('express-validator');
 
 /**
  * Middleware de validation pour les entrées du module menus
@@ -14,14 +13,14 @@ const { validationResult } = require('express-validator');
  */
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
       field: error.param,
       message: error.msg,
       value: error.value
     }));
-    
+
     return res.status(400).json({
       success: false,
       message: 'Erreur de validation',
@@ -29,7 +28,22 @@ const handleValidationErrors = (req, res, next) => {
       timestamp: new Date().toISOString()
     });
   }
-  
+
+  // Vérification des champs non autorisés (Hardening Rule 3)
+  const validatedData = matchedData(req, { includeOptionals: true, locations: ['body'] });
+  if (req.body && Object.keys(req.body).length > 0) {
+    const bodyFields = Object.keys(req.body);
+    const extraFields = bodyFields.filter(field => !Object.keys(validatedData).includes(field));
+
+    if (extraFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Champs non autorisés dans le corps de la requête: ${extraFields.join(', ')}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
   next();
 };
 
@@ -42,44 +56,44 @@ const validateCreateMenu = [
     .withMessage('Le label du menu est requis')
     .isObject()
     .withMessage('Le label doit être un objet JSON'),
-    
+
   body('description')
     .optional()
     .isObject()
     .withMessage('La description doit être un objet JSON'),
-    
+
   body('icon')
     .optional()
     .trim()
     .isLength({ max: 100 })
     .withMessage('L\'icône ne peut pas dépasser 100 caractères'),
-    
+
   body('route')
     .optional()
     .trim()
     .isLength({ max: 255 })
     .withMessage('La route ne peut pas dépasser 255 caractères'),
-    
+
   body('parentMenuId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu parent doit être un entier positif'),
-    
+
   body('sortOrder')
     .optional()
     .isInt({ min: 0, max: 9999 })
     .withMessage('L\'ordre de tri doit être un entier entre 0 et 9999'),
-    
+
   body('isVisible')
     .optional()
     .isBoolean()
     .withMessage('La visibilité doit être un booléen'),
-    
+
   body('status')
     .optional()
     .isIn(['active', 'inactive'])
     .withMessage('Le statut doit être "active" ou "inactive"'),
-    
+
   handleValidationErrors
 ];
 
@@ -90,49 +104,49 @@ const validateUpdateMenu = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu doit être un entier positif'),
-    
+
   body('label')
     .optional()
     .isObject()
     .withMessage('Le label doit être un objet JSON'),
-    
+
   body('description')
     .optional()
     .isObject()
     .withMessage('La description doit être un objet JSON'),
-    
+
   body('icon')
     .optional()
     .trim()
     .isLength({ max: 100 })
     .withMessage('L\'icône ne peut pas dépasser 100 caractères'),
-    
+
   body('route')
     .optional()
     .trim()
     .isLength({ max: 255 })
     .withMessage('La route ne peut pas dépasser 255 caractères'),
-    
+
   body('parentMenuId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu parent doit être un entier positif'),
-    
+
   body('sortOrder')
     .optional()
     .isInt({ min: 0, max: 9999 })
     .withMessage('L\'ordre de tri doit être un entier entre 0 et 9999'),
-    
+
   body('isVisible')
     .optional()
     .isBoolean()
     .withMessage('La visibilité doit être un booléen'),
-    
+
   body('status')
     .optional()
     .isIn(['active', 'inactive'])
     .withMessage('Le statut doit être "active" ou "inactive"'),
-    
+
   handleValidationErrors
 ];
 
@@ -143,7 +157,7 @@ const validateGetMenuById = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -155,43 +169,43 @@ const validateGetMenus = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('Le numéro de page doit être un entier positif'),
-    
+
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('La limite doit être entre 1 et 100'),
-    
+
   query('search')
     .optional()
     .trim()
     .isLength({ max: 100 })
     .withMessage('Le terme de recherche ne peut pas dépasser 100 caractères'),
-    
+
   query('status')
     .optional()
     .isIn(['active', 'inactive', 'deleted'])
     .withMessage('Le statut de filtre doit être "active", "inactive" ou "deleted"'),
-    
+
   query('isVisible')
     .optional()
     .isBoolean()
     .withMessage('La visibilité doit être un booléen'),
-    
+
   query('parentMenuId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu parent doit être un entier positif'),
-    
+
   query('sortBy')
     .optional()
     .isIn(['label', 'description', 'route', 'sort_order', 'created_at', 'updated_at'])
     .withMessage('Le champ de tri est invalide'),
-    
+
   query('sortOrder')
     .optional()
     .isIn(['ASC', 'DESC'])
     .withMessage('L\'ordre de tri doit être ASC ou DESC'),
-    
+
   handleValidationErrors
 ];
 
@@ -203,7 +217,7 @@ const validateGetUserMenus = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -215,13 +229,13 @@ const validateCheckUserMenuAccess = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   query('menuId')
     .notEmpty()
     .withMessage('L\'ID du menu est requis')
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -232,15 +246,15 @@ const validateAssignMenuPermissions = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu doit être un entier positif'),
-    
+
   body('permissionIds')
     .isArray({ min: 1 })
     .withMessage('Les IDs de permissions doivent être un tableau non vide'),
-    
+
   body('permissionIds.*')
     .isInt({ min: 1 })
     .withMessage('Chaque ID de permission doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -251,19 +265,19 @@ const validateDuplicateMenu = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu source doit être un entier positif'),
-    
+
   body('label')
     .notEmpty()
     .withMessage('Le label du nouveau menu est requis')
     .isObject()
     .withMessage('Le label doit être un objet JSON'),
-    
+
   body('description')
     .optional()
     .trim()
     .isLength({ max: 255 })
     .withMessage('La description ne peut pas dépasser 255 caractères'),
-    
+
   handleValidationErrors
 ];
 
@@ -274,15 +288,15 @@ const validateReorderMenus = [
   body('menuOrders')
     .isArray({ min: 1 })
     .withMessage('La liste des menus est requise'),
-    
+
   body('menuOrders.*.menuId')
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu doit être un entier positif'),
-    
+
   body('menuOrders.*.sortOrder')
     .isInt({ min: 0 })
     .withMessage('L\'ordre de tri doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 

@@ -13,24 +13,24 @@ class UsersService {
    * @returns {Promise<Object>} Données paginées
    */
   async getAll(options = {}) {
-    const { page = 1, limit = 10, search, status, userAccess } = options;
-    
+    const { page = 1, limit = 10, search, status, userCode } = options;
+
     // Validation des paramètres
     if (page < 1) throw new Error('Le numéro de page doit être supérieur à 0');
     if (limit < 1 || limit > 100) throw new Error('La limite doit être entre 1 et 100');
-    
+
     // Validation du statut
     if (status && !['active', 'inactive', 'lock'].includes(status)) {
       throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
     }
-    
-    // Validation du niveau d'accès utilisateur
-    if (userAccess !== undefined && (userAccess !== null && (isNaN(userAccess) || userAccess < 0))) {
-      throw new Error('user_access doit être un entier positif ou null');
+
+    // Validation du code utilisateur
+    if (userCode !== undefined && userCode !== null && typeof userCode !== 'string') {
+      throw new Error('userCode doit être une chaîne de caractères');
     }
-    
+
     // Le filtre par rôle est maintenant géré via la table accesses
-    return await usersRepository.findAll({ page, limit, search, status });
+    return await usersRepository.findAll({ page, limit, search, status, userCode });
   }
 
   /**
@@ -48,7 +48,7 @@ class UsersService {
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
-    
+
     return user;
   }
 
@@ -71,7 +71,7 @@ class UsersService {
     if (!user) {
       throw new Error('Utilisateur non trouvé avec cet email');
     }
-    
+
     return user;
   }
 
@@ -99,22 +99,17 @@ class UsersService {
     if (!user) {
       throw new Error('Utilisateur non trouvé avec ce username');
     }
-    
+
     return user;
   }
 
-  /**
-   * Crée un nouvel utilisateur avec validation complète
-   * @param {Object} userData - Données de l'utilisateur
-   * @param {number} createdBy - ID de l'utilisateur qui crée
-   * @returns {Promise<Object>} Utilisateur créé
-   */
   async create(userData, createdBy = null) {
     const {
       username,
       email,
       password,
-      userAccess = null,
+      userCode = null,
+      phone = null,
       status = 'active',
       personId = null
     } = userData;
@@ -128,6 +123,9 @@ class UsersService {
     }
     if (!password || !password.trim()) {
       throw new Error('Le mot de passe est obligatoire');
+    }
+    if (!userCode || !userCode.trim()) {
+      throw new Error('Le userCode est obligatoire');
     }
 
     // Validation des formats
@@ -146,11 +144,6 @@ class UsersService {
       throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
     }
 
-    // Validation du niveau d'accès utilisateur
-    if (userAccess !== null && (isNaN(userAccess) || userAccess < 0)) {
-      throw new Error('user_access doit être un entier positif ou null');
-    }
-
     // Validation du statut
     if (!['active', 'inactive', 'lock'].includes(status)) {
       throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
@@ -161,7 +154,8 @@ class UsersService {
       username: username.trim().toLowerCase(),
       email: email.toLowerCase().trim(),
       password: password.trim(),
-      userAccess,
+      userCode: userCode.trim(),
+      phone: phone ? phone.trim() : null,
       status,
       personId,
       createdBy
@@ -211,8 +205,10 @@ class UsersService {
       username,
       email,
       password,
-      userAccess,
-      status
+      userCode,
+      phone,
+      status,
+      personId
     } = updateData;
 
     // Validation des formats si fournis
@@ -230,9 +226,6 @@ class UsersService {
         throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
       }
     }
-    if (userAccess !== undefined && (userAccess !== null && (isNaN(userAccess) || userAccess < 0))) {
-      throw new Error('user_access doit être un entier positif ou null');
-    }
     if (status && !['active', 'inactive', 'lock'].includes(status)) {
       throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
     }
@@ -242,8 +235,10 @@ class UsersService {
     if (username !== undefined) cleanData.username = username.trim().toLowerCase();
     if (email !== undefined) cleanData.email = email.toLowerCase().trim();
     if (password !== undefined) cleanData.password = password.trim();
-    if (userAccess !== undefined) cleanData.userAccess = userAccess;
+    if (userCode !== undefined) cleanData.userCode = userCode.trim();
+    if (phone !== undefined) cleanData.phone = phone ? phone.trim() : null;
     if (status !== undefined) cleanData.status = status;
+    if (personId !== undefined) cleanData.personId = personId;
     cleanData.updatedBy = updatedBy;
 
     // Vérification des doublons si email/username modifié
@@ -416,12 +411,12 @@ class UsersService {
    * @returns {Promise<Object>} Résultats paginés
    */
   async search(criteria) {
-    const { search, status, userAccess, page = 1, limit = 10 } = criteria;
-    
+    const { search, status, userCode, page = 1, limit = 10 } = criteria;
+
     return await this.getAll({
       search: search?.trim(),
       status,
-      userAccess,
+      userCode,
       page,
       limit
     });
@@ -434,7 +429,7 @@ class UsersService {
    */
   async exists(id) {
     if (!id || id <= 0) return false;
-    
+
     try {
       return await usersRepository.exists(id);
     } catch (error) {
@@ -555,7 +550,7 @@ class UsersService {
     // Récupérer l'access existant
     const accesses = await accessesRepository.findByUserId(userId);
     const userAccess = accesses.find(access => access.role_id === roleId);
-    
+
     if (!userAccess) {
       throw new Error('L\'utilisateur n\'a pas ce rôle');
     }
@@ -578,21 +573,14 @@ class UsersService {
     return await accessesRepository.findByUserId(userId, onlyActive);
   }
 
-  /**
-   * Met à jour le niveau d'accès d'un utilisateur
-   * @param {number} userId - ID de l'utilisateur
-   * @param {number|null} userAccess - Nouveau niveau d'accès
-   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
-   * @returns {Promise<Object>} Utilisateur mis à jour
-   */
-  async updateUserAccess(userId, userAccess, updatedBy = null) {
+  async updateUserCode(userId, userCode, updatedBy = null) {
     if (!userId || userId <= 0) {
       throw new Error('ID d\'utilisateur invalide');
     }
 
-    // Validation du niveau d'accès
-    if (userAccess !== null && (isNaN(userAccess) || userAccess < 0)) {
-      throw new Error('user_access doit être un entier positif ou null');
+    // Validation du code utilisateur
+    if (!userCode || !userCode.trim()) {
+      throw new Error('userCode est requis');
     }
 
     // Vérifier si l'utilisateur existe
@@ -601,10 +589,7 @@ class UsersService {
       throw new Error('Utilisateur non trouvé');
     }
 
-    // Mettre à jour user_access via le repository
-    // Note: Cette méthode nécessite une implémentation dans usersRepository
-    // Pour l'instant, nous retournons l'utilisateur existant
-    return user;
+    return await usersRepository.update(userId, { userCode, updatedBy });
   }
 
   /**

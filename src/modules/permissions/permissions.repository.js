@@ -29,9 +29,9 @@ class PermissionRepository {
 
     const values = [
       code?.trim(), // code sera utilisé comme code (colonne 'code' du schéma)
-      label ? JSON.stringify(label) : JSON.stringify({en: code?.trim(), fr: code?.trim()}), // label en JSONB (colonne 'label' du schéma)
+      label ? JSON.stringify(label) : JSON.stringify({ en: code?.trim(), fr: code?.trim() }), // label en JSONB (colonne 'label' du schéma)
       group?.trim() || null, // group sera utilisé comme group (colonne 'group' du schéma)
-      description ? JSON.stringify({en: description, fr: description}) : null, // description en JSONB (colonne 'description' du schéma)
+      description ? JSON.stringify({ en: description, fr: description }) : null, // description en JSONB (colonne 'description' du schéma)
       createdBy
     ];
 
@@ -205,6 +205,7 @@ class PermissionRepository {
   async update(id, updateData, updatedBy = null) {
     const {
       code,
+      label,
       description,
       group
     } = updateData;
@@ -215,19 +216,25 @@ class PermissionRepository {
 
     if (code !== undefined) {
       updates.push(`code = $${paramIndex}`);
-      values.push(code.trim());
+      values.push(code ? code.trim() : null);
+      paramIndex++;
+    }
+
+    if (label !== undefined) {
+      updates.push(`label = $${paramIndex}`);
+      values.push(label);
       paramIndex++;
     }
 
     if (description !== undefined) {
       updates.push(`description = $${paramIndex}`);
-      values.push(description.trim());
+      values.push(description);
       paramIndex++;
     }
 
     if (group !== undefined) {
       updates.push(`"group" = $${paramIndex}`);
-      values.push(group.trim());
+      values.push(group ? group.trim() : null);
       paramIndex++;
     }
 

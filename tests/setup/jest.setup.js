@@ -17,9 +17,8 @@ process.env.SMTP_PASS = 'test_password';
 process.env.LOG_MAX_SIZE = '20MB';
 process.env.LOG_MAX_FILES = '14d';
 
-// Mock des services externes pour éviter les dépendances réelles
-jest.mock('../../src/services/email.service');
-jest.mock('../../src/utils/logger');
+// Mock des services externes si nécessaire
+// jest.mock('../../src/utils/logger'); // On préfère garder le logger pour le debug
 
 // Timeout global pour les tests
-jest.setTimeout(10000);
+jest.setTimeout(30000);

@@ -65,7 +65,7 @@ class PermissionService {
     const permission = await permissionRepository.create(cleanData);
 
     console.log(`🔐 Permission créée: ${permission.code} (ID: ${permission.id}) par l'utilisateur ${createdBy}`);
-    
+
     return permission;
   }
 
@@ -154,6 +154,7 @@ class PermissionService {
     // Validation des données de mise à jour
     const {
       code,
+      label,
       description,
       group
     } = updateData;
@@ -173,6 +174,18 @@ class PermissionService {
       }
     }
 
+    if (label !== undefined) {
+      if (typeof label !== 'object' || label === null) {
+        throw new Error('Le label doit être un objet JSON');
+      }
+    }
+
+    if (description !== undefined && description !== null) {
+      if (typeof description !== 'object') {
+        throw new Error('La description doit être un objet JSON');
+      }
+    }
+
     if (group !== undefined) {
       if (!group || !group.trim()) {
         throw new Error('Le groupe est requis');
@@ -185,19 +198,16 @@ class PermissionService {
       }
     }
 
-    if (description !== undefined && description && description.length > 255) {
-      throw new Error('La description ne peut pas dépasser 255 caractères');
-    }
-
     // Mettre à jour la permission
     const updatedPermission = await permissionRepository.update(id, {
       code: code?.trim(),
-      description: description?.trim(),
+      label,
+      description,
       group: group?.trim()
     }, updatedBy);
 
     console.log(`🔐 Permission mise à jour: ${updatedPermission.code} (ID: ${updatedPermission.id}) par l'utilisateur ${updatedBy}`);
-    
+
     return updatedPermission;
   }
 
@@ -236,11 +246,11 @@ class PermissionService {
 
     // Supprimer la permission
     const deleted = await permissionRepository.delete(id, deletedBy);
-    
+
     if (deleted) {
       console.log(`🗑️ Permission supprimée: ${permission.code} (ID: ${permission.id}) par l'utilisateur ${deletedBy}`);
     }
-    
+
     return deleted;
   }
 
@@ -335,13 +345,13 @@ class PermissionService {
 
     const validActions = ['create', 'read', 'update', 'delete', 'manage', 'view', 'list'];
     const invalidActions = actions.filter(action => !validActions.includes(action));
-    
+
     if (invalidActions.length > 0) {
       throw new Error(`Actions invalides: ${invalidActions.join(', ')}`);
     }
 
     const createdPermissions = [];
-    
+
     for (const action of actions) {
       try {
         const permissionName = `${group.trim()}.${action}`;
@@ -361,7 +371,7 @@ class PermissionService {
     }
 
     console.log(`🔐 ${createdPermissions.length} permissions générées pour le groupe ${group}`);
-    
+
     return createdPermissions;
   }
 

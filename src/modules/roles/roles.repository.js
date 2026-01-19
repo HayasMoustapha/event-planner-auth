@@ -173,8 +173,8 @@ class RoleRepository {
   async update(id, updateData, updatedBy = null) {
     const {
       code,
+      label,
       description,
-      status,
       level
     } = updateData;
 
@@ -184,13 +184,19 @@ class RoleRepository {
 
     if (code !== undefined) {
       updates.push(`code = $${paramIndex}`);
-      values.push(code.trim());
+      values.push(code ? code.trim() : null);
+      paramIndex++;
+    }
+
+    if (label !== undefined) {
+      updates.push(`label = $${paramIndex}`);
+      values.push(label); // pg driver handles objects for jsonb
       paramIndex++;
     }
 
     if (description !== undefined) {
       updates.push(`description = $${paramIndex}`);
-      values.push(description.trim());
+      values.push(description); // pg driver handles objects for jsonb
       paramIndex++;
     }
 

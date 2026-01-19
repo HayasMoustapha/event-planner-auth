@@ -22,20 +22,21 @@ class AuthService {
     if (!email || !email.trim()) {
       throw new Error('Email requis');
     }
-    
+
     if (!password || !password.trim()) {
       throw new Error('Mot de passe requis');
     }
 
     // Validation du format de l'email
-    const emailRegex = /^[^\s*[^@\s]+@[^@\s]+\.[^@\s]+\s*$/;
-    if (!emailRegex.test(email)) {
+    // Validation du format de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
       throw new Error('Format d\'email invalide');
     }
 
     // Vérifier les identifiants dans la base de données
     const user = await usersRepository.verifyPassword(email, password);
-    
+
     if (!user) {
       throw new Error('Email ou mot de passe incorrect');
     }
@@ -77,9 +78,9 @@ class AuthService {
       }
     } catch (sessionError) {
       console.log('🔍 Debug authenticate - Erreur création session:', sessionError.message);
-      logger.warn('Failed to create session during login', { 
+      logger.warn('Failed to create session during login', {
         error: sessionError.message,
-        userId: user.id 
+        userId: user.id
       });
       // Continuer même si la session échoue
     }
@@ -151,10 +152,10 @@ class AuthService {
   async refreshToken(token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
+
       // Récupérer l'utilisateur depuis la base de données
       const user = await usersRepository.findById(decoded.id);
-      
+
       if (!user || user.status !== 'active') {
         throw new Error('Utilisateur non trouvé ou inactif');
       }
@@ -176,7 +177,7 @@ class AuthService {
       // Ajouter le token à une liste noire (optionnel)
       // Dans une implémentation réelle, vous pourriez gérer une liste noire
       console.log('🔐 Déconnexion de l\'utilisateur');
-      
+
       return {
         success: true,
         message: 'Déconnexion réussie',
@@ -196,7 +197,7 @@ class AuthService {
     try {
       const decoded = this.verifyToken(token);
       const now = Math.floor(Date.now() / 1000);
-      
+
       // Vérifier si le token est expiré
       if (decoded.exp < now) {
         return {
@@ -228,13 +229,13 @@ class AuthService {
   async getUserFromToken(token) {
     try {
       const decoded = this.verifyToken(token);
-      
+
       if (!decoded.valid) {
         throw new Error('Token invalide');
       }
 
       const user = await usersRepository.findById(decoded.id);
-      
+
       if (!user || user.status !== 'active') {
         throw new Error('Utilisateur non trouvé ou inactif');
       }
@@ -265,11 +266,11 @@ class AuthService {
     if (!userId || userId <= 0) {
       throw new Error('ID utilisateur invalide');
     }
-    
+
     if (!currentPassword || !currentPassword.trim()) {
       throw new Error('Mot de passe actuel requis');
     }
-    
+
     if (!newPassword || !newPassword.trim()) {
       throw new Error('Nouveau mot de passe requis');
     }
@@ -286,21 +287,21 @@ class AuthService {
 
     // Récupérer l'utilisateur pour vérifier le mot de passe actuel
     const user = await usersRepository.findById(userId, true);
-    
+
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
 
     // Vérifier le mot de passe actuel
     const isValidPassword = await bcrypt.compare(currentPassword, user.password);
-    
+
     if (!isValidPassword) {
       throw new Error('Mot de passe actuel incorrect');
     }
 
     // Mettre à jour le mot de passe
     const updatedUser = await usersRepository.updatePassword(userId, newPassword, updatedBy);
-    
+
     // Retourner l'utilisateur sans le mot de passe
     const userResponse = { ...updatedUser };
     delete userResponse.password;
@@ -349,7 +350,7 @@ class AuthService {
   async getUserPermissions(userId) {
     try {
       const user = await usersRepository.findById(userId);
-      
+
       if (!user) {
         return [];
       }
@@ -370,7 +371,7 @@ class AuthService {
    */
   async activateUser(userId, activatedBy = null) {
     const user = await usersRepository.findById(userId);
-    
+
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
@@ -391,10 +392,10 @@ class AuthService {
     try {
       const crypto = require('crypto');
       const token = crypto.randomBytes(32).toString('hex');
-      
+
       // Sauvegarder le token dans la base de données
       await usersRepository.update(userId, { remember_token: token });
-      
+
       logger.info('Remember token generated', { userId });
       return token;
     } catch (error) {
@@ -411,14 +412,14 @@ class AuthService {
   async verifyRememberToken(token) {
     try {
       const user = await usersRepository.findByRememberToken(token);
-      
+
       if (!user) {
         return null;
       }
 
       // Vérifier si le token n'est pas expiré (optionnel: 30 jours)
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      
+
       if (user.updated_at < thirtyDaysAgo) {
         return null;
       }
@@ -438,7 +439,7 @@ class AuthService {
    */
   async deactivateUser(userId, deactivatedBy = null) {
     const user = await usersRepository.findById(userId);
-    
+
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
@@ -458,7 +459,7 @@ class AuthService {
    */
   async lockUser(userId, lockBy = null) {
     const user = await usersRepository.findById(userId);
-    
+
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
@@ -478,7 +479,7 @@ class AuthService {
    */
   async unlockUser(userId, unlockBy = null) {
     const user = await usersRepository.findById(userId);
-    
+
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
@@ -553,16 +554,16 @@ class AuthService {
   async generateRefreshToken(token) {
     try {
       const tokenValidation = this.validateToken(token);
-      
+
       if (!tokenValidation.valid) {
         throw new Error('Token de rafraîchissement invalide');
       }
-      
+
       const decoded = tokenValidation.decoded;
-      
+
       // Récupérer l'utilisateur depuis la base de données
       const user = await usersRepository.findById(decoded.id);
-      
+
       if (!user || user.status !== 'active') {
         throw new Error('Utilisateur non trouvé ou inactif');
       }
@@ -597,7 +598,7 @@ class AuthService {
     try {
       const decoded = this.verifyToken(token);
       const now = Math.floor(Date.now() / 1000);
-      
+
       // Vérifier si le token de rafraîchissement est expiré
       if (decoded.exp < now) {
         return {

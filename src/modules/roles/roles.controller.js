@@ -102,12 +102,12 @@ class RoleController {
   async updateRole(req, res, next) {
     try {
       const { id } = req.params;
-      const { code, description, level } = req.body;
+      const { code, label, description, level } = req.body;
       const updatedBy = req.user?.id;
 
       const role = await roleService.updateRole(
         parseInt(id),
-        { code, description, level },
+        { code, label, description, level },
         updatedBy
       );
 

@@ -15,7 +15,7 @@ class PeopleController {
   async getAll(req, res, next) {
     try {
       const { page = 1, limit = 10, search, status } = req.query;
-      
+
       const options = {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -24,7 +24,7 @@ class PeopleController {
       };
 
       const result = await peopleService.getAll(options);
-      
+
       res.status(200).json(createResponse(
         true,
         'Personnes récupérées avec succès',
@@ -44,9 +44,9 @@ class PeopleController {
   async getById(req, res, next) {
     try {
       const { id } = req.params;
-      
+
       const person = await peopleService.getById(parseInt(id));
-      
+
       res.status(200).json(createResponse(
         true,
         'Personne récupérée avec succès',
@@ -66,9 +66,9 @@ class PeopleController {
   async getByEmail(req, res, next) {
     try {
       const { email } = req.params;
-      
+
       const person = await peopleService.getByEmail(email);
-      
+
       res.status(200).json(createResponse(
         true,
         'Personne récupérée avec succès',
@@ -88,9 +88,9 @@ class PeopleController {
   async getByPhone(req, res, next) {
     try {
       const { phone } = req.params;
-      
+
       const person = await peopleService.getByPhone(phone);
-      
+
       res.status(200).json(createResponse(
         true,
         'Personne récupérée avec succès',
@@ -109,13 +109,17 @@ class PeopleController {
    */
   async create(req, res, next) {
     try {
-      const personData = req.body;
-      
+      const personData = {
+        ...req.body,
+        first_name: req.body.first_name || req.body.firstName,
+        last_name: req.body.last_name || req.body.lastName
+      };
+
       // Récupérer l'ID de l'utilisateur authentifié si disponible
       const createdBy = req.user?.id || null;
-      
+
       const person = await peopleService.create(personData, createdBy);
-      
+
       res.status(201).json(createResponse(
         true,
         'Personne créée avec succès',
@@ -135,13 +139,17 @@ class PeopleController {
   async update(req, res, next) {
     try {
       const { id } = req.params;
-      const updateData = req.body;
-      
+      const updateData = {
+        ...req.body,
+        first_name: req.body.first_name || req.body.firstName,
+        last_name: req.body.last_name || req.body.lastName
+      };
+
       // Récupérer l'ID de l'utilisateur authentifié si disponible
       const updatedBy = req.user?.id || null;
-      
+
       const person = await peopleService.update(parseInt(id), updateData, updatedBy);
-      
+
       res.status(200).json(createResponse(
         true,
         'Personne mise à jour avec succès',
@@ -161,12 +169,12 @@ class PeopleController {
   async delete(req, res, next) {
     try {
       const { id } = req.params;
-      
+
       // Récupérer l'ID de l'utilisateur authentifié si disponible
       const deletedBy = req.user?.id || null;
-      
+
       const success = await peopleService.delete(parseInt(id), deletedBy);
-      
+
       if (success) {
         res.status(200).json(createResponse(
           true,
@@ -193,12 +201,12 @@ class PeopleController {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      
+
       // Récupérer l'ID de l'utilisateur authentifié si disponible
       const updatedBy = req.user?.id || null;
-      
+
       const person = await peopleService.updateStatus(parseInt(id), status, updatedBy);
-      
+
       res.status(200).json(createResponse(
         true,
         `Personne ${status === 'active' ? 'activée' : 'désactivée'} avec succès`,
@@ -218,9 +226,9 @@ class PeopleController {
   async search(req, res, next) {
     try {
       const criteria = req.query;
-      
+
       const result = await peopleService.search(criteria);
-      
+
       res.status(200).json(createResponse(
         true,
         'Résultats de la recherche',
@@ -240,7 +248,7 @@ class PeopleController {
   async getStats(req, res, next) {
     try {
       const stats = await peopleService.getStats();
-      
+
       res.status(200).json(createResponse(
         true,
         'Statistiques récupérées avec succès',
@@ -260,9 +268,9 @@ class PeopleController {
   async exists(req, res, next) {
     try {
       const { id } = req.params;
-      
+
       const exists = await peopleService.exists(parseInt(id));
-      
+
       res.status(200).json(createResponse(
         true,
         'Vérification effectuée',

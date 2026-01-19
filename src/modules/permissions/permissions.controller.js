@@ -104,12 +104,12 @@ class PermissionController {
   async updatePermission(req, res, next) {
     try {
       const { id } = req.params;
-      const { code, description, group } = req.body;
+      const { code, label, description, group } = req.body;
       const updatedBy = req.user?.id;
 
       const permission = await permissionService.updatePermission(
         parseInt(id),
-        { code, description, group },
+        { code, label, description, group },
         updatedBy
       );
 

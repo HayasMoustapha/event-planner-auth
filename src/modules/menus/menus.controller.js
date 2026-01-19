@@ -14,12 +14,12 @@ class MenuController {
    */
   async createMenu(req, res, next) {
     try {
-      const { 
-        label, 
-        description, 
-        icon, 
-        route, 
-        parentMenuId, 
+      const {
+        label,
+        description,
+        icon,
+        route,
+        parentMenuId,
         sortOrder
       } = req.body;
       const createdBy = req.user?.id;
@@ -167,15 +167,15 @@ class MenuController {
   async updateMenu(req, res, next) {
     try {
       const { id } = req.params;
-      const { 
-        label, 
-        description, 
-        icon, 
-        route, 
-        parentMenuId, 
-        sortOrder, 
-        isVisible, 
-        status 
+      const {
+        label,
+        description,
+        icon,
+        route,
+        parentMenuId,
+        sortOrder,
+        isVisible,
+        status
       } = req.body;
       const updatedBy = req.user?.id;
 
@@ -396,7 +396,7 @@ class MenuController {
 
       const newMenu = await menuService.duplicateMenu(
         parseInt(id),
-        { name, description },
+        { label, description },
         createdBy
       );
 
@@ -436,7 +436,7 @@ class MenuController {
         'Permissions du menu récupérées avec succès',
         {
           menuId: parseInt(id),
-          menuName: menu.name,
+          menuLabel: menu.label,
           permissions
         }
       ));

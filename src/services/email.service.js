@@ -46,7 +46,10 @@ class EmailService {
       // Vérifier la connexion
       this.transporter.verify((error, success) => {
         if (error) {
-          logger.error('Email service verification failed', { error: error.message });
+          // Ne pas logger d'erreur bruyante en environnement de test
+          if (config.NODE_ENV !== 'test') {
+            logger.error('Email service verification failed', { environment: config.NODE_ENV, error: error.message });
+          }
           this.isConfigured = false;
         } else {
           logger.info('Email service ready');
@@ -54,7 +57,9 @@ class EmailService {
         }
       });
     } catch (error) {
-      logger.error('Failed to initialize email service', { error: error.message });
+      if (configValidation.getConfig().NODE_ENV !== 'test') {
+        logger.error('Failed to initialize email service', { error: error.message });
+      }
       this.isConfigured = false;
     }
   }

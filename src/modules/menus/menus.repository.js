@@ -18,6 +18,7 @@ class MenuRepository {
       route,
       component,
       parentPath,
+      parentMenuId = null,
       menuGroup,
       sortOrder = 0,
       depth = 0,
@@ -36,7 +37,7 @@ class MenuRepository {
     `;
 
     const values = [
-      null, // parent_id par défaut
+      parentMenuId, // parent_id
       label,
       icon || null,
       route || null,
@@ -130,7 +131,8 @@ class MenuRepository {
    */
   async findById(id) {
     const query = `
-      SELECT id, label, description, icon, route, parent_id, sort_order, 
+      SELECT id, parent_id, label, icon, route, component, parent_path, 
+             menu_group, sort_order, depth, description, 
              created_by, created_at, updated_at
       FROM menus
       WHERE id = $1 AND deleted_at IS NULL
@@ -151,7 +153,8 @@ class MenuRepository {
    */
   async findByLabel(label) {
     const query = `
-      SELECT id, label, description, icon, route, parent_id, sort_order, 
+      SELECT id, parent_id, label, icon, route, component, parent_path, 
+             menu_group, sort_order, depth, description, 
              created_by, created_at, updated_at
       FROM menus
       WHERE label = $1 AND deleted_at IS NULL
@@ -172,7 +175,8 @@ class MenuRepository {
    */
   async getRootMenus() {
     const query = `
-      SELECT id, label, description, icon, route, parent_id, sort_order, 
+      SELECT id, parent_id, label, icon, route, component, parent_path, 
+             menu_group, sort_order, depth, description, 
              created_by, created_at, updated_at
       FROM menus
       WHERE parent_id IS NULL AND deleted_at IS NULL
@@ -195,7 +199,8 @@ class MenuRepository {
    */
   async getSubMenus(parentMenuId) {
     const query = `
-      SELECT id, label, description, icon, route, parent_id, sort_order, 
+      SELECT id, parent_id, label, icon, route, component, parent_path, 
+             menu_group, sort_order, depth, description, 
              created_by, created_at, updated_at
       FROM menus
       WHERE parent_id = $1 AND deleted_at IS NULL
@@ -228,9 +233,8 @@ class MenuRepository {
     } = menuData;
 
     const updates = [];
-    const values = [updatedBy];
-
-    let paramIndex = 2;
+    const values = [];
+    let paramIndex = 1;
 
     if (label !== undefined) {
       updates.push(`label = $${paramIndex}`);
@@ -240,19 +244,19 @@ class MenuRepository {
 
     if (description !== undefined) {
       updates.push(`description = $${paramIndex}`);
-      values.push(description.trim());
+      values.push(description);
       paramIndex++;
     }
 
     if (icon !== undefined) {
       updates.push(`icon = $${paramIndex}`);
-      values.push(icon.trim());
+      values.push(icon ? icon.trim() : null);
       paramIndex++;
     }
 
     if (route !== undefined) {
       updates.push(`route = $${paramIndex}`);
-      values.push(route.trim());
+      values.push(route ? route.trim() : null);
       paramIndex++;
     }
 
@@ -269,17 +273,20 @@ class MenuRepository {
     }
 
     updates.push(`updated_by = $${paramIndex}`);
+    values.push(updatedBy);
+    paramIndex++;
+
     updates.push(`updated_at = CURRENT_TIMESTAMP`);
 
     const query = `
       UPDATE menus
       SET ${updates.join(', ')}
-      WHERE id = $1
+      WHERE id = $${paramIndex}
       RETURNING id, label, description, icon, route, parent_id, sort_order, 
                 created_by, created_at, updated_at, updated_by
     `;
 
-    values.unshift(id);
+    values.push(id);
 
     try {
       const result = await connection.query(query, values);
@@ -321,7 +328,7 @@ class MenuRepository {
    */
   buildMenuTree(menus, parentId = null) {
     const tree = [];
-    
+
     for (const menu of menus) {
       if (menu.parent_id === parentId) {
         const children = this.buildMenuTree(menus, menu.id);
@@ -331,7 +338,7 @@ class MenuRepository {
         tree.push(menu);
       }
     }
-    
+
     return tree;
   }
 
@@ -342,7 +349,8 @@ class MenuRepository {
    */
   async getMenuTree() {
     const query = `
-      SELECT id, label, description, icon, route, parent_id, sort_order, 
+      SELECT id, parent_id, label, icon, route, component, parent_path, 
+             menu_group, sort_order, depth, description, 
              created_by, created_at, updated_at
       FROM menus
       WHERE deleted_at IS NULL
@@ -352,56 +360,11 @@ class MenuRepository {
     try {
       const result = await connection.query(query);
       const menus = result.rows;
-      
+
       // Construire l'arborescence
       return this.buildMenuTree(menus);
     } catch (error) {
       throw new Error(`Erreur lors de la récupération de l'arborescence: ${error.message}`);
-    }
-  }
-
-  /**
-   * Récupère les menus de premier niveau (racine)
-   * @param {Object} options - Options de filtre
-   * @returns {Promise<Array>} Menus racine
-   */
-  async getRootMenus() {
-    const query = `
-      SELECT id, label, description, icon, route, parent_id, sort_order, 
-             created_by, created_at, updated_at
-      FROM menus
-      WHERE parent_id IS NULL AND deleted_at IS NULL
-      ORDER BY sort_order ASC, label ASC
-    `;
-
-    try {
-      const result = await connection.query(query);
-      return result.rows;
-    } catch (error) {
-      throw new Error(`Erreur lors de la récupération des menus racine: ${error.message}`);
-    }
-  }
-
-  /**
-   * Récupère les sous-menus d'un menu parent
-   * @param {number} parentMenuId - ID du menu parent
-   * @param {Object} options - Options de filtre
-   * @returns {Promise<Array>} Sous-menus
-   */
-  async getSubMenus(parentMenuId) {
-    const query = `
-      SELECT id, label, description, icon, route, parent_id, sort_order, 
-             created_by, created_at, updated_at
-      FROM menus
-      WHERE parent_id = $1 AND deleted_at IS NULL
-      ORDER BY sort_order ASC, label ASC
-    `;
-
-    try {
-      const result = await connection.query(query, [parentMenuId]);
-      return result.rows;
-    } catch (error) {
-      throw new Error(`Erreur lors de la récupération des sous-menus: ${error.message}`);
     }
   }
 
@@ -412,21 +375,46 @@ class MenuRepository {
    */
   async getUserMenus(userId) {
     const query = `
-      SELECT id, label, description, icon, route, parent_id, sort_order, 
-             created_by, created_at, updated_at
-      FROM menus
-      WHERE deleted_at IS NULL
-      ORDER BY sort_order ASC, label ASC
+      SELECT DISTINCT m.id, m.parent_id, m.label, m.icon, m.route, m.component, m.parent_path, 
+             m.menu_group, m.sort_order, m.depth, m.description, 
+             m.created_by, m.created_at, m.updated_at
+      FROM menus m
+      INNER JOIN authorizations a ON m.id = a.menu_id
+      INNER JOIN accesses acc ON a.role_id = acc.role_id
+      WHERE acc.user_id = $1 AND acc.status = 'active' AND m.deleted_at IS NULL
+      ORDER BY m.sort_order ASC, m.label ASC
     `;
 
     try {
-      const result = await connection.query(query);
+      const result = await connection.query(query, [userId]);
       const menus = result.rows;
-      
+
       // Construire l'arborescence
       return this.buildMenuTree(menus);
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des menus utilisateur: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère les permissions associées à un menu
+   * @param {number} menuId - ID du menu
+   * @returns {Promise<Array>} Liste des permissions
+   */
+  async getMenuPermissions(menuId) {
+    const query = `
+      SELECT DISTINCT p.id, p.code, p.label, p."group", p.description
+      FROM permissions p
+      INNER JOIN authorizations a ON p.id = a.permission_id
+      WHERE a.menu_id = $1
+      ORDER BY p."group" ASC, p.code ASC
+    `;
+
+    try {
+      const result = await connection.query(query, [menuId]);
+      return result.rows;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des permissions du menu: ${error.message}`);
     }
   }
 
@@ -437,7 +425,7 @@ class MenuRepository {
    */
   async removeAllPermissions(menuId) {
     const query = `
-      DELETE FROM menu_permissions
+      DELETE FROM authorizations
       WHERE menu_id = $1
     `;
 
@@ -446,6 +434,89 @@ class MenuRepository {
       return result.rowCount;
     } catch (error) {
       throw new Error(`Erreur lors de la suppression des permissions du menu: ${error.message}`);
+    }
+  }
+
+  /**
+   * Vérifie si un utilisateur a accès à un menu
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number} menuId - ID du menu
+   * @returns {Promise<boolean>} True si l'accès est autorisé
+   */
+  async userHasMenuAccess(userId, menuId) {
+    const query = `
+      SELECT COUNT(*) as count
+      FROM authorizations a
+      INNER JOIN accesses acc ON a.role_id = acc.role_id
+      WHERE acc.user_id = $1 AND a.menu_id = $2 AND acc.status = 'active'
+    `;
+
+    try {
+      const result = await connection.query(query, [userId, menuId]);
+      return parseInt(result.rows[0].count) > 0;
+    } catch (error) {
+      throw new Error(`Erreur lors de la vérification de l'accès au menu: ${error.message}`);
+    }
+  }
+
+  /**
+   * Associe des permissions à un menu (pour le rôle super_admin par défaut)
+   * @param {number} menuId - ID du menu
+   * @param {Array<number>} permissionIds - IDs des permissions
+   * @param {number} createdBy - ID de l'utilisateur qui effectue l'association
+   * @returns {Promise<number>} Nombre d'associations créées
+   */
+  async assignPermissions(menuId, permissionIds, createdBy = null) {
+    if (!Array.isArray(permissionIds) || permissionIds.length === 0) {
+      return 0;
+    }
+
+    let count = 0;
+    // Note: Utilise le rôle super_admin (1) par défaut car l'API ne spécifie pas de rôle
+    for (const permissionId of permissionIds) {
+      const query = `
+        INSERT INTO authorizations (role_id, permission_id, menu_id, created_by, created_at, updated_at)
+        VALUES (1, $1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT (role_id, permission_id, menu_id) DO NOTHING
+      `;
+      try {
+        const res = await connection.query(query, [permissionId, menuId, createdBy]);
+        count += res.rowCount;
+      } catch (error) {
+        console.error(`Erreur lors de l'association permission ${permissionId} au menu ${menuId}:`, error);
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Réorganise l'ordre des menus
+   * @param {Array<Object>} menuOrders - Liste des menus et leur ordre
+   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
+   * @returns {Promise<number>} Nombre de menus mis à jour
+   */
+  async reorderMenus(menuOrders, updatedBy = null) {
+    if (!Array.isArray(menuOrders) || menuOrders.length === 0) {
+      return 0;
+    }
+
+    await connection.query('BEGIN');
+    try {
+      let count = 0;
+      for (const order of menuOrders) {
+        const query = `
+          UPDATE menus 
+          SET sort_order = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP 
+          WHERE id = $1
+        `;
+        const res = await connection.query(query, [order.menuId, order.sortOrder, updatedBy]);
+        count += res.rowCount;
+      }
+      await connection.query('COMMIT');
+      return count;
+    } catch (error) {
+      await connection.query('ROLLBACK');
+      throw new Error(`Erreur lors de la réorganisation des menus: ${error.message}`);
     }
   }
 
@@ -464,9 +535,9 @@ class MenuRepository {
     try {
       const result = await connection.query(query);
       return {
-        deletedMenus: result.rows[0].deleted_menus,
-        totalMenus: result.rows[0].total_menus,
-        activeMenus: result.rows[0].total_menus - result.rows[0].deleted_menus
+        deletedMenus: parseInt(result.rows[0].deleted_menus),
+        totalMenus: parseInt(result.rows[0].total_menus),
+        activeMenus: parseInt(result.rows[0].total_menus) - parseInt(result.rows[0].deleted_menus)
       };
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);

@@ -36,15 +36,15 @@ class OtpService {
     if (!personId || personId <= 0) {
       throw new Error('ID personne invalide');
     }
-    
+
     if (!purpose || !['email', 'phone'].includes(purpose)) {
       throw new Error('Purpose d\'OTP invalide. Valeurs autorisées: email, phone');
     }
-    
+
     if (!contactInfo || !contactInfo.trim()) {
       throw new Error('Contact (email/téléphone) requis');
     }
-    
+
     if (expiresInMinutes < 1 || expiresInMinutes > 60) {
       throw new Error('La durée de validité doit être entre 1 et 60 minutes');
     }
@@ -57,7 +57,7 @@ class OtpService {
 
     // Générer le code
     const otpCode = this.generateCode();
-    
+
     // Calculer la date d'expiration
     const expiresAt = new Date(Date.now() + (expiresInMinutes * 60 * 1000));
 
@@ -87,8 +87,8 @@ class OtpService {
     }
 
     // Validation du format de l'email
-    const emailRegex = /^[^\s*[^@\s]+@[^@\s]+\.[^@\s]+\s*$/;
-    if (!emailRegex.test(email)) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
       throw new Error('Format d\'email invalide');
     }
 
@@ -110,7 +110,7 @@ class OtpService {
 
     // Nettoyer le numéro de téléphone
     const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
-    
+
     // Validation basique du numéro de téléphone
     if (cleanPhone.length < 10 || cleanPhone.length > 15) {
       throw new Error('Numéro de téléphone invalide');
@@ -132,11 +132,11 @@ class OtpService {
     if (!otpCode || !otpCode.trim()) {
       throw new Error('Code OTP requis');
     }
-    
+
     if (!contactInfo || !contactInfo.trim()) {
       throw new Error('Contact requis');
     }
-    
+
     if (!purpose || !['email', 'phone'].includes(purpose)) {
       throw new Error('Purpose d\'OTP invalide');
     }
@@ -158,9 +158,9 @@ class OtpService {
 
     // Vérifier et marquer comme utilisé
     const otp = await otpRepository.validateOtp(otpCode, personId, purpose);
-    
+
     console.log('🔍 Debug OTP Result:', otp ? 'OTP trouvé' : 'OTP non trouvé');
-    
+
     if (!otp) {
       throw new Error('Code OTP invalide ou expiré');
     }
@@ -200,7 +200,7 @@ class OtpService {
       }
       personId = person.id;
     }
-    
+
     return await this.verifyOtp(otpCode, email, 'email', personId);
   }
 
@@ -220,7 +220,7 @@ class OtpService {
       }
       personId = person.id;
     }
-    
+
     return await this.verifyOtp(otpCode, phone, 'phone', personId);
   }
 
@@ -314,7 +314,7 @@ class OtpService {
    */
   async generatePasswordResetOtp(personId, email) {
     // Générer un OTP avec une durée plus longue pour la réinitialisation
-    return await this.generateEmailOtp(personId, email, 30, personId);
+    return await this.generateEmailOtp(personId, email, 30);
   }
 
   /**
@@ -326,7 +326,7 @@ class OtpService {
    */
   async verifyPasswordResetOtp(otpCode, email, personId) {
     const otp = await this.verifyEmailOtp(otpCode, email, personId);
-    
+
     if (otp) {
       // Ajouter une log pour la réinitialisation
       console.log(`🔐 Réinitialisation mot de passe pour la personne ${personId} via email ${email}`);

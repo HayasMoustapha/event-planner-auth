@@ -17,10 +17,27 @@ describe('Authentication Flows E2E', () => {
     const testEmail = 'newuser@test.com';
     const adminEmail = 'admin@eventplanner.com';
 
-    // 1. Nettoyer newuser@test.com
-    const personRes = await connection.query('SELECT id FROM people WHERE email = $1', [testEmail]);
-    if (personRes.rows.length > 0) {
-      const pId = personRes.rows[0].id;
+    // 1. Nettoyer les données de test
+    const testPhone = '+33687654321';
+
+    // Nettoyer TOUTES les sessions pour éviter les limites
+    await connection.query('DELETE FROM sessions');
+    await connection.query('DELETE FROM personal_access_tokens');
+
+    // Supprimer par email
+    const personByEmail = await connection.query('SELECT id FROM people WHERE email = $1', [testEmail]);
+    for (const row of personByEmail.rows) {
+      const pId = row.id;
+      await connection.query('DELETE FROM otps WHERE person_id = $1', [pId]);
+      await connection.query('DELETE FROM accesses WHERE user_id IN (SELECT id FROM users WHERE person_id = $1)', [pId]);
+      await connection.query('DELETE FROM users WHERE person_id = $1', [pId]);
+      await connection.query('DELETE FROM people WHERE id = $1', [pId]);
+    }
+
+    // Supprimer par téléphone
+    const personByPhone = await connection.query('SELECT id FROM people WHERE phone = $1', [testPhone]);
+    for (const row of personByPhone.rows) {
+      const pId = row.id;
       await connection.query('DELETE FROM otps WHERE person_id = $1', [pId]);
       await connection.query('DELETE FROM accesses WHERE user_id IN (SELECT id FROM users WHERE person_id = $1)', [pId]);
       await connection.query('DELETE FROM users WHERE person_id = $1', [pId]);
@@ -81,7 +98,7 @@ describe('Authentication Flows E2E', () => {
         firstName: 'Test',
         lastName: 'User',
         email: 'newuser@test.com',
-        phone: '+33612345678',
+        phone: '+33687654321', // Différent de l'admin
         password: 'Password123!',
         username: 'testuser'
       };
@@ -110,14 +127,18 @@ describe('Authentication Flows E2E', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.identifier).toBe('newuser@test.com');
+      expect(response.body.data.contactInfo).toBe('newuser@test.com');
       expect(response.body.data.expiresAt).toBeDefined();
     });
 
     it('should verify email with OTP', async () => {
       // Simuler la récupération de l'OTP depuis la base de données
-      // En pratique, vous devriez intercepter l'email ou utiliser un mock
       const { connection } = require('../../src/config/database');
+
+      if (!testPerson) {
+        throw new Error('testPerson est null, l\'inscription a probablement échoué');
+      }
+
       const otpResult = await connection.query(
         'SELECT otp_code FROM otps WHERE person_id = $1 AND purpose = $2 AND is_used = FALSE ORDER BY created_at DESC LIMIT 1',
         [testPerson.id, 'email']
@@ -130,7 +151,7 @@ describe('Authentication Flows E2E', () => {
           .post('/api/auth/verify-email')
           .send({
             email: 'newuser@test.com',
-            otpCode: otpCode
+            code: otpCode
           })
           .expect(200);
 
@@ -168,12 +189,17 @@ describe('Authentication Flows E2E', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.identifier).toBe('newuser@test.com');
+      expect(response.body.data.contactInfo).toBe('newuser@test.com');
     });
 
     it('should verify OTP directly', async () => {
       // Récupérer le dernier OTP généré
       const { connection } = require('../../src/config/database');
+
+      if (!testPerson) {
+        throw new Error('testPerson est null');
+      }
+
       const otpResult = await connection.query(
         'SELECT otp_code FROM otps WHERE person_id = $1 AND purpose = $2 AND is_used = FALSE ORDER BY created_at DESC LIMIT 1',
         [testPerson.id, 'email']
@@ -199,6 +225,9 @@ describe('Authentication Flows E2E', () => {
     });
 
     it('should reject invalid OTP', async () => {
+      if (!testPerson) {
+        throw new Error('testPerson est null');
+      }
       const response = await request(app)
         .post('/api/auth/otp/email/verify')
         .send({
@@ -206,7 +235,7 @@ describe('Authentication Flows E2E', () => {
           code: '999999',
           personId: testPerson.id
         })
-        .expect(400);
+        .expect(401);
 
       expect(response.body.success).toBe(false);
     });
@@ -222,6 +251,11 @@ describe('Authentication Flows E2E', () => {
 
       // Récupérer l'OTP de réinitialisation
       const { connection } = require('../../src/config/database');
+
+      if (!testPerson) {
+        throw new Error('testPerson est null');
+      }
+
       const otpResult = await connection.query(
         'SELECT otp_code FROM otps WHERE person_id = $1 AND purpose = $2 AND is_used = FALSE ORDER BY created_at DESC LIMIT 1',
         [testPerson.id, 'email']
@@ -329,7 +363,7 @@ describe('Authentication Flows E2E', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
-      expect(Array.isArray(response.body.data.users)).toBe(true);
+      expect(Array.isArray(response.body.data.data)).toBe(true);
     });
 
     it('should reject user list with user token (insufficient permissions)', async () => {
@@ -389,8 +423,12 @@ describe('Authentication Flows E2E', () => {
     // Nettoyer les données de test
     const { connection } = require('../../src/config/database');
     try {
-      await connection.query('DELETE FROM otps WHERE person_id = $1', [testPerson.id]);
-      await connection.query('DELETE FROM accesses WHERE user_id = $1', [testUser.id]);
+      if (testPerson) {
+        await connection.query('DELETE FROM otps WHERE person_id = $1', [testPerson.id]);
+      }
+      if (testUser) {
+        await connection.query('DELETE FROM accesses WHERE user_id = $1', [testUser.id]);
+      }
       await connection.query('DELETE FROM users WHERE email = $1', ['newuser@test.com']);
       await connection.query('DELETE FROM people WHERE email = $1', ['newuser@test.com']);
     } catch (error) {

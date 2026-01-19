@@ -46,8 +46,8 @@ class RegistrationController {
    */
   async verifyEmail(req, res, next) {
     try {
-      const { email, otpCode, token } = req.body;
-      const code = otpCode || token;
+      const { email, otpCode, token, code: codeField } = req.body;
+      const code = codeField || otpCode || token;
 
       logger.info(`Tentative de vérification email: ${email}`);
 

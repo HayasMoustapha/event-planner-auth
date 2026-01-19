@@ -173,6 +173,7 @@ router.put('/change-password',
 // Récupérer les OTP d'une personne
 router.get('/otp/person/:personId',
   rbacMiddleware.requirePermission('otp.read'),
+  authValidation.validatePersonIdParam,
   authController.getUserOtps
 );
 
@@ -186,6 +187,7 @@ router.post('/otp/person/:personId/invalidate',
 // Vérifier si une personne a des OTP actifs
 router.get('/otp/person/:personId/active',
   rbacMiddleware.requirePermission('otp.read'),
+  authValidation.validatePersonIdParam,
   authController.hasActiveOtp
 );
 

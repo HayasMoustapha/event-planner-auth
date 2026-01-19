@@ -1,5 +1,4 @@
-const { body, param } = require('express-validator');
-const { validationResult } = require('express-validator');
+const { body, param, validationResult, matchedData } = require('express-validator');
 
 /**
  * Middleware de validation pour les entrées du module authorizations
@@ -14,14 +13,14 @@ const { validationResult } = require('express-validator');
  */
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
       field: error.param,
       message: error.msg,
       value: error.value
     }));
-    
+
     return res.status(400).json({
       success: false,
       message: 'Erreur de validation',
@@ -29,7 +28,22 @@ const handleValidationErrors = (req, res, next) => {
       timestamp: new Date().toISOString()
     });
   }
-  
+
+  // Vérification des champs non autorisés (Hardening Rule 3)
+  const validatedData = matchedData(req, { includeOptionals: true, locations: ['body'] });
+  if (req.body && Object.keys(req.body).length > 0) {
+    const bodyFields = Object.keys(req.body);
+    const extraFields = bodyFields.filter(field => !Object.keys(validatedData).includes(field));
+
+    if (extraFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Champs non autorisés dans le corps de la requête: ${extraFields.join(', ')}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
   next();
 };
 
@@ -41,7 +55,7 @@ const validateCheckPermission = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('permissionName')
     .trim()
     .notEmpty()
@@ -50,7 +64,7 @@ const validateCheckPermission = [
     .withMessage('Le nom de la permission doit contenir entre 3 et 100 caractères')
     .matches(/^[a-z]+\.[a-z]+$/)
     .withMessage('Le nom de la permission doit suivre le format: resource.action'),
-    
+
   handleValidationErrors
 ];
 
@@ -62,18 +76,18 @@ const validateCheckPermissions = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('permissions')
     .isArray({ min: 1 })
     .withMessage('La liste de permissions doit être un tableau non vide'),
-    
+
   body('permissions.*')
     .trim()
     .isLength({ min: 3, max: 100 })
     .withMessage('Chaque permission doit contenir entre 3 et 100 caractères')
     .matches(/^[a-z]+\.[a-z]+$/)
     .withMessage('Chaque permission doit suivre le format: resource.action'),
-    
+
   handleValidationErrors
 ];
 
@@ -85,14 +99,14 @@ const validateCheckRole = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('roleName')
     .trim()
     .notEmpty()
     .withMessage('Le nom du rôle est requis')
     .isLength({ min: 2, max: 50 })
     .withMessage('Le nom du rôle doit contenir entre 2 et 50 caractères'),
-    
+
   handleValidationErrors
 ];
 
@@ -104,16 +118,16 @@ const validateCheckRoles = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('roles')
     .isArray({ min: 1 })
     .withMessage('La liste de rôles doit être un tableau non vide'),
-    
+
   body('roles.*')
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Chaque rôle doit contenir entre 2 et 50 caractères'),
-    
+
   handleValidationErrors
 ];
 
@@ -125,13 +139,13 @@ const validateCheckMenuAccess = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('menuId')
     .notEmpty()
     .withMessage('L\'ID du menu est requis')
     .isInt({ min: 1 })
     .withMessage('L\'ID du menu doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -143,7 +157,7 @@ const validateCheckResourceAccess = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('resource')
     .trim()
     .notEmpty()
@@ -152,7 +166,7 @@ const validateCheckResourceAccess = [
     .withMessage('La ressource doit contenir entre 2 et 50 caractères')
     .matches(/^[a-z]+$/)
     .withMessage('La ressource ne peut contenir que des lettres minuscules'),
-    
+
   body('action')
     .trim()
     .notEmpty()
@@ -161,7 +175,7 @@ const validateCheckResourceAccess = [
     .withMessage('L\'action doit contenir entre 2 et 50 caractères')
     .matches(/^[a-z]+$/)
     .withMessage('L\'action ne peut contenir que des lettres minuscules'),
-    
+
   handleValidationErrors
 ];
 
@@ -173,7 +187,7 @@ const validateGetUserAuthorizations = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -185,7 +199,7 @@ const validateCheckAdminStatus = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -197,23 +211,23 @@ const validateCheckPolicy = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('policy')
     .notEmpty()
     .withMessage('La politique est requise')
     .isObject()
     .withMessage('La politique doit être un objet'),
-    
+
   body('policy.type')
     .isIn(['permission', 'role', 'menu', 'resource', 'complex'])
     .withMessage('Le type de politique doit être valide: permission, role, menu, resource, complex'),
-    
+
   body('policy.conditions')
     .notEmpty()
     .withMessage('Les conditions de la politique sont requises')
     .isObject()
     .withMessage('Les conditions doivent être un objet'),
-    
+
   handleValidationErrors
 ];
 
@@ -225,12 +239,12 @@ const validateCacheUserAuthorizations = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('ttl')
     .optional()
     .isInt({ min: 60, max: 3600 })
     .withMessage('La durée de vie du cache doit être entre 60 et 3600 secondes'),
-    
+
   handleValidationErrors
 ];
 
@@ -242,7 +256,7 @@ const validateInvalidateUserAuthorizationCache = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 

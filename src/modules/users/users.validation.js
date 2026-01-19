@@ -1,5 +1,4 @@
-const { body, param, query } = require('express-validator');
-const { validationResult } = require('express-validator');
+const { body, param, query, validationResult, matchedData } = require('express-validator');
 
 /**
  * Middleware de validation pour les entrées du module users
@@ -14,21 +13,37 @@ const { validationResult } = require('express-validator');
  */
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
       field: error.param,
       message: error.msg,
       value: error.value
     }));
-    
+
     return res.status(400).json({
       success: false,
       message: 'Erreur de validation',
-      errors: formattedErrors
+      errors: formattedErrors,
+      timestamp: new Date().toISOString()
     });
   }
-  
+
+  // Vérification des champs non autorisés (Hardening Rule 3)
+  const validatedData = matchedData(req, { includeOptionals: true, locations: ['body'] });
+  if (req.body && Object.keys(req.body).length > 0) {
+    const bodyFields = Object.keys(req.body);
+    const extraFields = bodyFields.filter(field => !Object.keys(validatedData).includes(field));
+
+    if (extraFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Champs non autorisés dans le corps de la requête: ${extraFields.join(', ')}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
   next();
 };
 
@@ -43,7 +58,7 @@ const validateCreate = [
     .withMessage('Le username doit contenir entre 3 et 50 caractères')
     .matches(/^[a-zA-Z0-9_]+$/)
     .withMessage('Le username ne peut contenir que des lettres, chiffres et underscores'),
-    
+
   body('email')
     .trim()
     .isEmail()
@@ -51,35 +66,38 @@ const validateCreate = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-  
+
   body('password')
     .trim()
     .isLength({ min: 8 })
     .withMessage('Le mot de passe doit contenir au moins 8 caractères')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
-  
+
+  body('userCode')
+    .trim()
+    .notEmpty()
+    .withMessage('Le code utilisateur est requis')
+    .isLength({ max: 50 })
+    .withMessage('Le code utilisateur ne doit pas dépasser 50 caractères'),
+
   // Champs optionnels
-  body('role')
+  body('phone')
     .optional()
-    .isIn(['admin', 'user', 'moderator'])
-    .withMessage('Le rôle doit être admin, user ou moderator'),
-    
+    .trim()
+    .matches(/^[+]?[\d\s\-\(\)]+$/)
+    .withMessage('Format de numéro de téléphone invalide'),
+
   body('status')
     .optional()
     .isIn(['active', 'inactive', 'lock'])
     .withMessage('Le statut doit être active, inactive ou lock'),
-    
+
   body('personId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID de la personne doit être un entier positif'),
-    
-  body('photo')
-    .optional()
-    .isURL()
-    .withMessage('L\'URL de la photo est invalide'),
-    
+
   handleValidationErrors
 ];
 
@@ -91,7 +109,7 @@ const validateUpdate = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID doit être un entier positif'),
-    
+
   // Champs optionnels pour la mise à jour
   body('username')
     .optional()
@@ -100,7 +118,7 @@ const validateUpdate = [
     .withMessage('Le username doit contenir entre 3 et 50 caractères')
     .matches(/^[a-zA-Z0-9_]+$/)
     .withMessage('Le username ne peut contenir que des lettres, chiffres et underscores'),
-    
+
   body('email')
     .optional()
     .trim()
@@ -109,7 +127,7 @@ const validateUpdate = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
+
   body('password')
     .optional()
     .trim()
@@ -117,27 +135,29 @@ const validateUpdate = [
     .withMessage('Le mot de passe doit contenir au moins 8 caractères')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
-    
-  body('role')
+
+  body('userCode')
     .optional()
-    .isIn(['admin', 'user', 'moderator'])
-    .withMessage('Le rôle doit être admin, user ou moderator'),
-    
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Le code utilisateur ne doit pas dépasser 50 caractères'),
+
+  body('phone')
+    .optional()
+    .trim()
+    .matches(/^[+]?[\d\s\-\(\)]+$/)
+    .withMessage('Format de numéro de téléphone invalide'),
+
   body('status')
     .optional()
     .isIn(['active', 'inactive', 'lock'])
     .withMessage('Le statut doit être active, inactive ou lock'),
-    
+
   body('personId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID de la personne doit être un entier positif'),
-    
-  body('photo')
-    .optional()
-    .isURL()
-    .withMessage('L\'URL de la photo est invalide'),
-    
+
   handleValidationErrors
 ];
 
@@ -149,20 +169,20 @@ const validatePasswordUpdate = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID doit être un entier positif'),
-    
+
   // Champs obligatoires
   body('currentPassword')
     .trim()
     .notEmpty()
     .withMessage('Le mot de passe actuel est requis'),
-    
+
   body('newPassword')
     .trim()
     .isLength({ min: 8 })
     .withMessage('Le nouveau mot de passe doit contenir au moins 8 caractères')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Le nouveau mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
-    
+
   // Validation que le mot de passe est différent
   body('newPassword')
     .custom((value, { req }) => {
@@ -171,7 +191,7 @@ const validatePasswordUpdate = [
       }
       return true;
     }),
-    
+
   handleValidationErrors
 ];
 
@@ -183,12 +203,12 @@ const validateStatusUpdate = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID doit être un entier positif'),
-    
+
   // Statut obligatoire
   body('status')
     .isIn(['active', 'inactive', 'lock'])
     .withMessage('Le statut doit être active, inactive ou lock'),
-    
+
   handleValidationErrors
 ];
 
@@ -202,14 +222,14 @@ const validatePasswordReset = [
     .isEmail()
     .withMessage('Format d\'email invalide')
     .normalizeEmail(),
-    
+
   body('newPassword')
     .trim()
     .isLength({ min: 8 })
     .withMessage('Le nouveau mot de passe doit contenir au moins 8 caractères')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Le nouveau mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
-    
+
   handleValidationErrors
 ];
 
@@ -221,28 +241,28 @@ const validateQueryParams = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('La page doit être un entier supérieur à 0'),
-    
+
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('La limite doit être un entier entre 1 et 100'),
-    
+
   query('search')
     .optional()
     .trim()
     .isLength({ min: 1, max: 100 })
     .withMessage('Le terme de recherche doit contenir entre 1 et 100 caractères'),
-    
+
   query('status')
     .optional()
     .isIn(['active', 'inactive', 'lock'])
     .withMessage('Le statut doit être active, inactive ou lock'),
-    
-  query('role')
+
+  query('userCode')
     .optional()
-    .isIn(['admin', 'user', 'moderator'])
-    .withMessage('Le rôle doit être admin, user ou moderator'),
-    
+    .isString()
+    .withMessage('Le userCode doit être une chaîne de caractères'),
+
   handleValidationErrors
 ];
 
@@ -253,7 +273,7 @@ const validateIdParam = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -265,7 +285,7 @@ const validateEmailParam = [
     .isEmail()
     .withMessage('Format d\'email invalide')
     .normalizeEmail(),
-    
+
   handleValidationErrors
 ];
 
@@ -278,7 +298,7 @@ const validateUsernameParam = [
     .withMessage('Le username doit contenir entre 3 et 50 caractères')
     .matches(/^[a-zA-Z0-9_]+$/)
     .withMessage('Le username ne peut contenir que des lettres, chiffres et underscores'),
-    
+
   handleValidationErrors
 ];
 

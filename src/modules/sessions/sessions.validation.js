@@ -1,5 +1,4 @@
-const { body, param, query } = require('express-validator');
-const { validationResult } = require('express-validator');
+const { body, param, query, validationResult, matchedData } = require('express-validator');
 
 /**
  * Middleware de validation pour les entrées du module sessions
@@ -14,14 +13,14 @@ const { validationResult } = require('express-validator');
  */
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
       field: error.param,
       message: error.msg,
       value: error.value
     }));
-    
+
     return res.status(400).json({
       success: false,
       message: 'Erreur de validation',
@@ -29,7 +28,22 @@ const handleValidationErrors = (req, res, next) => {
       timestamp: new Date().toISOString()
     });
   }
-  
+
+  // Vérification des champs non autorisés (Hardening Rule 3)
+  const validatedData = matchedData(req, { includeOptionals: true, locations: ['body'] });
+  if (req.body && Object.keys(req.body).length > 0) {
+    const bodyFields = Object.keys(req.body);
+    const extraFields = bodyFields.filter(field => !Object.keys(validatedData).includes(field));
+
+    if (extraFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Champs non autorisés dans le corps de la requête: ${extraFields.join(', ')}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
   next();
 };
 
@@ -40,26 +54,26 @@ const validateCreateSession = [
   body('userId')
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('deviceInfo')
     .optional()
     .isString()
     .trim()
     .isLength({ max: 255 })
     .withMessage('Les informations sur l\'appareil ne peuvent pas dépasser 255 caractères'),
-    
+
   body('ipAddress')
     .optional()
     .isIP()
     .withMessage('L\'adresse IP est invalide'),
-    
+
   body('userAgent')
     .optional()
     .isString()
     .trim()
     .isLength({ max: 500 })
     .withMessage('Le user agent ne peut pas dépasser 500 caractères'),
-    
+
   handleValidationErrors
 ];
 
@@ -73,12 +87,12 @@ const validateRefreshSession = [
     .withMessage('Le refresh token est requis')
     .isLength({ min: 10 })
     .withMessage('Le refresh token est invalide'),
-    
+
   body('expiresIn')
     .optional()
     .isInt({ min: 300, max: 86400 }) // 5min à 24h
     .withMessage('La durée d\'expiration doit être entre 300 et 86400 secondes'),
-    
+
   handleValidationErrors
 ];
 
@@ -90,12 +104,12 @@ const validateLogoutAllSessions = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('exceptSessionId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID de session doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -107,17 +121,17 @@ const validateGetUserSessions = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   query('page')
     .optional()
     .isInt({ min: 1 })
     .withMessage('Le numéro de page doit être un entier positif'),
-    
+
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('La limite doit être entre 1 et 100'),
-    
+
   handleValidationErrors
 ];
 
@@ -129,17 +143,17 @@ const validateGetLoginHistory = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   query('page')
     .optional()
     .isInt({ min: 1 })
     .withMessage('Le numéro de page doit être un entier positif'),
-    
+
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('La limite doit être entre 1 et 100'),
-    
+
   handleValidationErrors
 ];
 
@@ -151,7 +165,7 @@ const validateGetSessionStats = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -162,7 +176,7 @@ const validateGeneratePasswordResetToken = [
   body('userId')
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -176,7 +190,7 @@ const validateVerifyPasswordResetToken = [
     .withMessage('Le token de réinitialisation est requis')
     .isLength({ min: 10 })
     .withMessage('Le token de réinitialisation est invalide'),
-    
+
   handleValidationErrors
 ];
 
@@ -190,7 +204,7 @@ const validateRevokeToken = [
     .withMessage('Le token à révoquer est requis')
     .isLength({ min: 10 })
     .withMessage('Le token est invalide'),
-    
+
   body('reason')
     .optional()
     .isString()
@@ -199,7 +213,7 @@ const validateRevokeToken = [
     .withMessage('La raison ne peut pas dépasser 255 caractères')
     .isIn(['manual_revocation', 'security_breach', 'user_request', 'admin_action'])
     .withMessage('La raison doit être une valeur valide: manual_revocation, security_breach, user_request, admin_action'),
-    
+
   handleValidationErrors
 ];
 
@@ -210,7 +224,7 @@ const validateRouteParams = [
   param('sessionId')
     .isInt({ min: 1 })
     .withMessage('L\'ID de session doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 

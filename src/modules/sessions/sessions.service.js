@@ -113,7 +113,7 @@ class SessionService {
           message: 'Token invalide'
         };
       }
-      
+
       // Cas spécial pour les tokens blacklistés
       if (error.message === 'Token a été révoqué') {
         return {
@@ -122,7 +122,7 @@ class SessionService {
           message: 'Token a été révoqué'
         };
       }
-      
+
       return {
         valid: false,
         error: 'VERIFICATION_ERROR',
@@ -146,7 +146,7 @@ class SessionService {
 
       // Vérifier et décoder le token
       const decoded = jwt.verify(
-        token, 
+        token,
         process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
         {
           issuer: process.env.JWT_ISSUER || 'event-planner-auth',
@@ -215,7 +215,7 @@ class SessionService {
     // Vérifier les limites de sessions avant création
     const limitsCheck = await this.checkSessionLimits(userId);
     if (!limitsCheck.canCreateNewSession) {
-      throw new Error(`Limite de sessions atteinte: ${limitsCheck.activeSessions}/${limitsCheck.maxActiveSessions} sessions actives`);
+      throw new Error(`Limite de sessions atteinte: ${limitsCheck.stats.activeSessions}/${limitsCheck.limits.maxActiveSessions} sessions actives`);
     }
 
     // Générer un refresh token
@@ -262,9 +262,9 @@ class SessionService {
   async checkSessionLimits(userId) {
     try {
       const { maxActiveSessions = 5, maxTotalSessions = 20 } = this.getSessionLimits();
-      
+
       const stats = await sessionRepository.getUserSessionStats(userId);
-      
+
       const isOverLimit = {
         active: stats.activeSessions >= maxActiveSessions,
         total: stats.totalSessions >= maxTotalSessions
@@ -362,14 +362,14 @@ class SessionService {
   async logoutSession(accessToken) {
     // Debug: Vérifier le token reçu
     console.log('🔍 Debug logoutSession - Token reçu:', accessToken ? accessToken.substring(0, 20) + '...' : 'null');
-    
+
     // Vérifier le token
     const tokenValidation = await this.verifyAccessToken(accessToken);
     if (!tokenValidation.valid) {
       console.log('🔍 Debug logoutSession - Token invalide:', tokenValidation.error);
       throw new Error('Token invalide ou expiré');
     }
-    
+
     console.log('🔍 Debug logoutSession - Token valide, user_id:', tokenValidation.decoded.id);
 
     // Récupérer la session
@@ -382,7 +382,7 @@ class SessionService {
         last_activity: session.last_activity
       });
     }
-    
+
     if (!session) {
       console.log('🔍 Debug logoutSession - Session non trouvée, tentative de création...');
       // Optionnel: Créer la session si elle n'existe pas (fallback)
@@ -408,7 +408,7 @@ class SessionService {
         console.log('🔍 Debug logoutSession - Erreur création session fallback:', createError.message);
       }
     }
-    
+
     if (!session) {
       console.log('🔍 Debug logoutSession - Session toujours non trouvée après fallback');
       throw new Error('Session non trouvée');
@@ -442,11 +442,11 @@ class SessionService {
   async logoutAllSessions(userId, exceptSessionId = null) {
     // Récupérer toutes les sessions actives
     const sessions = await sessionRepository.findByUserId(userId, { limit: 100 });
-    
+
     // Blacklister tous les tokens actifs
     const blacklistPromises = sessions.sessions
       .filter(session => !exceptSessionId || session.id !== exceptSessionId)
-      .map(session => 
+      .map(session =>
         sessionRepository.blacklistToken({
           token: session.access_token,
           userId: session.user_id,

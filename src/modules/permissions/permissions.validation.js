@@ -1,5 +1,4 @@
-const { body, param, query } = require('express-validator');
-const { validationResult } = require('express-validator');
+const { body, param, query, validationResult, matchedData } = require('express-validator');
 
 /**
  * Middleware de validation pour les entrées du module permissions
@@ -14,14 +13,14 @@ const { validationResult } = require('express-validator');
  */
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
       field: error.param,
       message: error.msg,
       value: error.value
     }));
-    
+
     return res.status(400).json({
       success: false,
       message: 'Erreur de validation',
@@ -29,7 +28,22 @@ const handleValidationErrors = (req, res, next) => {
       timestamp: new Date().toISOString()
     });
   }
-  
+
+  // Vérification des champs non autorisés (Hardening Rule 3)
+  const validatedData = matchedData(req, { includeOptionals: true, locations: ['body'] });
+  if (req.body && Object.keys(req.body).length > 0) {
+    const bodyFields = Object.keys(req.body);
+    const extraFields = bodyFields.filter(field => !Object.keys(validatedData).includes(field));
+
+    if (extraFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Champs non autorisés dans le corps de la requête: ${extraFields.join(', ')}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
   next();
 };
 
@@ -45,18 +59,18 @@ const validateCreatePermission = [
     .withMessage('Le code de la permission doit contenir entre 3 et 100 caractères')
     .matches(/^[a-z_.]+[a-z_.]*$/)
     .withMessage('Le code doit être en minuscules avec underscores et/ou points (ex: users.read, user.read)'),
-    
+
   body('label')
     .optional()
     .isObject()
     .withMessage('Le label doit être un objet JSON'),
-    
+
   body('description')
     .optional()
     .trim()
     .isLength({ max: 255 })
     .withMessage('La description ne peut pas dépasser 255 caractères'),
-    
+
   body('group')
     .trim()
     .notEmpty()
@@ -65,7 +79,7 @@ const validateCreatePermission = [
     .withMessage('Le groupe doit contenir entre 2 et 50 caractères')
     .matches(/^[a-z_]+$/)
     .withMessage('Le groupe doit être en minuscules avec underscores uniquement'),
-    
+
   handleValidationErrors
 ];
 
@@ -76,7 +90,7 @@ const validateUpdatePermission = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID de la permission doit être un entier positif'),
-    
+
   body('code')
     .optional()
     .trim()
@@ -84,18 +98,18 @@ const validateUpdatePermission = [
     .withMessage('Le code de la permission doit contenir entre 3 et 100 caractères')
     .matches(/^[a-z_.]+[a-z_.]*$/)
     .withMessage('Le code doit être en minuscules avec underscores et/ou points (ex: users.read, user.read)'),
-    
+
   body('label')
     .optional()
     .isObject()
     .withMessage('Le label doit être un objet JSON'),
-    
+
   body('description')
     .optional()
     .trim()
     .isLength({ max: 255 })
     .withMessage('La description ne peut pas dépasser 255 caractères'),
-    
+
   body('group')
     .optional()
     .trim()
@@ -103,7 +117,7 @@ const validateUpdatePermission = [
     .withMessage('Le groupe doit contenir entre 2 et 50 caractères')
     .matches(/^[a-z_]+$/)
     .withMessage('Le groupe doit être en minuscules avec underscores uniquement'),
-    
+
   handleValidationErrors
 ];
 
@@ -114,7 +128,7 @@ const validateGetPermissionById = [
   param('id')
     .isInt({ min: 1 })
     .withMessage('L\'ID de la permission doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -126,46 +140,46 @@ const validateGetPermissions = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('Le numéro de page doit être un entier positif'),
-    
+
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('La limite doit être entre 1 et 100'),
-    
+
   query('search')
     .optional()
     .trim()
     .isLength({ max: 100 })
     .withMessage('Le terme de recherche ne peut pas dépasser 100 caractères'),
-    
+
   query('resource')
     .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('La ressource doit contenir entre 2 et 50 caractères'),
-    
+
   query('action')
     .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('L\'action doit contenir entre 2 et 50 caractères'),
-    
+
   query('group')
     .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Le groupe doit contenir entre 2 et 50 caractères'),
-    
+
   query('sortBy')
     .optional()
     .isIn(['code', 'description', 'group', 'created_at', 'updated_at'])
     .withMessage('Le champ de tri est invalide'),
-    
+
   query('sortOrder')
     .optional()
     .isIn(['ASC', 'DESC'])
     .withMessage('L\'ordre de tri doit être ASC ou DESC'),
-    
+
   handleValidationErrors
 ];
 
@@ -177,7 +191,7 @@ const validateGetUserPermissions = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -189,14 +203,14 @@ const validateCheckUserPermission = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   query('permissionCode')
     .notEmpty()
     .withMessage('Le code de la permission est requis')
     .trim()
     .matches(/^[a-z_]+[a-z_]*$/)
     .withMessage('Le code doit être en minuscules avec underscores (ex: users.create)'),
-    
+
   handleValidationErrors
 ];
 
@@ -207,7 +221,7 @@ const validateGetRolePermissions = [
   param('roleId')
     .isInt({ min: 1 })
     .withMessage('L\'ID du rôle doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -223,7 +237,7 @@ const validateGetActionsByResource = [
     .withMessage('Le groupe doit contenir entre 2 et 50 caractères')
     .matches(/^[a-z_]+$/)
     .withMessage('Le groupe doit être en minuscules avec underscores uniquement'),
-    
+
   handleValidationErrors
 ];
 
@@ -239,15 +253,15 @@ const validateGenerateResourcePermissions = [
     .withMessage('Le groupe doit contenir entre 2 et 50 caractères')
     .matches(/^[a-z_]+$/)
     .withMessage('Le groupe doit être en minuscules avec underscores uniquement'),
-    
+
   body('actions')
     .isArray({ min: 1 })
     .withMessage('La liste d\'actions doit être un tableau non vide'),
-    
+
   body('actions.*')
     .isIn(['create', 'read', 'update', 'delete', 'manage', 'view', 'list'])
     .withMessage('Chaque action doit être valide: create, read, update, delete, manage, view, list'),
-    
+
   handleValidationErrors
 ];
 
@@ -259,18 +273,18 @@ const validateCheckPermissions = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('permissions')
     .isArray({ min: 1 })
     .withMessage('La liste de permissions doit être un tableau non vide'),
-    
+
   body('permissions.*')
     .trim()
     .isLength({ min: 3, max: 100 })
     .withMessage('Chaque permission doit contenir entre 3 et 100 caractères')
     .matches(/^[a-z]+\.[a-z]+$/)
     .withMessage('Chaque permission doit suivre le format: resource.action'),
-    
+
   handleValidationErrors
 ];
 

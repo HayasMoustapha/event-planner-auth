@@ -1,5 +1,4 @@
-const { body, param, query } = require('express-validator');
-const { validationResult } = require('express-validator');
+const { body, param, query, validationResult, matchedData } = require('express-validator');
 
 /**
  * Middleware de validation pour les entrées du module auth
@@ -28,6 +27,21 @@ const handleValidationErrors = (req, res, next) => {
       errors: formattedErrors,
       timestamp: new Date().toISOString()
     });
+  }
+
+  // Vérification des champs non autorisés (Hardening Rule 3)
+  const validatedData = matchedData(req, { includeOptionals: true, locations: ['body'] });
+  if (req.body && Object.keys(req.body).length > 0) {
+    const bodyFields = Object.keys(req.body);
+    const extraFields = bodyFields.filter(field => !Object.keys(validatedData).includes(field));
+
+    if (extraFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Champs non autorisés dans le corps de la requête: ${extraFields.join(', ')}`,
+        timestamp: new Date().toISOString()
+      });
+    }
   }
 
   next();
@@ -182,6 +196,11 @@ const validateVerifyEmailOtp = [
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
 
+  body('personId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID personne doit être un entier positif'),
+
   handleValidationErrors
 ];
 
@@ -239,6 +258,7 @@ const validateResetPasswordWithOtp = [
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
   body(['code', 'token'])
+    .optional({ checkFalsy: true })
     .trim()
     .isLength({ min: 4, max: 10 })
     .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
@@ -259,14 +279,25 @@ const validateResetPasswordWithOtp = [
  * Validation pour l'invalidation des OTP d'un utilisateur
  */
 const validateInvalidateUserOtps = [
-  param('userId')
+  param('personId')
     .isInt({ min: 1 })
-    .withMessage('L\'ID utilisateur doit être un entier positif'),
+    .withMessage('L\'ID personne doit être un entier positif'),
 
   body('type')
     .optional()
     .isIn(['email', 'phone'])
     .withMessage('Le type doit être email ou phone'),
+
+  handleValidationErrors
+];
+
+/**
+ * Validation pour le paramètre personId dans les routes
+ */
+const validatePersonIdParam = [
+  param('personId')
+    .isInt({ min: 1 })
+    .withMessage('L\'ID personne doit être un entier positif'),
 
   handleValidationErrors
 ];
@@ -391,21 +422,19 @@ const validateVerifyEmail = [
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
-  body('otpCode')
-    .optional()
+  body('code')
+    .notEmpty()
+    .withMessage('Le code OTP est requis')
     .trim()
     .isLength({ min: 4, max: 10 })
     .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
     .matches(/^[0-9]+$/)
     .withMessage('Le code OTP doit contenir uniquement des chiffres'),
 
-  body('token')
+  body('personId')
     .optional()
-    .trim()
-    .isLength({ min: 4, max: 10 })
-    .withMessage('Le token/code doit contenir entre 4 et 10 caractères')
-    .matches(/^[0-9]+$/)
-    .withMessage('Le token/code doit contenir uniquement des chiffres'),
+    .isInt({ min: 1 })
+    .withMessage('L\'ID personne doit être un entier positif'),
 
 
 
@@ -487,5 +516,6 @@ module.exports = {
   validateResendOtp,
   validateEmailParam,
   validateUsernameParam,
+  validatePersonIdParam,
   handleValidationErrors
 };
