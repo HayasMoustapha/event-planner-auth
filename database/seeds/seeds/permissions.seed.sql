@@ -4,7 +4,7 @@
 -- Création des permissions pour le système RBAC
 -- Compatible avec le schéma PostgreSQL actuel
 
--- Insertion des permissions par catégories
+-- Insertion des permissions par catégories (IDEMPOTENT)
 INSERT INTO permissions (code, label, "group", description, created_at, updated_at) VALUES
 -- Permissions Utilisateurs
 ('users.create', '{"fr": "Créer utilisateur", "en": "Create user"}', 'users', '{"fr": "Créer de nouveaux utilisateurs", "en": "Create new users"}', NOW(), NOW()),
@@ -79,7 +79,7 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 ('menus.assign_permissions', '{"fr": "Assigner permissions menu", "en": "Assign menu permissions"}', 'menus', '{"fr": "Assigner des permissions aux menus", "en": "Assign permissions to menus"}', NOW(), NOW()),
 
 -- Permissions Système avancées
-('system.admin', '{"fr": "Administration système", "en": "System Administration"}', 'system', '{"fr": "Accès complet à l''administration système", "en": "Full system administration access"}', NOW(), NOW()),
+('system.admin', '{"fr": "Administration système", "en": "System Administration"}', 'system', '{"fr": "Accès complet à l''administration du système", "en": "Full system administration access"}', NOW(), NOW()),
 ('system.config', '{"fr": "Configuration système", "en": "System Configuration"}', 'system', '{"fr": "Configurer les paramètres système avancés", "en": "Configure advanced system settings"}', NOW(), NOW()),
 ('system.monitor', '{"fr": "Monitoring système", "en": "System Monitoring"}', 'system', '{"fr": "Accéder au monitoring système avancé", "en": "Access advanced system monitoring"}', NOW(), NOW()),
 
@@ -111,10 +111,10 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 ('authorizations.check', '{"fr": "Vérifier les autorisations", "en": "Check authorizations"}', 'authorizations', '{"fr": "Permet de vérifier les permissions d''un utilisateur", "en": "Allows checking user permissions"}', NOW(), NOW()),
 ('authorizations.cache', '{"fr": "Gérer le cache d''autorisations", "en": "Manage authorization cache"}', 'authorizations', '{"fr": "Permet de gérer le cache des autorisations utilisateur", "en": "Allows managing user authorization cache"}', NOW(), NOW()),
 
--- Permissions Système avancées
-('system.admin', '{"fr": "Administration système", "en": "System administration"}', 'system', '{"fr": "Accès complet à l''administration du système", "en": "Full system administration access"}', NOW(), NOW()),
+-- Permissions Système avancées (complément)
 ('system.monitoring', '{"fr": "Monitoring système", "en": "System monitoring"}', 'system', '{"fr": "Permet d''accéder aux outils de monitoring", "en": "Allows accessing monitoring tools"}', NOW(), NOW()),
-('system.audit', '{"fr": "Audit système", "en": "System audit"}', 'system', '{"fr": "Permet d''accéder aux logs et rapports d''audit", "en": "Allows accessing audit logs and reports"}', NOW(), NOW());
+('system.audit', '{"fr": "Audit système", "en": "System audit"}', 'system', '{"fr": "Permet d''accéder aux logs et rapports d''audit", "en": "Allows accessing audit logs and reports"}', NOW(), NOW())
+ON CONFLICT (code) DO NOTHING;
 
 -- Afficher confirmation
 DO $$
