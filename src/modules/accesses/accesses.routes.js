@@ -4,9 +4,13 @@ const accessesController = require('./accesses.controller');
 const accessesValidation = require('./accesses.validation');
 const { asyncAccessesErrorHandler } = require('./accesses.errorHandler');
 const rbacMiddleware = require('../../middlewares/rbac.middleware');
+const authMiddleware = require('../../middlewares/auth.middleware');
 
 // Middleware de gestion d'erreurs pour toutes les routes
 router.use(asyncAccessesErrorHandler);
+
+// Middleware d'authentification pour toutes les routes Accesses
+router.use(authMiddleware.authenticate);
 
 /**
  * @swagger

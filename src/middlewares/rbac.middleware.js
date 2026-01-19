@@ -565,5 +565,5 @@ module.exports = {
   requireAnyRole: rbacMiddleware.requireAnyRole.bind(rbacMiddleware),
   requireAllRoles: rbacMiddleware.requireAllRoles.bind(rbacMiddleware),
   requireOwnershipOrRole: rbacMiddleware.requireOwnershipOrRole.bind(rbacMiddleware),
-  rbacLogger: rbacMiddleware.withLogging.bind(rbacMiddleware)
+  requireSuperAdmin: rbacMiddleware.requireSuperAdmin.bind(rbacMiddleware)
 };
