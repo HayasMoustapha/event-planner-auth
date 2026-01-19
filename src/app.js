@@ -159,6 +159,21 @@ app.get('/', (req, res) => {
   });
 });
 
+// Routes de readiness et liveness
+app.get('/ready', (req, res) => {
+  res.status(200).json({
+    status: 'ready',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/live', (req, res) => {
+  res.status(200).json({
+    status: 'alive',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes API
 app.use('/api/auth',
   (req, res, next) => {

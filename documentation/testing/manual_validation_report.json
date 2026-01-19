@@ -1,0 +1,753 @@
+{
+  "summary": {
+    "total_tests": 40,
+    "successful_tests": 26,
+    "failed_tests": 14,
+    "success_rate": 65.0,
+    "critical_failures": 6
+  },
+  "scenario_stats": {
+    "Succès normal": {
+      "total": 12,
+      "success": 6
+    },
+    "Token invalide": {
+      "total": 12,
+      "success": 8
+    },
+    "Sans authentification": {
+      "total": 10,
+      "success": 8
+    },
+    "Données invalides": {
+      "total": 2,
+      "success": 2
+    },
+    "Erreur GET nonexistent/route": {
+      "total": 1,
+      "success": 1
+    },
+    "Erreur PATCH users": {
+      "total": 1,
+      "success": 0
+    },
+    "Erreur GET users/abc": {
+      "total": 1,
+      "success": 0
+    },
+    "Erreur POST users": {
+      "total": 1,
+      "success": 1
+    }
+  },
+  "test_results": [
+    {
+      "route": "GET health",
+      "scenario": "Succès normal",
+      "method": "GET",
+      "path": "health",
+      "timestamp": "2026-01-19T13:35:05.565321",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 200,
+      "response_time": 0.013416528701782227,
+      "response_body": "{\"status\":\"OK\",\"timestamp\":\"2026-01-19T12:35:05.574Z\",\"uptime\":1371.527004662,\"environment\":\"development\",\"version\":\"1.0.0\"}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET health",
+      "scenario": "Token invalide",
+      "method": "GET",
+      "path": "health",
+      "timestamp": "2026-01-19T13:35:05.579007",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 200,
+      "response_time": 0.004675626754760742,
+      "response_body": "{\"status\":\"OK\",\"timestamp\":\"2026-01-19T12:35:05.581Z\",\"uptime\":1371.533977492,\"environment\":\"development\",\"version\":\"1.0.0\"}",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET health/detailed",
+      "scenario": "Succès normal",
+      "method": "GET",
+      "path": "health/detailed",
+      "timestamp": "2026-01-19T13:35:05.584430",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 200,
+      "response_time": 0.015018463134765625,
+      "response_body": "{\"status\":\"WARNING\",\"timestamp\":\"2026-01-19T12:35:05.591Z\",\"uptime\":1371,\"environment\":\"development\",\"version\":\"1.0.0\",\"responseTime\":7,\"checks\":{\"database\":{\"status\":\"OK\",\"responseTime\":\"3ms\",\"details\":{\"host\":\"localhost\",\"database\":\"event_planner_auth\",\"connected\":true}},\"cache\":{\"status\":\"WARNING",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET health/detailed",
+      "scenario": "Token invalide",
+      "method": "GET",
+      "path": "health/detailed",
+      "timestamp": "2026-01-19T13:35:05.600341",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 200,
+      "response_time": 0.013008356094360352,
+      "response_body": "{\"status\":\"WARNING\",\"timestamp\":\"2026-01-19T12:35:05.606Z\",\"uptime\":1371,\"environment\":\"development\",\"version\":\"1.0.0\",\"responseTime\":7,\"checks\":{\"database\":{\"status\":\"OK\",\"responseTime\":\"2ms\",\"details\":{\"host\":\"localhost\",\"database\":\"event_planner_auth\",\"connected\":true}},\"cache\":{\"status\":\"WARNING",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET ready",
+      "scenario": "Succès normal",
+      "method": "GET",
+      "path": "ready",
+      "timestamp": "2026-01-19T13:35:05.613652",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 404,
+      "response_time": 0.012211322784423828,
+      "response_body": "{\"error\":\"Route non trouvée\",\"message\":\"La route GET /api/ready n'existe pas\",\"availableRoutes\":[{\"method\":\"GET\",\"path\":\"/\"},{\"method\":\"POST\",\"path\":\"/login\"},{\"method\":\"POST\",\"path\":\"/login-remember\"},{\"method\":\"POST\",\"path\":\"/login-otp\"},{\"method\":\"POST\",\"path\":\"/refresh-token\"},{\"method\":\"POST\",\"",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET ready",
+      "scenario": "Sans authentification",
+      "method": "GET",
+      "path": "ready",
+      "timestamp": "2026-01-19T13:35:05.626160",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 404,
+      "response_time": 0.009187936782836914,
+      "response_body": "{\"error\":\"Route non trouvée\",\"message\":\"La route GET /api/ready n'existe pas\",\"availableRoutes\":[{\"method\":\"GET\",\"path\":\"/\"},{\"method\":\"POST\",\"path\":\"/login\"},{\"method\":\"POST\",\"path\":\"/login-remember\"},{\"method\":\"POST\",\"path\":\"/login-otp\"},{\"method\":\"POST\",\"path\":\"/refresh-token\"},{\"method\":\"POST\",\"",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET ready",
+      "scenario": "Token invalide",
+      "method": "GET",
+      "path": "ready",
+      "timestamp": "2026-01-19T13:35:05.635920",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 404,
+      "response_time": 0.010051727294921875,
+      "response_body": "{\"error\":\"Route non trouvée\",\"message\":\"La route GET /api/ready n'existe pas\",\"availableRoutes\":[{\"method\":\"GET\",\"path\":\"/\"},{\"method\":\"POST\",\"path\":\"/login\"},{\"method\":\"POST\",\"path\":\"/login-remember\"},{\"method\":\"POST\",\"path\":\"/login-otp\"},{\"method\":\"POST\",\"path\":\"/refresh-token\"},{\"method\":\"POST\",\"",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET live",
+      "scenario": "Succès normal",
+      "method": "GET",
+      "path": "live",
+      "timestamp": "2026-01-19T13:35:05.646645",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 404,
+      "response_time": 0.005868434906005859,
+      "response_body": "{\"error\":\"Route non trouvée\",\"message\":\"La route GET /api/live n'existe pas\",\"availableRoutes\":[{\"method\":\"GET\",\"path\":\"/\"},{\"method\":\"POST\",\"path\":\"/login\"},{\"method\":\"POST\",\"path\":\"/login-remember\"},{\"method\":\"POST\",\"path\":\"/login-otp\"},{\"method\":\"POST\",\"path\":\"/refresh-token\"},{\"method\":\"POST\",\"p",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET live",
+      "scenario": "Sans authentification",
+      "method": "GET",
+      "path": "live",
+      "timestamp": "2026-01-19T13:35:05.652687",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 404,
+      "response_time": 0.008304834365844727,
+      "response_body": "{\"error\":\"Route non trouvée\",\"message\":\"La route GET /api/live n'existe pas\",\"availableRoutes\":[{\"method\":\"GET\",\"path\":\"/\"},{\"method\":\"POST\",\"path\":\"/login\"},{\"method\":\"POST\",\"path\":\"/login-remember\"},{\"method\":\"POST\",\"path\":\"/login-otp\"},{\"method\":\"POST\",\"path\":\"/refresh-token\"},{\"method\":\"POST\",\"p",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET live",
+      "scenario": "Token invalide",
+      "method": "GET",
+      "path": "live",
+      "timestamp": "2026-01-19T13:35:05.661115",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 404,
+      "response_time": 0.003935575485229492,
+      "response_body": "{\"error\":\"Route non trouvée\",\"message\":\"La route GET /api/live n'existe pas\",\"availableRoutes\":[{\"method\":\"GET\",\"path\":\"/\"},{\"method\":\"POST\",\"path\":\"/login\"},{\"method\":\"POST\",\"path\":\"/login-remember\"},{\"method\":\"POST\",\"path\":\"/login-otp\"},{\"method\":\"POST\",\"path\":\"/refresh-token\"},{\"method\":\"POST\",\"p",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET auth/profile",
+      "scenario": "Succès normal",
+      "method": "GET",
+      "path": "auth/profile",
+      "timestamp": "2026-01-19T13:35:06.166089",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 200,
+      "response_time": 0.017518043518066406,
+      "response_body": "{\"success\":true,\"message\":\"Profil utilisateur récupéré\",\"timestamp\":\"2026-01-19T12:35:06.180Z\",\"data\":{\"id\":\"52\",\"username\":\"superadmin_test\",\"email\":\"superadmin@test.com\",\"status\":\"active\",\"user_code\":\"superadmin_mkl3otij\",\"phone\":null,\"email_verified_at\":null,\"created_at\":\"2026-01-19T11:47:23.659Z",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET auth/profile",
+      "scenario": "Sans authentification",
+      "method": "GET",
+      "path": "auth/profile",
+      "timestamp": "2026-01-19T13:35:06.184416",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.009012460708618164,
+      "response_body": "{\"success\":false,\"message\":\"Token d'accès requis\",\"timestamp\":\"2026-01-19T12:35:06.189Z\",\"data\":{\"code\":\"TOKEN_REQUIRED\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET auth/profile",
+      "scenario": "Token invalide",
+      "method": "GET",
+      "path": "auth/profile",
+      "timestamp": "2026-01-19T13:35:06.193826",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.012315988540649414,
+      "response_body": "{\"success\":false,\"message\":\"Token invalide\",\"timestamp\":\"2026-01-19T12:35:06.203Z\",\"data\":{\"code\":\"INVALID_TOKEN\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST auth/logout",
+      "scenario": "Succès normal",
+      "method": "POST",
+      "path": "auth/logout",
+      "timestamp": "2026-01-19T13:35:06.206939",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 404,
+      "response_time": 0.023913145065307617,
+      "response_body": "{\"success\":false,\"error\":\"Ressource non trouvée\",\"message\":\"Session non trouvée\"}",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST auth/logout",
+      "scenario": "Sans authentification",
+      "method": "POST",
+      "path": "auth/logout",
+      "timestamp": "2026-01-19T13:35:06.231095",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.009090900421142578,
+      "response_body": "{\"success\":false,\"message\":\"Token d'accès requis\",\"timestamp\":\"2026-01-19T12:35:06.238Z\",\"data\":{\"code\":\"TOKEN_REQUIRED\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST auth/logout",
+      "scenario": "Token invalide",
+      "method": "POST",
+      "path": "auth/logout",
+      "timestamp": "2026-01-19T13:35:06.240598",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.00958704948425293,
+      "response_body": "{\"success\":false,\"message\":\"Token invalide\",\"timestamp\":\"2026-01-19T12:35:06.247Z\",\"data\":{\"code\":\"INVALID_TOKEN\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST users",
+      "scenario": "Succès normal",
+      "method": "POST",
+      "path": "users",
+      "timestamp": "2026-01-19T13:35:06.751156",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 500,
+      "response_time": 0.02877521514892578,
+      "response_body": "{\"success\":false,\"error\":\"Erreur\",\"message\":\"Impossible de créer une personne pour l'utilisateur\"}",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST users",
+      "scenario": "Sans authentification",
+      "method": "POST",
+      "path": "users",
+      "timestamp": "2026-01-19T13:35:06.780257",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.0070116519927978516,
+      "response_body": "{\"success\":false,\"message\":\"Token d'accès requis\",\"timestamp\":\"2026-01-19T12:35:06.786Z\",\"data\":{\"code\":\"TOKEN_REQUIRED\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST users",
+      "scenario": "Token invalide",
+      "method": "POST",
+      "path": "users",
+      "timestamp": "2026-01-19T13:35:06.787417",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.023624181747436523,
+      "response_body": "{\"success\":false,\"message\":\"Token invalide\",\"timestamp\":\"2026-01-19T12:35:06.810Z\",\"data\":{\"code\":\"INVALID_TOKEN\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST users",
+      "scenario": "Données invalides",
+      "method": "POST",
+      "path": "users",
+      "timestamp": "2026-01-19T13:35:06.811163",
+      "expected_status": [
+        400,
+        422
+      ],
+      "actual_status": 400,
+      "response_time": 0.026760578155517578,
+      "response_body": "{\"success\":false,\"message\":\"Erreur de validation\",\"errors\":[{\"message\":\"Le username doit contenir entre 3 et 50 caractères\",\"value\":\"\"},{\"message\":\"Le username ne peut contenir que des lettres, chiffres et underscores\",\"value\":\"\"},{\"message\":\"Format d'email invalide\",\"value\":\"\"},{\"message\":\"Le mot d",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET permissions",
+      "scenario": "Succès normal",
+      "method": "GET",
+      "path": "permissions",
+      "timestamp": "2026-01-19T13:35:07.338710",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 200,
+      "response_time": 0.03109264373779297,
+      "response_body": "{\"success\":true,\"message\":\"Permissions récupérées avec succès\",\"timestamp\":\"2026-01-19T12:35:07.364Z\",\"data\":{\"permissions\":[{\"id\":\"82\",\"code\":\"otp.manage\",\"label\":{\"en\":\"Manage otp\",\"fr\":\"Manage otp\"},\"group\":\"otp\",\"description\":{\"en\":\"Permission to manage for otp\",\"fr\":\"Permission de manage pour l",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET permissions",
+      "scenario": "Sans authentification",
+      "method": "GET",
+      "path": "permissions",
+      "timestamp": "2026-01-19T13:35:07.370029",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.00733637809753418,
+      "response_body": "{\"success\":false,\"message\":\"Token d'accès requis\",\"timestamp\":\"2026-01-19T12:35:07.376Z\",\"data\":{\"code\":\"TOKEN_REQUIRED\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET permissions",
+      "scenario": "Token invalide",
+      "method": "GET",
+      "path": "permissions",
+      "timestamp": "2026-01-19T13:35:07.377540",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.008930206298828125,
+      "response_body": "{\"success\":false,\"message\":\"Token invalide\",\"timestamp\":\"2026-01-19T12:35:07.384Z\",\"data\":{\"code\":\"INVALID_TOKEN\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET permissions/stats",
+      "scenario": "Succès normal",
+      "method": "GET",
+      "path": "permissions/stats",
+      "timestamp": "2026-01-19T13:35:07.386677",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 200,
+      "response_time": 0.02533698081970215,
+      "response_body": "{\"success\":true,\"message\":\"Statistiques des permissions récupérées avec succès\",\"timestamp\":\"2026-01-19T12:35:07.409Z\",\"data\":{\"total_permissions\":\"62\",\"active_permissions\":\"59\",\"deleted_permissions\":\"3\",\"total_resources\":\"12\",\"total_actions\":\"62\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET permissions/stats",
+      "scenario": "Sans authentification",
+      "method": "GET",
+      "path": "permissions/stats",
+      "timestamp": "2026-01-19T13:35:07.412348",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.008463144302368164,
+      "response_body": "{\"success\":false,\"message\":\"Token d'accès requis\",\"timestamp\":\"2026-01-19T12:35:07.418Z\",\"data\":{\"code\":\"TOKEN_REQUIRED\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET permissions/stats",
+      "scenario": "Token invalide",
+      "method": "GET",
+      "path": "permissions/stats",
+      "timestamp": "2026-01-19T13:35:07.421032",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.012839794158935547,
+      "response_body": "{\"success\":false,\"message\":\"Token invalide\",\"timestamp\":\"2026-01-19T12:35:07.430Z\",\"data\":{\"code\":\"INVALID_TOKEN\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST permissions",
+      "scenario": "Succès normal",
+      "method": "POST",
+      "path": "permissions",
+      "timestamp": "2026-01-19T13:35:07.437735",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 400,
+      "response_time": 0.021914243698120117,
+      "response_body": "{\"success\":false,\"message\":\"Erreur de validation\",\"errors\":[{\"message\":\"Le code doit être en minuscules avec underscores et/ou points (ex: users.read, user.read)\",\"value\":\"test.perm.1768826107\"}],\"timestamp\":\"2026-01-19T12:35:07.455Z\"}",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST permissions",
+      "scenario": "Sans authentification",
+      "method": "POST",
+      "path": "permissions",
+      "timestamp": "2026-01-19T13:35:07.460030",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.009206295013427734,
+      "response_body": "{\"success\":false,\"message\":\"Token d'accès requis\",\"timestamp\":\"2026-01-19T12:35:07.463Z\",\"data\":{\"code\":\"TOKEN_REQUIRED\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST permissions",
+      "scenario": "Token invalide",
+      "method": "POST",
+      "path": "permissions",
+      "timestamp": "2026-01-19T13:35:07.469909",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.0076558589935302734,
+      "response_body": "{\"success\":false,\"message\":\"Token invalide\",\"timestamp\":\"2026-01-19T12:35:07.476Z\",\"data\":{\"code\":\"INVALID_TOKEN\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST permissions",
+      "scenario": "Données invalides",
+      "method": "POST",
+      "path": "permissions",
+      "timestamp": "2026-01-19T13:35:07.477746",
+      "expected_status": [
+        400,
+        422
+      ],
+      "actual_status": 400,
+      "response_time": 0.01495504379272461,
+      "response_body": "{\"success\":false,\"message\":\"Erreur de validation\",\"errors\":[{\"message\":\"Le code de la permission est requis\",\"value\":\"\"},{\"message\":\"Le code de la permission doit contenir entre 3 et 100 caractères\",\"value\":\"\"},{\"message\":\"Le code doit être en minuscules avec underscores et/ou points (ex: users.read",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET sessions/current",
+      "scenario": "Succès normal",
+      "method": "GET",
+      "path": "sessions/current",
+      "timestamp": "2026-01-19T13:35:07.993495",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 200,
+      "response_time": 0.03647923469543457,
+      "response_body": "{\"success\":true,\"message\":\"Session courante récupérée avec succès\",\"timestamp\":\"2026-01-19T12:35:08.027Z\",\"data\":{\"session\":{\"id\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUyIiwiZW1haWwiOiJzdXBlcmFkbWluQHRlc3QuY29tIiwidXNlcm5hbWUiOiJzdXBlcmFkbWluX3Rlc3QiLCJzdGF0dXMiOiJhY3RpdmUiLCJ0eXBlIjoiYWNj",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET sessions/current",
+      "scenario": "Sans authentification",
+      "method": "GET",
+      "path": "sessions/current",
+      "timestamp": "2026-01-19T13:35:08.033631",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.012932538986206055,
+      "response_body": "{\"success\":false,\"message\":\"Token d'accès requis\",\"timestamp\":\"2026-01-19T12:35:08.042Z\",\"data\":{\"code\":\"TOKEN_REQUIRED\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET sessions/current",
+      "scenario": "Token invalide",
+      "method": "GET",
+      "path": "sessions/current",
+      "timestamp": "2026-01-19T13:35:08.046857",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.02011895179748535,
+      "response_body": "{\"success\":false,\"message\":\"Token invalide\",\"timestamp\":\"2026-01-19T12:35:08.068Z\",\"data\":{\"code\":\"INVALID_TOKEN\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET sessions/stats",
+      "scenario": "Succès normal",
+      "method": "GET",
+      "path": "sessions/stats",
+      "timestamp": "2026-01-19T13:35:08.070790",
+      "expected_status": [
+        200,
+        201,
+        204
+      ],
+      "actual_status": 500,
+      "response_time": 0.024451017379760742,
+      "response_body": "{\"success\":false,\"error\":\"Erreur\",\"message\":\"sessionRepository.getStats is not a function\"}",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET sessions/stats",
+      "scenario": "Sans authentification",
+      "method": "GET",
+      "path": "sessions/stats",
+      "timestamp": "2026-01-19T13:35:08.095436",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.008754730224609375,
+      "response_body": "{\"success\":false,\"message\":\"Token d'accès requis\",\"timestamp\":\"2026-01-19T12:35:08.102Z\",\"data\":{\"code\":\"TOKEN_REQUIRED\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET sessions/stats",
+      "scenario": "Token invalide",
+      "method": "GET",
+      "path": "sessions/stats",
+      "timestamp": "2026-01-19T13:35:08.104412",
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401,
+      "response_time": 0.017660140991210938,
+      "response_body": "{\"success\":false,\"message\":\"Token invalide\",\"timestamp\":\"2026-01-19T12:35:08.115Z\",\"data\":{\"code\":\"INVALID_TOKEN\"}}",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET nonexistent/route",
+      "scenario": "Erreur GET nonexistent/route",
+      "method": "GET",
+      "path": "nonexistent/route",
+      "timestamp": "2026-01-19T13:35:08.626989",
+      "expected_status": [
+        404
+      ],
+      "actual_status": 404,
+      "response_time": 0.005521297454833984,
+      "response_body": "{\"error\":\"Route non trouvée\",\"message\":\"La route GET /api/nonexistent/route n'existe pas\",\"availableRoutes\":[{\"method\":\"GET\",\"path\":\"/\"},{\"method\":\"POST\",\"path\":\"/login\"},{\"method\":\"POST\",\"path\":\"/login-remember\"},{\"method\":\"POST\",\"path\":\"/login-otp\"},{\"method\":\"POST\",\"path\":\"/refresh-token\"},{\"meth",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "PATCH users",
+      "scenario": "Erreur PATCH users",
+      "method": "PATCH",
+      "path": "users",
+      "timestamp": "2026-01-19T13:35:08.633525",
+      "expected_status": [
+        405
+      ],
+      "actual_status": 404,
+      "response_time": 0.016260862350463867,
+      "response_body": "{\"error\":\"Route non trouvée\",\"message\":\"La route PATCH /api/users n'existe pas\",\"availableRoutes\":[{\"method\":\"GET\",\"path\":\"/\"},{\"method\":\"POST\",\"path\":\"/login\"},{\"method\":\"POST\",\"path\":\"/login-remember\"},{\"method\":\"POST\",\"path\":\"/login-otp\"},{\"method\":\"POST\",\"path\":\"/refresh-token\"},{\"method\":\"POST\"",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "GET users/abc",
+      "scenario": "Erreur GET users/abc",
+      "method": "GET",
+      "path": "users/abc",
+      "timestamp": "2026-01-19T13:35:08.650238",
+      "expected_status": [
+        400
+      ],
+      "actual_status": 401,
+      "response_time": 0.013274192810058594,
+      "response_body": "{\"success\":false,\"error\":\"Erreur\",\"message\":\"ID d'utilisateur invalide\"}",
+      "error": null,
+      "success": false,
+      "db_state_before": {},
+      "db_state_after": {}
+    },
+    {
+      "route": "POST users",
+      "scenario": "Erreur POST users",
+      "method": "POST",
+      "path": "users",
+      "timestamp": "2026-01-19T13:35:08.663668",
+      "expected_status": [
+        400
+      ],
+      "actual_status": 400,
+      "response_time": 0.0224759578704834,
+      "response_body": "{\"success\":false,\"message\":\"Erreur de validation\",\"errors\":[{\"message\":\"Le username doit contenir entre 3 et 50 caractères\",\"value\":\"\"},{\"message\":\"Le username ne peut contenir que des lettres, chiffres et underscores\",\"value\":\"\"},{\"message\":\"Format d'email invalide\",\"value\":\"\"},{\"message\":\"Le mot d",
+      "error": null,
+      "success": true,
+      "db_state_before": {},
+      "db_state_after": {}
+    }
+  ],
+  "created_resources": {},
+  "timestamp": "2026-01-19T13:35:09.187401"
+}
