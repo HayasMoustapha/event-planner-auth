@@ -47,7 +47,41 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 ('system.dashboard', '{"fr": "Tableau de bord", "en": "Dashboard"}', 'system', '{"fr": "Accéder au tableau de bord", "en": "Access dashboard"}', NOW(), NOW()),
 ('system.logs', '{"fr": "Voir logs", "en": "View logs"}', 'system', '{"fr": "Voir les logs système", "en": "View system logs"}', NOW(), NOW()),
 ('system.settings', '{"fr": "Paramètres système", "en": "System settings"}', 'system', '{"fr": "Configurer les paramètres système", "en": "Configure system settings"}', NOW(), NOW()),
-('system.monitoring', '{"fr": "Monitoring", "en": "Monitoring"}', 'system', '{"fr": "Accéder au monitoring système", "en": "Access system monitoring"}', NOW(), NOW());
+('system.monitoring', '{"fr": "Monitoring", "en": "Monitoring"}', 'system', '{"fr": "Accéder au monitoring système", "en": "Access system monitoring"}', NOW(), NOW()),
+
+-- Permissions OTP
+('otp.read', '{"fr": "Voir OTP", "en": "Read OTP"}', 'otp', '{"fr": "Voir les détails des OTP", "en": "Read OTP details"}', NOW(), NOW()),
+('otp.manage', '{"fr": "Gérer OTP", "en": "Manage OTP"}', 'otp', '{"fr": "Gérer les OTP (créer, modifier, supprimer)", "en": "Manage OTP (create, update, delete)"}', NOW(), NOW()),
+('otp.stats', '{"fr": "Statistiques OTP", "en": "OTP Statistics"}', 'otp', '{"fr": "Voir les statistiques des OTP", "en": "View OTP statistics"}', NOW(), NOW()),
+
+-- Permissions People
+('people.create', '{"fr": "Créer personne", "en": "Create person"}', 'people', '{"fr": "Créer de nouvelles personnes", "en": "Create new people"}', NOW(), NOW()),
+('people.read', '{"fr": "Voir personne", "en": "Read person"}', 'people', '{"fr": "Voir les détails des personnes", "en": "Read person details"}', NOW(), NOW()),
+('people.update', '{"fr": "Modifier personne", "en": "Update person"}', 'people', '{"fr": "Modifier les informations des personnes", "en": "Update person information"}', NOW(), NOW()),
+('people.delete', '{"fr": "Supprimer personne", "en": "Delete person"}', 'people', '{"fr": "Supprimer des personnes", "en": "Delete people"}', NOW(), NOW()),
+('people.list', '{"fr": "Lister personnes", "en": "List people"}', 'people', '{"fr": "Lister toutes les personnes", "en": "List all people"}', NOW(), NOW()),
+('people.stats', '{"fr": "Statistiques personnes", "en": "People Statistics"}', 'people', '{"fr": "Voir les statistiques des personnes", "en": "View people statistics"}', NOW(), NOW()),
+
+-- Permissions Sessions
+('sessions.read', '{"fr": "Voir sessions", "en": "Read sessions"}', 'sessions', '{"fr": "Voir les détails des sessions", "en": "Read session details"}', NOW(), NOW()),
+('sessions.revoke', '{"fr": "Révoquer sessions", "en": "Revoke sessions"}', 'sessions', '{"fr": "Révoquer des sessions utilisateur", "en": "Revoke user sessions"}', NOW(), NOW()),
+('sessions.cleanup', '{"fr": "Nettoyer sessions", "en": "Cleanup sessions"}', 'sessions', '{"fr": "Nettoyer les sessions expirées", "en": "Cleanup expired sessions"}', NOW(), NOW()),
+('sessions.monitor', '{"fr": "Monitorer sessions", "en": "Monitor sessions"}', 'sessions', '{"fr": "Surveiller les sessions actives", "en": "Monitor active sessions"}', NOW(), NOW()),
+
+-- Permissions Statistiques avancées
+('users.stats', '{"fr": "Statistiques utilisateurs", "en": "Users Statistics"}', 'users', '{"fr": "Voir les statistiques des utilisateurs", "en": "View users statistics"}', NOW(), NOW()),
+('roles.view_stats', '{"fr": "Statistiques rôles", "en": "Roles Statistics"}', 'roles', '{"fr": "Voir les statistiques des rôles", "en": "View roles statistics"}', NOW(), NOW()),
+('permissions.view_stats', '{"fr": "Statistiques permissions", "en": "Permissions Statistics"}', 'permissions', '{"fr": "Voir les statistiques des permissions", "en": "View permissions statistics"}', NOW(), NOW()),
+('menus.view_stats', '{"fr": "Statistiques menus", "en": "Menus Statistics"}', 'menus', '{"fr": "Voir les statistiques des menus", "en": "View menus statistics"}', NOW(), NOW()),
+
+-- Permissions Assignation avancée
+('roles.assign_permissions', '{"fr": "Assigner permissions rôle", "en": "Assign role permissions"}', 'roles', '{"fr": "Assigner des permissions aux rôles", "en": "Assign permissions to roles"}', NOW(), NOW()),
+('menus.assign_permissions', '{"fr": "Assigner permissions menu", "en": "Assign menu permissions"}', 'menus', '{"fr": "Assigner des permissions aux menus", "en": "Assign permissions to menus"}', NOW(), NOW()),
+
+-- Permissions Système avancées
+('system.admin', '{"fr": "Administration système", "en": "System Administration"}', 'system', '{"fr": "Accès complet à l'administration système", "en": "Full system administration access"}', NOW(), NOW()),
+('system.config', '{"fr": "Configuration système", "en": "System Configuration"}', 'system', '{"fr": "Configurer les paramètres système avancés", "en": "Configure advanced system settings"}', NOW(), NOW()),
+('system.monitor', '{"fr": "Monitoring système", "en": "System Monitoring"}', 'system', '{"fr": "Accéder au monitoring système avancé", "en": "Access advanced system monitoring"}', NOW(), NOW());
 
 -- Afficher confirmation
 DO $$

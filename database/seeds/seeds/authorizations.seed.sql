@@ -26,7 +26,7 @@ BEGIN
     
     RAISE NOTICE '🔗 Création des autorisations pour le rôle super_admin...';
     
-    -- Super Admin: Toutes les permissions sur tous les menus
+    -- Super Admin: TOUTES LES PERMISSIONS sur TOUS LES MENUS - LE ROI ABSOLU
     FOR permission_id IN SELECT id FROM permissions LOOP
         FOR menu_id IN SELECT id FROM menus LOOP
             INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
@@ -34,6 +34,9 @@ BEGIN
             authorization_count := authorization_count + 1;
         END LOOP;
     END LOOP;
+    
+    RAISE NOTICE '👑 SUPER ADMIN: Le ROI a maintenant TOUTES les permissions sur TOUS les menus (%)', 
+        (SELECT COUNT(*) FROM permissions);
     
     RAISE NOTICE '🔗 Création des autorisations pour le rôle admin...';
     
