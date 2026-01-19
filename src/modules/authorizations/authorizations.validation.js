@@ -1,4 +1,4 @@
-const { body, param, validationResult, matchedData } = require('express-validator');
+const { body, param, query, validationResult, matchedData } = require('express-validator');
 
 /**
  * Middleware de validation pour les entrées du module authorizations
