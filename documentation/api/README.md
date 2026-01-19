@@ -8,10 +8,12 @@ Ce dossier contient toute la documentation des API REST du projet Event Planner 
 
 ### 📖 **Documentation Complète**
 - **`API_DOCUMENTATION.md`** - Documentation exhaustive de toutes les API
+  - **216 routes** réparties en **15 modules**
   - Routes complètes avec méthodes HTTP
   - Corps de requête et réponse
   - Codes d'erreur et gestion
   - Exemples d'utilisation
+  - **Nouveaux modules** : Accesses (12 routes), Authorizations CRUD (9 routes)
 
 ### 🔐 **Authentification**
 - **`AUTH_FLOWS.md`** - Documentation des flux d'authentification
@@ -26,13 +28,14 @@ Ce dossier contient toute la documentation des API REST du projet Event Planner 
   - Permissions et autorisations
   - Middleware de sécurité
   - Matrice des accès
+  - **Nouveaux modules** : Accesses (User-Role), Authorizations CRUD
 
 ### 📊 **Inventaire des Routes**
-- **`API_ROUTES_INVENTORY.md`** - Inventaire complet de toutes les routes
-  - Liste exhaustive des endpoints
-  - Méthodes et paramètres
-  - Statut de validation
-  - Mapping avec les collections Postman
+- **`API_ROUTES_INVENTORY.md`** - Liste exhaustive de toutes les routes
+  - **216 routes** identifiées et documentées
+  - Répartition par module et par méthode HTTP
+  - Statistiques complètes mises à jour
+  - **Nouveaux modules** : Accesses, Authorizations CRUD
 
 ### ✅ **Checklist API**
 - **`API_ROUTES_CHECKLIST.md`** - Checklist de validation des routes

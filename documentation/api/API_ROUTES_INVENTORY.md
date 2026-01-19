@@ -1,12 +1,12 @@
-# 📋 INVENTAIRE COMPLET DES ROUTES API - EVENT PLANNER AUTH - PRODUCTION READY v1.0
+# 📋 INVENTAIRE COMPLET DES ROUTES API - EVENT PLANNER AUTH - PRODUCTION READY v1.1
 
 ## 🎯 OBJECTIF
 Lister toutes les routes existantes dans le code pour synchroniser les collections Postman.  
-**183 routes** identifiées réparties en **13 modules** avec **hardening validation (Rule 3)** et **score 100/100**.
+**216 routes** identifiées réparties en **15 modules** avec **hardening validation (Rule 3)** et **score 100/100**.
 
 ## 📊 STATISTIQUES
-- **Total de modules** : 13 modules principaux
-- **Total de routes** : 183 routes identifiées
+- **Total de modules** : 15 modules principaux
+- **Total de routes** : 216 routes identifiées
 - **Méthodes HTTP** : GET, POST, PUT, PATCH, DELETE
 - **Middlewares principaux** : authenticate, requirePermission, validate*
 - **Production ready** : ✅ Score 100/100
@@ -221,6 +221,51 @@ Lister toutes les routes existantes dans le code pour synchroniser les collectio
 
 ---
 
+## 🔐 MODULE ACCESSES - GESTION ACCÈS UTILISATEUR-RÔLE (12 routes)
+
+### Routes CRUD (protégées)
+| Méthode | Path | Controller | Permission | Description |
+|---------|------|------------|-----------|-------------|
+| GET | `/api/accesses` | accessesController.getAllAccesses | accesses.read | Lister tous les accès avec pagination et filtres |
+| GET | `/api/accesses/:id` | accessesController.getAccessById | accesses.read | Récupérer un accès par ID |
+| POST | `/api/accesses` | accessesController.createAccess | accesses.create | Créer un nouvel accès utilisateur-rôle |
+| PUT | `/api/accesses/:id/status` | accessesController.updateAccessStatus | accesses.update | Mettre à jour le statut d'un accès |
+| DELETE | `/api/accesses/:id` | accessesController.deleteAccess | accesses.delete | Supprimer un accès (soft delete) |
+| DELETE | `/api/accesses/:id/hard` | accessesController.hardDeleteAccess | accesses.hard_delete | Supprimer définitivement un accès |
+
+### Routes spécialisées (protégées)
+| Méthode | Path | Controller | Permission | Description |
+|---------|------|------------|-----------|-------------|
+| GET | `/api/accesses/user/:userId/roles` | accessesController.getUserRoles | accesses.read | Lister les rôles d'un utilisateur |
+| GET | `/api/accesses/role/:roleId/users` | accessesController.getRoleUsers | accesses.read | Lister les utilisateurs d'un rôle |
+| GET | `/api/accesses/user/:userId/role/:roleId` | accessesController.checkUserHasRole | accesses.read | Vérifier si un utilisateur a un rôle |
+| POST | `/api/accesses/user/:userId/roles/assign` | accessesController.assignMultipleRoles | accesses.assign | Assigner plusieurs rôles à un utilisateur |
+| POST | `/api/accesses/user/:userId/roles/remove` | accessesController.removeMultipleRoles | accesses.remove | Retirer plusieurs rôles d'un utilisateur |
+| GET | `/api/accesses/stats` | accessesController.getAccessStats | accesses.read | Statistiques des accès (non implémenté) |
+
+---
+
+## 🔑 MODULE AUTHORIZATIONS CRUD - GESTION AUTORISATIONS RÔLE-PERMISSION-MENU (9 routes)
+
+### Routes CRUD (protégées)
+| Méthode | Path | Controller | Permission | Description |
+|---------|------|------------|-----------|-------------|
+| GET | `/api/authorizations` | authorizationController.getAllAuthorizations | authorizations.read | Lister toutes les autorisations avec pagination et filtres |
+| GET | `/api/authorizations/:id` | authorizationController.getAuthorizationById | authorizations.read | Récupérer une autorisation par ID |
+| POST | `/api/authorizations` | authorizationController.createAuthorization | authorizations.create | Créer une nouvelle autorisation |
+| PUT | `/api/authorizations/:id` | authorizationController.updateAuthorization | authorizations.update | Mettre à jour une autorisation |
+| DELETE | `/api/authorizations/:id` | authorizationController.deleteAuthorization | authorizations.delete | Supprimer une autorisation (soft delete) |
+| DELETE | `/api/authorizations/:id/hard` | authorizationController.hardDeleteAuthorization | authorizations.hard_delete | Supprimer définitivement une autorisation |
+
+### Routes spécialisées (protégées)
+| Méthode | Path | Controller | Permission | Description |
+|---------|------|------------|-----------|-------------|
+| GET | `/api/authorizations/role/:roleId` | authorizationController.getAuthorizationsByRole | authorizations.read | Lister les autorisations d'un rôle |
+| GET | `/api/authorizations/permission/:permissionId` | authorizationController.getAuthorizationsByPermission | authorizations.read | Lister les autorisations d'une permission |
+| GET | `/api/authorizations/menu/:menuId` | authorizationController.getAuthorizationsByMenu | authorizations.read | Lister les autorisations d'un menu |
+
+---
+
 ## 🛡️ MODULE AUTHORIZATIONS - VÉRIFICATIONS AUTORISATIONS (14 routes)
 
 ### Routes vérification permissions (protégées)
@@ -357,11 +402,11 @@ Lister toutes les routes existantes dans le code pour synchroniser les collectio
 
 | Méthode | Total | Pourcentage |
 |---------|-------|-------------|
-| GET | 89 | 48.6% |
-| POST | 71 | 38.8% |
-| PUT | 9 | 4.9% |
-| PATCH | 7 | 3.8% |
-| DELETE | 7 | 3.8% |
+| GET | 107 | 49.5% |
+| POST | 80 | 37.0% |
+| PUT | 15 | 6.9% |
+| PATCH | 7 | 3.2% |
+| DELETE | 7 | 3.2% |
 
 ---
 
@@ -369,9 +414,9 @@ Lister toutes les routes existantes dans le code pour synchroniser les collectio
 
 | Niveau | Total | Pourcentage |
 |--------|-------|-------------|
-| Publiques | 23 | 12.6% |
-| Authentifiées | 89 | 48.6% |
-| Administration | 71 | 38.8% |
+| Publiques | 23 | 10.6% |
+| Authentifiées | 193 | 89.4% |
+| Administration | 71 | 32.9% |
 
 ---
 
@@ -379,26 +424,27 @@ Lister toutes les routes existantes dans le code pour synchroniser les collectio
 
 | Module | Routes | Pourcentage |
 |--------|--------|-------------|
-| Auth | 28 | 15.3% |
-| Users | 15 | 8.2% |
-| People | 11 | 6.0% |
-| Roles | 14 | 7.7% |
-| Permissions | 14 | 7.7% |
-| Menus | 14 | 7.7% |
-| Authorizations | 14 | 7.7% |
-| Sessions | 12 | 6.6% |
-| Session Monitoring | 8 | 4.4% |
-| Health | 6 | 3.3% |
-| Metrics | 3 | 1.6% |
-| Dashboard | 4 | 2.2% |
-| Docs | 5 | 2.7% |
+| Auth | 28 | 13.0% |
+| Users | 15 | 6.9% |
+| People | 11 | 5.1% |
+| Roles | 14 | 6.5% |
+| Permissions | 14 | 6.5% |
+| Menus | 14 | 6.5% |
+| Accesses | 12 | 5.6% |
+| Authorizations | 23 | 10.6% |
+| Sessions | 12 | 5.6% |
+| Session Monitoring | 8 | 3.7% |
+| Health | 6 | 2.8% |
+| Metrics | 3 | 1.4% |
+| Dashboard | 4 | 1.9% |
+| Docs | 5 | 2.3% |
 
 ---
 
 ## ✅ VALIDATION FINALE
 
-- **Total routes analysées** : 183/183 ✅
-- **Routes documentées** : 183/183 ✅
+- **Total routes analysées** : 216/216 ✅
+- **Routes documentées** : 216/216 ✅
 - **Hardening validation (Rule 3)** : Appliqué sur toutes les routes ✅
 - **Score production ready** : 100/100 ✅
 - **Synchronisation Postman** : Prête ✅

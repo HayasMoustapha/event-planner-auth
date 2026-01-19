@@ -360,10 +360,14 @@ CREATE TABLE otps (
 
 Une collection Postman complète est disponible dans `/postman/collections/Event-Planner-Auth-API.postman_collection.json` avec :
 
+- **216 routes** réparties en **15 modules**
 - Variables d'environnement préconfigurées
 - Tests automatisés pour tous les flux
 - Gestion des tokens JWT
 - Validation des réponses
+- **Modules récents** :
+  - 🔐 Gestion Accesses (User-Role) - 12 endpoints
+  - 🔑 Gestion Authorizations CRUD - 9 endpoints
 
 ## Testing
 
@@ -384,7 +388,7 @@ npm run test:e2e
 
 ## Development Setup
 
-1. Clone the repository
+1. Clone repository
 2. Install dependencies: `npm install`
 3. Configure environment: `cp .env.example .env`
 4. Setup database: `npm run db:setup`
@@ -398,9 +402,24 @@ npm run test:e2e
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
 
+### Modules Disponibles
+- **Auth** : 28 routes (authentification, OTP, gestion tokens)
+- **Users** : 15 routes (CRUD utilisateurs)
+- **People** : 11 routes (CRUD personnes)
+- **Roles** : 14 routes (CRUD rôles, assignation permissions)
+- **Permissions** : 14 routes (CRUD permissions)
+- **Menus** : 14 routes (CRUD menus, assignation permissions)
+- **Accesses** : 12 routes (CRUD accès utilisateur-rôle)
+- **Authorizations** : 23 routes (vérifications + CRUD autorisations)
+- **Sessions** : 12 routes (gestion sessions)
+- **Session Monitoring** : 8 routes (monitoring sessions)
+- **Health** : 6 routes (health checks)
+- **Metrics** : 3 routes (métriques système)
+- **Dashboard** : 4 routes (tableau de bord admin)
+- **Docs** : 5 routes (documentation API)
+
 ### Security Considerations
 - Use HTTPS in production
 - Configure CORS properly
 - Enable rate limiting
 - Monitor logs for suspicious activity
-- Regular security updates
