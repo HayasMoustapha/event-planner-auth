@@ -15,6 +15,7 @@ const errorHandler = (err, req, res, next) => {
   // Erreurs JWT
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
+      success: false,
       error: 'Erreur d\'authentification',
       message: 'Token invalide'
     });
@@ -22,6 +23,7 @@ const errorHandler = (err, req, res, next) => {
 
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json({
+      success: false,
       error: 'Erreur d\'authentification',
       message: 'Token expiré'
     });
@@ -30,6 +32,7 @@ const errorHandler = (err, req, res, next) => {
   // Erreurs de base de données
   if (err.code === 'ER_DUP_ENTRY') {
     return res.status(409).json({
+      success: false,
       error: 'Conflit de données',
       message: 'Une entrée avec ces données existe déjà'
     });
@@ -37,6 +40,7 @@ const errorHandler = (err, req, res, next) => {
 
   if (err.code === 'ER_NO_REFERENCED_ROW_2') {
     return res.status(400).json({
+      success: false,
       error: 'Erreur de référence',
       message: 'Référence à une ligne inexistante'
     });
@@ -46,6 +50,7 @@ const errorHandler = (err, req, res, next) => {
   if (err.message) {
     const statusCode = getStatusCodeFromError(err.message);
     return res.status(statusCode).json({
+      success: false,
       error: getErrorTypeFromError(err.message),
       message: err.message
     });
@@ -53,6 +58,7 @@ const errorHandler = (err, req, res, next) => {
 
   // Erreur par défaut
   res.status(500).json({
+    success: false,
     error: 'Erreur interne du serveur',
     message: (env.NODE_ENV === 'development' || env.NODE_ENV === 'test') ? err.message : 'Une erreur est survenue',
     ...((env.NODE_ENV === 'development' || env.NODE_ENV === 'test') && { stack: err.stack })
@@ -78,7 +84,7 @@ const getStatusCodeFromError = (message) => {
   const lowercaseMessage = message.toLowerCase();
   if (lowercaseMessage.includes('non trouvé') || lowercaseMessage.includes('not found')) return 404;
   if (lowercaseMessage.includes('déjà') || lowercaseMessage.includes('already') || lowercaseMessage.includes('existe déjà')) return 409;
-  if (lowercaseMessage.includes('incorrect') || lowercaseMessage.includes('invalide') || lowercaseMessage.includes('invalid') || lowercaseMessage.includes('échec')) return 401;
+  if (lowercaseMessage.includes('incorrect') || lowercaseMessage.includes('invalide') || lowercaseMessage.includes('invalid') || lowercaseMessage.includes('authentification a échoué')) return 401;
   if (lowercaseMessage.includes('autorisé') || lowercaseMessage.includes('unauthorized') || lowercaseMessage.includes('non autorisé')) return 401;
   if (lowercaseMessage.includes('interdit') || lowercaseMessage.includes('forbidden') || lowercaseMessage.includes('accès refusé')) return 403;
   if (lowercaseMessage.includes('requis') || lowercaseMessage.includes('required') || lowercaseMessage.includes('manquant')) return 400;
