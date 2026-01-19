@@ -49,8 +49,6 @@ const handleValidationErrors = (req, res, next) => {
   }
 
   next();
-
-  next();
 };
 
 /**

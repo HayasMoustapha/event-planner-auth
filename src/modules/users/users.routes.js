@@ -37,7 +37,7 @@ router.get('/username/:username', rbacMiddleware.requirePermission('users.read')
  */
 router.post('/', 
   rbacMiddleware.requirePermission('users.create'),
-  // usersValidation.validateCreate,  // Temporairement désactivé pour permettre person_id
+  usersValidation.validateCreate,
   usersController.create
 );
 
