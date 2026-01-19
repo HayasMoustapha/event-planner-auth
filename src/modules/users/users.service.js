@@ -130,15 +130,24 @@ class UsersService {
       throw new Error('Le userCode est obligatoire');
     }
 
-    // Créer une personne si personId n'est pas fourni
+    // Gestion obligatoire de person_id (contrainte NOT NULL)
     let finalPersonId = personId;
-    if (!finalPersonId) {
+    
+    if (!personId) {
+      // Si personId n'est pas fourni, créer une personne automatiquement
       try {
         const peopleRepository = require('../people/people.repository');
-        // Créer une personne par défaut avec les données disponibles
-        const defaultFirstName = firstName || 'Utilisateur';
-        const defaultLastName = lastName || 'Anonyme';
-        const defaultEmail = email || `user_${Date.now()}@system.local`; // Email par défaut
+        
+        // Utiliser firstName/lastName ou des valeurs par défaut
+        const defaultFirstName = firstName || username || 'Utilisateur';
+        const defaultLastName = lastName || 'System';
+        const defaultEmail = email || `user_${Date.now()}@system.local`;
+        
+        console.log(' Création automatique de personne pour utilisateur:', {
+          firstName: defaultFirstName,
+          lastName: defaultLastName,
+          email: defaultEmail
+        });
         
         const person = await peopleRepository.create({
           first_name: defaultFirstName.trim(),
@@ -147,23 +156,29 @@ class UsersService {
           phone: phone || null,
           createdBy
         });
+        
         finalPersonId = person.id;
+        console.log(' Personne créée avec ID:', finalPersonId);
+        
       } catch (error) {
-        // Si la création de personne échoue, créer une personne minimale
-        console.warn('Création personne détaillée échouée, tentative minimale:', error.message);
-        try {
-          const peopleRepository = require('../people/people.repository');
-          const person = await peopleRepository.create({
-            first_name: 'Utilisateur',
-            last_name: 'System',
-            email: `system_${Date.now()}@default.local`,
-            phone: null,
-            createdBy
-          });
-          finalPersonId = person.id;
-        } catch (fallbackError) {
-          throw new Error('Impossible de créer une personne pour l\'utilisateur');
+        console.error(' Erreur création personne:', error.message);
+        throw new Error(`Impossible de créer une personne pour l'utilisateur: ${error.message}`);
+      }
+    } else {
+      // Valider que la personne existe
+      try {
+        const peopleRepository = require('../people/people.repository');
+        const existingPerson = await peopleRepository.findById(personId);
+        
+        if (!existingPerson) {
+          throw new Error(`La personne avec ID ${personId} n'existe pas`);
         }
+        
+        console.log(' Personne existante utilisée:', finalPersonId);
+        
+      } catch (error) {
+        console.error(' Erreur validation personne:', error.message);
+        throw new Error(`Personne invalide: ${error.message}`);
       }
     }
 

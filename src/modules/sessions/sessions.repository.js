@@ -706,6 +706,72 @@ class SessionRepository {
   }
 
   /**
+   * Récupère l'historique des connexions d'un utilisateur
+   * @param {number} userId - ID de l'utilisateur
+   * @param {Object} options - Options de pagination
+   * @returns {Promise<Object>} Historique et pagination
+   */
+  async getLoginHistory(userId, options = {}) {
+    try {
+      const { page = 1, limit = 20 } = options;
+      const offset = (page - 1) * limit;
+      
+      // Vérifier que userId est valide
+      if (!userId || isNaN(parseInt(userId))) {
+        throw new Error('ID utilisateur invalide');
+      }
+      
+      // Requête principale pour l'historique
+      const historyQuery = `
+        SELECT 
+          s.id,
+          s.user_id,
+          s.device_info,
+          s.ip_address,
+          s.user_agent,
+          s.created_at,
+          s.last_activity,
+          s.is_active,
+          u.username,
+          u.email
+        FROM sessions s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.user_id = $1
+        ORDER BY s.created_at DESC
+        LIMIT $2 OFFSET $3
+      `;
+      
+      const [history] = await connection.query(historyQuery, [userId, limit, offset]);
+      
+      // Requête pour le total
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM sessions s
+        WHERE s.user_id = $1
+      `;
+      
+      const [countResult] = await connection.query(countQuery, [userId]);
+      const total = parseInt(countResult.total);
+      
+      return {
+        success: true,
+        data: history,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasNext: page * limit < total,
+          hasPrev: page > 1
+        }
+      };
+      
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération de l'historique: ${error.message}`);
+    }
+  }
+
+  /**
    * Récupère les statistiques des sessions
    * @param {number} userId - ID de l'utilisateur (optionnel)
    * @returns {Promise<Object>} Statistiques des sessions
