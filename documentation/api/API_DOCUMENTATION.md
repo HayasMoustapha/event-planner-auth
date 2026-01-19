@@ -279,6 +279,19 @@ X-XSS-Protection: 1; mode=block
 Strict-Transport-Security: max-age=31536000; includeSubDomains
 ```
 
+## Hardening Validation (Rule 3)
+
+### Protection contre les champs non autorisés
+- **Validation stricte** : Seuls les champs attendus sont acceptés
+- **Détection automatique** : Les champs supplémentaires sont rejetés
+- **Audit complet** : Journalisation des tentatives d'injection
+
+### Types d'attaques détectées
+- **SQL Injection** : Blocage des requêtes malveillantes
+- **XSS** : Échappement automatique du HTML
+- **Path Traversal** : Validation des chemins système
+- **Command Injection** : Filtrage des commandes système
+
 ## Database Schema
 
 ### Key Tables

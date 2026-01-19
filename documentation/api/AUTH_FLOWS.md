@@ -384,6 +384,12 @@ Authorization: Bearer <access_token>
 
 ## 11. Sécurité
 
+### Hardening Validation (Rule 3)
+- **Protection contre les champs non autorisés** : Validation stricte des entrées
+- **Détection d'attaques** : SQL injection, XSS, path traversal, command injection
+- **Sanitisation automatique** : Nettoyage des données utilisateur
+- **Audit de sécurité** : Journalisation des tentatives d'attaque
+
 ### Rate Limiting
 - **Auth endpoints** : 5 requêtes/15min/IP
 - **API endpoints** : 100 requêtes/15min/IP
