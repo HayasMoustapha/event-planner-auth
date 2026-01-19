@@ -81,7 +81,17 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 -- Permissions Système avancées
 ('system.admin', '{"fr": "Administration système", "en": "System Administration"}', 'system', '{"fr": "Accès complet à l'administration système", "en": "Full system administration access"}', NOW(), NOW()),
 ('system.config', '{"fr": "Configuration système", "en": "System Configuration"}', 'system', '{"fr": "Configurer les paramètres système avancés", "en": "Configure advanced system settings"}', NOW(), NOW()),
-('system.monitor', '{"fr": "Monitoring système", "en": "System Monitoring"}', 'system', '{"fr": "Accéder au monitoring système avancé", "en": "Access advanced system monitoring"}', NOW(), NOW());
+('system.monitor', '{"fr": "Monitoring système", "en": "System Monitoring"}', 'system', '{"fr": "Accéder au monitoring système avancé", "en": "Access advanced system monitoring"}', NOW(), NOW()),
+
+-- Permissions Administration
+('admin.dashboard.read', '{"fr": "Dashboard admin", "en": "Dashboard admin"}', 'admin', '{"fr": "Voir le tableau de bord administrateur", "en": "View administrator dashboard"}', NOW(), NOW()),
+('admin.health.read', '{"fr": "Health admin", "en": "Health admin"}', 'admin', '{"fr": "Voir les health checks administrateur", "en": "View administrator health checks"}', NOW(), NOW()),
+('admin.metrics.read', '{"fr": "Metrics admin", "en": "Metrics admin"}', 'admin', '{"fr": "Voir les métriques administrateur", "en": "View administrator metrics"}', NOW(), NOW()),
+('admin.metrics.reset', '{"fr": "Reset metrics admin", "en": "Reset metrics admin"}', 'admin', '{"fr": "Réinitialiser les métriques administrateur", "en": "Reset administrator metrics"}', NOW(), NOW()),
+('admin.security.read', '{"fr": "Security admin", "en": "Security admin"}', 'admin', '{"fr": "Voir les informations de sécurité administrateur", "en": "View administrator security information"}', NOW(), NOW()),
+
+-- Permissions Développeur
+('developer.docs.read', '{"fr": "Documentation développeur", "en": "Developer documentation"}', 'developer', '{"fr": "Accéder à la documentation développeur", "en": "Access developer documentation"}', NOW(), NOW());
 
 -- Afficher confirmation
 DO $$
