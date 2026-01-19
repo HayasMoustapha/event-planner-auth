@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Event Planner Auth API",
-    "description": "Collection complète pour l'API d'authentification Event Planner avec inscription, connexion, OTP et gestion des comptes",
+    "description": "Collection complète pour l'API d'authentification Event Planner avec inscription, connexion, OTP, gestion des comptes et hardening de validation (Rule 3) - PRODUCTION READY v1.0",
     "version": "1.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },

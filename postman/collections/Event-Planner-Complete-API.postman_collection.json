@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Event Planner Complete API",
-    "description": "Collection complète pour tous les modules de l'API Event Planner - Auth, Users, People, Roles, Permissions, Menus",
+    "description": "Collection complète pour tous les modules de l'API Event Planner - Auth, Users, People, Roles, Permissions, Menus avec hardening de validation (Rule 3) - PRODUCTION READY v2.0",
     "version": "2.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },

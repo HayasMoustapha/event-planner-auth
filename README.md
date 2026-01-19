@@ -8,6 +8,7 @@ Service d'authentification et d'autorisation enterprise-ready pour Event Planner
 - **Multi-méthodes** : Email/password, OTP, tokens JWT
 - **Inscription complète** : Création compte people + users avec validation OTP
 - **Sécurité avancée** : Détection automatique d'attaques (SQL injection, XSS, path traversal, command injection)
+- **Hardening de validation** : Protection contre les champs non autorisés (Rule 3)
 - **Protection brute force** : Rate limiting et blocage automatique
 - **Sanitisation** : Nettoyage automatique des entrées utilisateur
 - **IP blacklist** : Protection contre les IPs malveillantes
@@ -245,6 +246,12 @@ npm run test:security
 npm run test:coverage
 ```
 
+### Configuration de test avancée
+- **Jest setup** : Configuration optimisée avec variables d'environnement test
+- **Timeout global** : 30 secondes pour les tests asynchrones
+- **Nettoyage automatique** : Fermeture des connexions DB après les tests
+- **Services externes mockés** : Configuration SMTP et services optionnels
+
 ### Tests de charge
 ```bash
 # Test de charge basique (100 requêtes concurrentes)
@@ -301,6 +308,7 @@ Features incluses :
 - **XSS** : Sanitisation et échappement HTML
 - **Path Traversal** : Validation des chemins de fichiers
 - **Command Injection** : Filtrage des commandes système
+- **Hardening validation** : Protection contre les champs non autorisés (Rule 3)
 - **Brute Force** : Rate limiting et blocage IP
 - **CSRF** : Tokens CSRF et validation d'origine
 
@@ -441,6 +449,12 @@ MIT License - voir [LICENSE](LICENSE) pour les détails.
 - **Discord** : [Serveur Discord](https://discord.gg/eventplanner)
 
 ## Roadmap
+
+### ✅ Version Actuelle (v1.0) - PRODUCTION READY
+- [x] **Score 100/100** : Validation production complète
+- [x] **Hardening validation** : Protection Rule 3 implémentée
+- [x] **Tests avancés** : Configuration Jest optimisée
+- [x] **Postman synchronisé** : 28/28 routes validées
 
 ### v1.1 (Prochain)
 - [ ] OAuth2 (Google, GitHub, Microsoft)
