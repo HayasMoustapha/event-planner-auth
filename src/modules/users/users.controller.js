@@ -162,7 +162,10 @@ class UsersController {
   async update(req, res, next) {
     try {
       const { id } = req.params;
-      const updateData = req.body;
+      
+      // Utiliser les données validées par express-validator
+      const { matchedData } = require('express-validator');
+      const updateData = matchedData(req, { includeOptionals: true, locations: ['body'] });
       
       // Vérifier qu'il y a des données à mettre à jour
       if (!updateData || Object.keys(updateData).length === 0) {

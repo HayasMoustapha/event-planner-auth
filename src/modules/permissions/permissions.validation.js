@@ -96,7 +96,7 @@ const validateUpdatePermission = [
     .trim()
     .isLength({ min: 3, max: 100 })
     .withMessage('Le code de la permission doit contenir entre 3 et 100 caractères')
-    .matches(/^[a-z._]+[a-z._]*$/)   
+    .matches(/^[a-z0-9._]+[a-z0-9._]*$/)   
     .withMessage('Le code doit être en minuscules avec underscores et/ou points (ex: users.read, user.read)'),
 
   body('label')
@@ -208,7 +208,7 @@ const validateCheckUserPermission = [
     .notEmpty()
     .withMessage('Le code de la permission est requis')
     .trim()
-    .matches(/^[a-z._]+[a-z._]*$/)
+    .matches(/^[a-z0-9._]+[a-z0-9._]*$/)
     .withMessage('Le code doit être en minuscules avec underscores (ex: users.create)'),
 
   handleValidationErrors
