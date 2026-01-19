@@ -131,6 +131,18 @@ const validateUpdate = [
     .matches(/^[a-zA-Z0-9_]+$/)
     .withMessage('Le username ne peut contenir que des lettres, chiffres et underscores'),
 
+  body('firstName')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Le prénom doit contenir entre 1 et 50 caractères'),
+
+  body('lastName')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Le nom doit contenir entre 1 et 50 caractères'),
+
   body('email')
     .optional()
     .trim()

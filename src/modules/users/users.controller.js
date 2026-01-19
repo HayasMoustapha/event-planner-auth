@@ -164,6 +164,14 @@ class UsersController {
       const { id } = req.params;
       const updateData = req.body;
       
+      // Vérifier qu'il y a des données à mettre à jour
+      if (!updateData || Object.keys(updateData).length === 0) {
+        return res.status(400).json(createResponse(
+          false,
+          'Aucune donnée à mettre à jour'
+        ));
+      }
+      
       // Récupérer l'ID de l'utilisateur authentifié si disponible
       const updatedBy = req.user?.id || null;
       

@@ -47,6 +47,12 @@ router.put('/:id',
   usersController.update
 );
 
+router.patch('/:id', 
+  rbacMiddleware.requirePermission('users.update'),
+  usersValidation.validateUpdate,
+  usersController.update
+);
+
 router.patch('/:id/password', 
   rbacMiddleware.requirePermission('users.update'),
   usersValidation.validatePasswordUpdate,

@@ -141,8 +141,8 @@ class UsersService {
         const defaultEmail = email || `user_${Date.now()}@system.local`; // Email par défaut
         
         const person = await peopleRepository.create({
-          firstName: defaultFirstName.trim(),
-          lastName: defaultLastName.trim(),
+          first_name: defaultFirstName.trim(),
+          last_name: defaultLastName.trim(),
           email: defaultEmail,
           phone: phone || null,
           createdBy
@@ -154,8 +154,8 @@ class UsersService {
         try {
           const peopleRepository = require('../people/people.repository');
           const person = await peopleRepository.create({
-            firstName: 'Utilisateur',
-            lastName: 'System',
+            first_name: 'Utilisateur',
+            last_name: 'System',
             email: `system_${Date.now()}@default.local`,
             phone: null,
             createdBy

@@ -704,6 +704,48 @@ class SessionRepository {
       throw new Error(`Erreur lors de la récupération des sessions suspectes: ${error.message}`);
     }
   }
+
+  /**
+   * Récupère les statistiques des sessions
+   * @param {number} userId - ID de l'utilisateur (optionnel)
+   * @returns {Promise<Object>} Statistiques des sessions
+   */
+  async getStats(userId = null) {
+    try {
+      let query = `
+        SELECT 
+          COUNT(*) as total_sessions,
+          COUNT(DISTINCT user_id) as unique_users,
+          COUNT(CASE WHEN last_activity > (EXTRACT(EPOCH FROM NOW()) * 1000 - 3600000) THEN 1 END) as active_sessions_last_hour,
+          COUNT(CASE WHEN last_activity > (EXTRACT(EPOCH FROM NOW()) * 1000 - 86400000) THEN 1 END) as active_sessions_last_day,
+          0 as new_sessions_last_day,
+          0 as avg_session_duration_minutes
+        FROM sessions
+      `;
+
+      let params = [];
+
+      if (userId) {
+        query += ' WHERE user_id = $1';
+        params.push(userId);
+      }
+
+      const result = await connection.query(query, params);
+      const stats = result.rows[0] || {};
+
+      return {
+        total_sessions: parseInt(stats.total_sessions) || 0,
+        unique_users: parseInt(stats.unique_users) || 0,
+        active_sessions_last_hour: parseInt(stats.active_sessions_last_hour) || 0,
+        active_sessions_last_day: parseInt(stats.active_sessions_last_day) || 0,
+        new_sessions_last_day: parseInt(stats.new_sessions_last_day) || 0,
+        avg_session_duration_minutes: parseFloat(stats.avg_session_duration_minutes) || 0,
+        user_specific: !!userId
+      };
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des statistiques de sessions: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new SessionRepository(); /**/
