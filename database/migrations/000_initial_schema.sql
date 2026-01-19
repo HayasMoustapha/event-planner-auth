@@ -93,6 +93,8 @@ CREATE TABLE IF NOT EXISTS menus (
     parent_path VARCHAR(255),
     menu_group INTEGER NOT NULL,
     sort_order INTEGER NOT NULL,
+    depth INTEGER,
+    description JSONB,
     is_visible BOOLEAN NOT NULL DEFAULT TRUE,
     created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     updated_by BIGINT REFERENCES users(id) ON DELETE SET NULL,

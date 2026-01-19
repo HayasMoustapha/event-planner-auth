@@ -691,7 +691,7 @@ class DatabaseBootstrap {
       for (const permission of permissionsResult.rows) {
         await client.query(`
           INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
-          VALUES ($1, $2, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          VALUES ($1, $2, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
           ON CONFLICT (role_id, permission_id, menu_id) DO NOTHING
         `, [superAdminRoleId, permission.id]);
       }
