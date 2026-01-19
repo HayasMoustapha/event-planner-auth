@@ -84,6 +84,12 @@ class RegistrationService {
         if (existingPhone) {
           throw new Error('Ce numéro de téléphone est déjà utilisé');
         }
+
+        // Vérifier aussi dans la table users
+        const existingUserPhone = await usersRepository.findByPhone(phone);
+        if (existingUserPhone) {
+          throw new Error('Ce numéro de téléphone est déjà utilisé par un autre utilisateur');
+        }
       }
 
       // 5. Créer la personne

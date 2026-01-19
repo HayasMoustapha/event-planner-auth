@@ -216,7 +216,7 @@ class UsersService {
       userCode: userCode.trim(),
       phone: phone ? phone.trim() : null,
       status,
-      person_id: person_id,  // Utiliser le personId final (créé ou fourni)
+      person_id,
       createdBy
     };
 
@@ -229,6 +229,14 @@ class UsersService {
     const existingUsername = await usersRepository.findByUsername(cleanData.username);
     if (existingUsername) {
       throw new Error('Ce nom d\'utilisateur est déjà utilisé');
+    }
+
+    // Vérifier si le téléphone est déjà utilisé dans la table users
+    if (cleanData.phone) {
+      const existingPhone = await usersRepository.findByPhone(cleanData.phone);
+      if (existingPhone) {
+        throw new Error('Ce numéro de téléphone est déjà utilisé par un autre utilisateur');
+      }
     }
 
     // Validation de la personne si spécifiée
@@ -312,6 +320,16 @@ class UsersService {
       const existingUsername = await usersRepository.findByUsername(cleanData.username);
       if (existingUsername) {
         throw new Error('Ce nom d\'utilisateur est déjà utilisé');
+      }
+    }
+
+    // Vérification des doublons si téléphone modifié
+    if (cleanData.phone !== undefined && cleanData.phone !== existingUser.phone) {
+      if (cleanData.phone) {
+        const existingPhone = await usersRepository.findByPhone(cleanData.phone);
+        if (existingPhone) {
+          throw new Error('Ce numéro de téléphone est déjà utilisé par un autre utilisateur');
+        }
       }
     }
 

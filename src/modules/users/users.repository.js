@@ -99,6 +99,23 @@ class UsersRepository {
   }
 
   /**
+   * Trouve un utilisateur par son téléphone
+   * @param {string} phone - Téléphone de l'utilisateur
+   * @returns {Promise<Object|null>} Données de l'utilisateur
+   */
+  async findByPhone(phone) {
+    const query = 'SELECT * FROM users WHERE phone = $1 AND deleted_at IS NULL';
+    
+    try {
+      const result = await connection.query(query, [phone]);
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } catch (error) {
+      console.error('Erreur lors de la recherche de l\'utilisateur par téléphone:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Récupère un utilisateur par son email
    * @param {string} email - Email de l'utilisateur
    * @param {boolean} includePassword - Inclure le mot de passe
