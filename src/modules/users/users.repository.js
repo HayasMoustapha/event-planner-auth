@@ -163,7 +163,7 @@ class UsersRepository {
       userCode = null,
       phone = null,
       status = 'active',
-      personId ,
+      person_id,
       createdBy = null
     } = userData;
 
@@ -171,20 +171,20 @@ class UsersRepository {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const query = `
-      INSERT INTO users (person_id, username, email, password, user_code, phone, status, person_id, created_by, created_at, updated_at)
+      INSERT INTO users (person_id, username, email, password, user_code, phone, status, created_by, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, person_id, username, email, user_code, phone, status, person_id, created_at, updated_at
+      RETURNING id, person_id, username, email, user_code, phone, status, created_at, updated_at
     `;
 
     try {
       const result = await connection.query(query, [
-        personId,
+        person_id,
+        username,
         email,
         hashedPassword,
         userCode,
         phone,
         status,
-        personId,
         createdBy
       ]);
 

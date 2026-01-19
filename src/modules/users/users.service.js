@@ -216,7 +216,7 @@ class UsersService {
       userCode: userCode.trim(),
       phone: phone ? phone.trim() : null,
       status,
-      person_id: person_id.trim(),  // Utiliser le personId final (créé ou fourni)
+      person_id: person_id,  // Utiliser le personId final (créé ou fourni)
       createdBy
     };
 
