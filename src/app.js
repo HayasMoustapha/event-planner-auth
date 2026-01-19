@@ -62,14 +62,14 @@ app.use(compression());
 // Rate limiting (désactivé pour les tests)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 1000, // Augmenté pour les tests automatisés
   message: {
     error: 'Trop de requêtes',
     message: 'Veuillez réessayer plus tard'
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req, res) => process.env.NODE_ENV === 'test'
+  skip: (req, res) => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
 });
 
 app.use('/api/', limiter);
@@ -77,13 +77,13 @@ app.use('/api/', limiter);
 // Rate limiting plus strict pour l'authentification (désactivé pour les tests)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Augmenté pour les tests
+  max: 500, // Augmenté pour les tests
   message: {
     error: 'Trop de tentatives de connexion',
     message: 'Veuillez réessayer plus tard'
   },
   skipSuccessfulRequests: true,
-  skip: (req, res) => process.env.NODE_ENV === 'test'
+  skip: (req, res) => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
 });
 
 // Logging
