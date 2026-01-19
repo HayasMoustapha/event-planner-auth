@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-01-19T16:26:39.986Z",
+  "updated_examples": [
+    "register",
+    "login",
+    "verify-email",
+    "resend-otp",
+    "change-password",
+    "otp-email-generate",
+    "otp-phone-generate",
+    "otp-email-verify",
+    "otp-password-reset-generate",
+    "otp-password-reset-verify",
+    "user-create",
+    "user-update",
+    "role-create",
+    "role-update",
+    "role-assign-permissions",
+    "permission-create",
+    "menu-create",
+    "menu-assign-permissions",
+    "person-create",
+    "person-update"
+  ],
+  "total_examples": 20,
+  "validators_checked": [
+    "auth.validation.js",
+    "users.validation.js",
+    "roles.validation.js",
+    "permissions.validation.js",
+    "menus.validation.js",
+    "people.validation.js"
+  ]
+}

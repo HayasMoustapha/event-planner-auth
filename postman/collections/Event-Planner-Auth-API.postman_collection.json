@@ -53,8 +53,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
             }
           },
           "response": []
@@ -66,8 +71,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": ["{{baseUrl}}"],
-              "path": [""]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
             }
           },
           "response": []
@@ -84,8 +93,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/check-email/{{userEmail}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "check-email", "{{userEmail}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "check-email",
+                "{{userEmail}}"
+              ]
             }
           },
           "response": []
@@ -97,8 +113,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/check-username/testuser123",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "check-username", "testuser123"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "check-username",
+                "testuser123"
+              ]
             }
           },
           "response": []
@@ -132,12 +155,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe{{timestamp}}@example.com\",\n  \"phone\": \"+33612345678\",\n  \"password\": \"Password123\",\n  \"username\": \"johndoe{{timestamp}}\"\n}"
+              "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+33612345678\",\n  \"password\": \"Password123\",\n  \"username\": \"johndoe\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
             }
           },
           "response": []
@@ -154,12 +183,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/resend-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "resend-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "resend-otp"
+              ]
             }
           },
           "response": []
@@ -190,12 +225,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"otpCode\": \"{{otpCode}}\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"otpCode\": \"123456\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/verify-email",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "verify-email"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-email"
+              ]
             }
           },
           "response": []
@@ -233,12 +274,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"Password123\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login-after-verification",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login-after-verification"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login-after-verification"
+              ]
             }
           },
           "response": []
@@ -259,8 +306,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             }
           },
           "response": []
@@ -277,12 +330,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"{{authToken}}\"\n}"
+              "raw": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/validate-token",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "validate-token"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "validate-token"
+              ]
             }
           },
           "response": []
@@ -299,12 +358,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{authToken}}\"\n}"
+              "raw": "{\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/refresh-token",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "refresh-token"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh-token"
+              ]
             }
           },
           "response": []
@@ -325,8 +390,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
             }
           },
           "response": []
@@ -343,8 +414,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile"
+              ]
             }
           },
           "response": []
@@ -365,8 +442,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/change-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "change-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
             }
           },
           "response": []
@@ -405,12 +488,20 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/email/generate",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "email", "generate"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "email",
+                "generate"
+              ]
             }
           },
           "response": []
@@ -431,8 +522,16 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/phone/generate",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "phone", "generate"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "phone",
+                "generate"
+              ]
             }
           },
           "response": []
@@ -464,12 +563,20 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"code\": \"{{otpCode}}\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/email/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "email", "verify"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "email",
+                "verify"
+              ]
             }
           },
           "response": []
@@ -502,12 +609,20 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/password-reset/generate",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "password-reset", "generate"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "password-reset",
+                "generate"
+              ]
             }
           },
           "response": []
@@ -539,12 +654,20 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"code\": \"{{otpCode}}\",\n  \"newPassword\": \"ResetPassword123\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\",\n  \"newPassword\": \"NewPassword123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/password-reset/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "password-reset", "verify"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "password-reset",
+                "verify"
+              ]
             }
           },
           "response": []
@@ -561,8 +684,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -584,8 +712,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users?search=john&page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -611,8 +744,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "1"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "1"
+              ]
             }
           },
           "response": []
@@ -629,8 +768,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/people?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "people"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "people"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -652,8 +796,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/people?search=doe&page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "people"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "people"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -679,8 +828,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/people/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "people", "1"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "people",
+                "1"
+              ]
             }
           },
           "response": []
@@ -697,8 +852,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/person/{{personId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "person", "{{personId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "person",
+                "{{personId}}"
+              ]
             }
           },
           "response": []
@@ -710,8 +873,17 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/person/{{personId}}/active",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "person", "{{personId}}", "active"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "person",
+                "{{personId}}",
+                "active"
+              ]
             }
           },
           "response": []
@@ -732,8 +904,17 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/person/{{personId}}/invalidate",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "person", "{{personId}}", "invalidate"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "person",
+                "{{personId}}",
+                "invalidate"
+              ]
             }
           },
           "response": []
@@ -754,8 +935,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/cleanup",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "cleanup"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "cleanup"
+              ]
             }
           },
           "response": []
@@ -767,8 +955,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "otp", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "stats"
+              ]
             }
           },
           "response": []
