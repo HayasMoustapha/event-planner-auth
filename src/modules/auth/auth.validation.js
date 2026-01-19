@@ -14,14 +14,14 @@ const { validationResult } = require('express-validator');
  */
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
       field: error.param,
       message: error.msg,
       value: error.value
     }));
-    
+
     return res.status(400).json({
       success: false,
       message: 'Erreur de validation',
@@ -29,7 +29,7 @@ const handleValidationErrors = (req, res, next) => {
       timestamp: new Date().toISOString()
     });
   }
-  
+
   next();
 };
 
@@ -44,14 +44,12 @@ const validateLogin = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
+
   body('password')
     .trim()
-    .isLength({ min: 8 })
-    .withMessage('Le mot de passe doit contenir au moins 8 caractères')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/)
-    .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
-    
+    .notEmpty()
+    .withMessage('Le mot de passe est requis'),
+
   handleValidationErrors
 ];
 
@@ -65,19 +63,19 @@ const validateLoginWithOtp = [
     .withMessage('Le contact (email ou téléphone) est requis')
     .isLength({ min: 3, max: 254 })
     .withMessage('Le contact doit contenir entre 3 et 254 caractères'),
-    
+
   body('code')
     .trim()
     .isLength({ min: 4, max: 10 })
     .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
     .isNumeric()
     .withMessage('Le code OTP doit contenir uniquement des chiffres'),
-    
+
   body('type')
     .optional()
     .isIn(['email', 'phone'])
     .withMessage('Le type doit être email ou phone'),
-    
+
   handleValidationErrors
 ];
 
@@ -91,7 +89,7 @@ const validateRefreshToken = [
     .withMessage('Le token de rafraîchissement est requis')
     .isLength({ min: 10 })
     .withMessage('Le token de rafraîchissement est invalide'),
-    
+
   handleValidationErrors
 ];
 
@@ -105,7 +103,7 @@ const validateToken = [
     .withMessage('Le token est requis')
     .isLength({ min: 10 })
     .withMessage('Le token est invalide'),
-    
+
   handleValidationErrors
 ];
 
@@ -120,17 +118,17 @@ const validateGenerateEmailOtp = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
+
   body('userId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('expiresInMinutes')
     .optional()
     .isInt({ min: 1, max: 60 })
     .withMessage('La durée de validité doit être entre 1 et 60 minutes'),
-    
+
   handleValidationErrors
 ];
 
@@ -146,17 +144,17 @@ const validateGeneratePhoneOtp = [
     .withMessage('Format de numéro de téléphone invalide')
     .isLength({ min: 10, max: 15 })
     .withMessage('Le numéro de téléphone doit contenir entre 10 et 15 caractères'),
-    
+
   body('userId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('expiresInMinutes')
     .optional()
     .isInt({ min: 1, max: 60 })
     .withMessage('La durée de validité doit être entre 1 et 60 minutes'),
-    
+
   handleValidationErrors
 ];
 
@@ -171,19 +169,19 @@ const validateVerifyEmailOtp = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
+
   body('code')
     .trim()
     .isLength({ min: 4, max: 10 })
     .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
     .isNumeric()
     .withMessage('Le code OTP doit contenir uniquement des chiffres'),
-    
+
   body('userId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -197,19 +195,19 @@ const validateVerifyPhoneOtp = [
     .withMessage('Format de numéro de téléphone invalide')
     .isLength({ min: 10, max: 15 })
     .withMessage('Le numéro de téléphone doit contenir entre 10 et 15 caractères'),
-    
+
   body('code')
     .trim()
     .isLength({ min: 4, max: 10 })
     .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
     .isNumeric()
     .withMessage('Le code OTP doit contenir uniquement des chiffres'),
-    
+
   body('userId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -224,7 +222,7 @@ const validateGeneratePasswordResetOtp = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
+
   handleValidationErrors
 ];
 
@@ -239,21 +237,21 @@ const validateResetPasswordWithOtp = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
-  body('code')
+
+  body(['code', 'token'])
     .trim()
     .isLength({ min: 4, max: 10 })
     .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
     .isNumeric()
     .withMessage('Le code OTP doit contenir uniquement des chiffres'),
-    
+
   body('newPassword')
     .trim()
     .isLength({ min: 8 })
     .withMessage('Le mot de passe doit contenir au moins 8 caractères')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/)
     .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
-    
+
   handleValidationErrors
 ];
 
@@ -264,12 +262,12 @@ const validateInvalidateUserOtps = [
   param('userId')
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   body('type')
     .optional()
     .isIn(['email', 'phone'])
     .withMessage('Le type doit être email ou phone'),
-    
+
   handleValidationErrors
 ];
 
@@ -281,7 +279,7 @@ const validateChangePassword = [
     .trim()
     .isLength({ min: 1 })
     .withMessage('Le mot de passe actuel est requis'),
-    
+
   body('newPassword')
     .trim()
     .isLength({ min: 8 })
@@ -294,12 +292,12 @@ const validateChangePassword = [
       }
       return true;
     }),
-    
+
   body('userId')
     .optional()
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   handleValidationErrors
 ];
 
@@ -308,14 +306,21 @@ const validateChangePassword = [
  */
 const validateRegister = [
   body('first_name')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Le prénom est requis')
     .isLength({ min: 2, max: 50 })
     .withMessage('Le prénom doit contenir entre 2 et 50 caractères')
     .matches(/^[a-zA-ZÀ-ÿ\s'-]+$/)
     .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
-    
+
+  body('firstName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Le prénom doit contenir entre 2 et 50 caractères')
+    .matches(/^[a-zA-ZÀ-ÿ\s'-]+$/)
+    .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+
   body('last_name')
     .optional()
     .trim()
@@ -323,7 +328,17 @@ const validateRegister = [
     .withMessage('Le nom ne doit pas dépasser 50 caractères')
     .matches(/^[a-zA-ZÀ-ÿ\s'-]*$/)
     .withMessage('Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
-    
+
+  body('lastName')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Le nom ne doit pas dépasser 50 caractères')
+    .matches(/^[a-zA-ZÀ-ÿ\s'-]*$/)
+    .withMessage('Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+
+
+
   body('email')
     .trim()
     .isEmail()
@@ -331,7 +346,7 @@ const validateRegister = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
+
   body('phone')
     .optional()
     .trim()
@@ -339,20 +354,20 @@ const validateRegister = [
     .withMessage('Format de numéro de téléphone invalide')
     .isLength({ min: 10, max: 20 })
     .withMessage('Le numéro de téléphone doit contenir entre 10 et 20 caractères'),
-    
+
   body('password')
     .trim()
     .isLength({ min: 8 })
     .withMessage('Le mot de passe doit contenir au moins 8 caractères')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/)
     .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
-    
+
   body('username')
     .optional()
     .trim()
     .matches(/^[a-zA-Z0-9_]{3,20}$/)
     .withMessage('Le username doit contenir entre 3 et 20 caractères alphanumériques et underscores'),
-    
+
   body('userCode')
     .optional()
     .trim()
@@ -360,7 +375,7 @@ const validateRegister = [
     .withMessage('Le user code ne doit pas dépasser 50 caractères')
     .matches(/^[a-zA-Z0-9_-]+$/)
     .withMessage('Le user code ne peut contenir que des lettres, chiffres, tirets et underscores'),
-    
+
   handleValidationErrors
 ];
 
@@ -375,16 +390,25 @@ const validateVerifyEmail = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
+
   body('otpCode')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Le code OTP est requis')
     .isLength({ min: 4, max: 10 })
     .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
     .matches(/^[0-9]+$/)
     .withMessage('Le code OTP doit contenir uniquement des chiffres'),
-    
+
+  body('token')
+    .optional()
+    .trim()
+    .isLength({ min: 4, max: 10 })
+    .withMessage('Le token/code doit contenir entre 4 et 10 caractères')
+    .matches(/^[0-9]+$/)
+    .withMessage('Le token/code doit contenir uniquement des chiffres'),
+
+
+
   handleValidationErrors
 ];
 
@@ -399,7 +423,7 @@ const validateResendOtp = [
     .normalizeEmail()
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
-    
+
   handleValidationErrors
 ];
 
@@ -412,7 +436,7 @@ const validateEmailParam = [
     .isEmail()
     .withMessage('Format d\'email invalide')
     .normalizeEmail(),
-    
+
   handleValidationErrors
 ];
 
@@ -424,7 +448,7 @@ const validateUsernameParam = [
     .trim()
     .matches(/^[a-zA-Z0-9_]{3,20}$/)
     .withMessage('Format de username invalide'),
-    
+
   handleValidationErrors
 ];
 
@@ -435,12 +459,12 @@ const validateQueryParams = [
   param('userId')
     .isInt({ min: 1 })
     .withMessage('L\'ID utilisateur doit être un entier positif'),
-    
+
   query('type')
     .optional()
     .isIn(['email', 'phone'])
     .withMessage('Le type doit être email ou phone'),
-    
+
   handleValidationErrors
 ];
 

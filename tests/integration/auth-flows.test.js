@@ -7,6 +7,65 @@ describe('Authentication Flows E2E', () => {
   let authToken = null;
   let otpCode = null;
 
+  beforeAll(async () => {
+    // Initialiser l'application (services, database)
+    const bootstrap = require('../../src/bootstrap');
+    await bootstrap.initialize();
+
+    // Nettoyer les données de test existantes pour garantir l'idempotence des tests
+    const { connection } = require('../../src/config/database');
+    const testEmail = 'newuser@test.com';
+    const adminEmail = 'admin@eventplanner.com';
+
+    // 1. Nettoyer newuser@test.com
+    const personRes = await connection.query('SELECT id FROM people WHERE email = $1', [testEmail]);
+    if (personRes.rows.length > 0) {
+      const pId = personRes.rows[0].id;
+      await connection.query('DELETE FROM otps WHERE person_id = $1', [pId]);
+      await connection.query('DELETE FROM accesses WHERE user_id IN (SELECT id FROM users WHERE person_id = $1)', [pId]);
+      await connection.query('DELETE FROM users WHERE person_id = $1', [pId]);
+      await connection.query('DELETE FROM people WHERE id = $1', [pId]);
+    }
+
+    // 2. Garantir l'admin par défaut
+    const adminPersonRes = await connection.query('SELECT id FROM people WHERE email = $1', [adminEmail]);
+    let adminPId;
+    if (adminPersonRes.rows.length === 0) {
+      const res = await connection.query(`
+        INSERT INTO people (first_name, last_name, email, phone, status, created_at, updated_at)
+        VALUES ('Super', 'Administrateur', $1, '+33612345678', 'active', NOW(), NOW())
+        RETURNING id
+      `, [adminEmail]);
+      adminPId = res.rows[0].id;
+    } else {
+      adminPId = adminPersonRes.rows[0].id;
+    }
+
+    const adminUserRes = await connection.query('SELECT id FROM users WHERE person_id = $1', [adminPId]);
+    if (adminUserRes.rows.length === 0) {
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash('admin123', 12);
+      await connection.query(`
+        INSERT INTO users (person_id, user_code, username, email, password, status, email_verified_at, created_at, updated_at)
+        VALUES ($1, 'ADMIN_TEST', 'admin', $2, $3, 'active', NOW(), NOW(), NOW())
+      `, [adminPId, adminEmail, hashedPassword]);
+    }
+
+    // 3. Garantir le rôle admin
+    const adminRoleIdRes = await connection.query("SELECT id FROM roles WHERE code = 'super_admin'");
+    if (adminRoleIdRes.rows.length > 0) {
+      const adminRoleId = adminRoleIdRes.rows[0].id;
+      const adminUserFinal = await connection.query("SELECT id FROM users WHERE username = 'admin'");
+      if (adminUserFinal.rows.length > 0) {
+        await connection.query(`
+          INSERT INTO accesses (user_id, role_id, status, created_at, updated_at)
+          VALUES ($1, $2, 'active', NOW(), NOW())
+          ON CONFLICT DO NOTHING
+        `, [adminUserFinal.rows[0].id, adminRoleId]);
+      }
+    }
+  });
+
   describe('Registration Flow', () => {
     it('should check email availability', async () => {
       const response = await request(app)
@@ -196,9 +255,13 @@ describe('Authentication Flows E2E', () => {
         .send({
           email: 'admin@eventplanner.com',
           password: 'admin123'
-        })
-        .expect(200);
+        });
 
+      if (response.status !== 200) {
+        console.log('DEBUG ADMIN LOGIN FAILED:', JSON.stringify(response.body, null, 2));
+      }
+
+      expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.token).toBeDefined();
       expect(response.body.data.user.email).toBe('admin@eventplanner.com');

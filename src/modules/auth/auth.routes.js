@@ -14,31 +14,35 @@ const router = express.Router();
  */
 
 // Connexion classique avec email et mot de passe
-router.post('/login', 
+router.post('/login',
   authValidation.validateLogin,
   authController.login
 );
 
 // Connexion avec remember token
-router.post('/login-remember', 
+router.post('/login-remember',
   authValidation.validateLogin,
   authController.loginWithRememberToken
 );
 
 // Connexion avec OTP
-router.post('/login-otp', 
+router.post('/login-otp',
   authValidation.validateLoginWithOtp,
   authController.loginWithOtp
 );
 
 // Rafraîchissement de token
-router.post('/refresh-token', 
+router.post('/refresh-token',
+  authValidation.validateRefreshToken,
+  authController.refreshToken
+);
+router.post('/refresh',
   authValidation.validateRefreshToken,
   authController.refreshToken
 );
 
 // Validation de token
-router.post('/validate-token', 
+router.post('/validate-token',
   authValidation.validateToken,
   authController.validateToken
 );
@@ -49,37 +53,49 @@ router.post('/validate-token',
  */
 
 // Générer OTP pour email
-router.post('/otp/email/generate', 
+router.post('/otp/email/generate',
   authValidation.validateGenerateEmailOtp,
   authController.generateEmailOtp
 );
 
 // Générer OTP pour téléphone
-router.post('/otp/phone/generate', 
+router.post('/otp/phone/generate',
   authValidation.validateGeneratePhoneOtp,
   authController.generatePhoneOtp
 );
 
 // Vérifier OTP pour email
-router.post('/otp/email/verify', 
+router.post('/otp/email/verify',
   authValidation.validateVerifyEmailOtp,
   authController.verifyEmailOtp
 );
 
 // Vérifier OTP pour téléphone
-router.post('/otp/phone/verify', 
+router.post('/otp/phone/verify',
   authValidation.validateVerifyPhoneOtp,
   authController.verifyPhoneOtp
 );
 
 // Générer OTP pour réinitialisation de mot de passe
-router.post('/otp/password-reset/generate', 
+router.post('/otp/password-reset/generate',
+  authValidation.validateGeneratePasswordResetOtp,
+  authController.generatePasswordResetOtp
+);
+
+// Alias pour mot de passe oublié (selon AUTH_FLOWS.md)
+router.post('/forgot-password',
   authValidation.validateGeneratePasswordResetOtp,
   authController.generatePasswordResetOtp
 );
 
 // Réinitialiser le mot de passe avec OTP
-router.post('/otp/password-reset/verify', 
+router.post('/otp/password-reset/verify',
+  authValidation.validateResetPasswordWithOtp,
+  authController.resetPasswordWithOtp
+);
+
+// Alias pour réinitialisation de mot de passe (selon AUTH_FLOWS.md)
+router.post('/reset-password',
   authValidation.validateResetPasswordWithOtp,
   authController.resetPasswordWithOtp
 );
@@ -89,37 +105,37 @@ router.post('/otp/password-reset/verify',
  */
 
 // Inscription d'un nouvel utilisateur
-router.post('/register', 
+router.post('/register',
   authValidation.validateRegister,
   registrationController.register
 );
 
 // Vérification d'email avec OTP
-router.post('/verify-email', 
+router.post('/verify-email',
   authValidation.validateVerifyEmail,
   registrationController.verifyEmail
 );
 
 // Renvoi d'OTP
-router.post('/resend-otp', 
+router.post('/resend-otp',
   authValidation.validateResendOtp,
   registrationController.resendOTP
 );
 
 // Connexion après vérification
-router.post('/login-after-verification', 
+router.post('/login-after-verification',
   authValidation.validateLogin,
   registrationController.loginAfterVerification
 );
 
 // Vérification disponibilité email
-router.get('/check-email/:email', 
+router.get('/check-email/:email',
   authValidation.validateEmailParam,
   registrationController.checkEmailAvailability
 );
 
 // Vérification disponibilité username
-router.get('/check-username/:username', 
+router.get('/check-username/:username',
   authValidation.validateUsernameParam,
   registrationController.checkUsernameAvailability
 );
@@ -135,8 +151,17 @@ router.post('/logout', authController.logout);
 // Récupérer le profil utilisateur
 router.get('/profile', authController.getProfile);
 
+// Alias pour profil (selon AUTH_FLOWS.md)
+router.get('/me', authController.getProfile);
+
 // Changer le mot de passe
-router.post('/change-password', 
+router.post('/change-password',
+  authValidation.validateChangePassword,
+  authController.changePassword
+);
+
+// Version PUT pour changement de mot de passe (selon AUTH_FLOWS.md)
+router.put('/change-password',
   authValidation.validateChangePassword,
   authController.changePassword
 );
@@ -146,32 +171,32 @@ router.post('/change-password',
  */
 
 // Récupérer les OTP d'une personne
-router.get('/otp/person/:personId', 
+router.get('/otp/person/:personId',
   rbacMiddleware.requirePermission('otp.read'),
   authController.getUserOtps
 );
 
 // Invalider les OTP d'une personne
-router.post('/otp/person/:personId/invalidate', 
+router.post('/otp/person/:personId/invalidate',
   rbacMiddleware.requirePermission('otp.manage'),
   authValidation.validateInvalidateUserOtps,
   authController.invalidateUserOtps
 );
 
 // Vérifier si une personne a des OTP actifs
-router.get('/otp/person/:personId/active', 
+router.get('/otp/person/:personId/active',
   rbacMiddleware.requirePermission('otp.read'),
   authController.hasActiveOtp
 );
 
 // Nettoyer les OTP expirés (maintenance)
-router.post('/otp/cleanup', 
+router.post('/otp/cleanup',
   rbacMiddleware.requirePermission('otp.manage'),
   authController.cleanupExpiredOtps
 );
 
 // Statistiques sur les OTP
-router.get('/otp/stats', 
+router.get('/otp/stats',
   rbacMiddleware.requirePermission('otp.stats'),
   authController.getOtpStats
 );

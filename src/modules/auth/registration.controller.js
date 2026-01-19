@@ -16,12 +16,16 @@ class RegistrationController {
    */
   async register(req, res, next) {
     try {
-      const registrationData = req.body;
-      
+      const registrationData = {
+        first_name: req.body.first_name || req.body.firstName,
+        last_name: req.body.last_name || req.body.lastName,
+        ...req.body
+      };
+
       logger.info(`Tentative d'inscription: ${registrationData.email}`);
-      
+
       const result = await registrationService.register(registrationData);
-      
+
       res.status(201).json(createResponse(
         true,
         result.message,
@@ -42,12 +46,13 @@ class RegistrationController {
    */
   async verifyEmail(req, res, next) {
     try {
-      const { email, otpCode } = req.body;
-      
+      const { email, otpCode, token } = req.body;
+      const code = otpCode || token;
+
       logger.info(`Tentative de vérification email: ${email}`);
-      
-      const result = await registrationService.verifyEmail(email, otpCode);
-      
+
+      const result = await registrationService.verifyEmail(email, code);
+
       res.status(200).json(createResponse(
         true,
         result.message,
@@ -69,11 +74,11 @@ class RegistrationController {
   async resendOTP(req, res, next) {
     try {
       const { email } = req.body;
-      
+
       logger.info(`Demande de renvoi OTP: ${email}`);
-      
+
       const result = await registrationService.resendOTP(email);
-      
+
       res.status(200).json(createResponse(
         true,
         result.message,
@@ -95,12 +100,12 @@ class RegistrationController {
   async loginAfterVerification(req, res, next) {
     try {
       const { email, password } = req.body;
-      
+
       logger.info(`Tentative de connexion post-vérification: ${email}`);
-      
+
       // Utiliser le service d'authentification standard
       const result = await authService.authenticate(email, password);
-      
+
       res.status(200).json(createResponse(
         true,
         result.message,
@@ -122,13 +127,13 @@ class RegistrationController {
   async checkEmailAvailability(req, res, next) {
     try {
       const { email } = req.params;
-      
+
       const exists = await authService.userExists(email);
-      
+
       res.status(200).json(createResponse(
         true,
         'Disponibilité vérifiée',
-        { 
+        {
           email: email,
           available: !exists,
           message: exists ? 'Email déjà utilisé' : 'Email disponible'
@@ -150,13 +155,13 @@ class RegistrationController {
   async checkUsernameAvailability(req, res, next) {
     try {
       const { username } = req.params;
-      
+
       const available = await authService.isUsernameAvailable(username);
-      
+
       res.status(200).json(createResponse(
         true,
         'Disponibilité vérifiée',
-        { 
+        {
           username: username,
           available: available,
           message: available ? 'Username disponible' : 'Username déjà utilisé'

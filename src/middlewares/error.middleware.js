@@ -54,8 +54,8 @@ const errorHandler = (err, req, res, next) => {
   // Erreur par défaut
   res.status(500).json({
     error: 'Erreur interne du serveur',
-    message: env.NODE_ENV === 'development' ? err.message : 'Une erreur est survenue',
-    ...(env.NODE_ENV === 'development' && { stack: err.stack })
+    message: (env.NODE_ENV === 'development' || env.NODE_ENV === 'test') ? err.message : 'Une erreur est survenue',
+    ...((env.NODE_ENV === 'development' || env.NODE_ENV === 'test') && { stack: err.stack })
   });
 };
 
@@ -75,10 +75,13 @@ const asyncHandler = (fn) => {
 
 // Fonctions utilitaires
 const getStatusCodeFromError = (message) => {
-  if (message.includes('non trouvé') || message.includes('not found')) return 404;
-  if (message.includes('déjà') || message.includes('already') || message.includes('existe déjà')) return 409;
-  if (message.includes('autorisé') || message.includes('unauthorized') || message.includes('interdit')) return 403;
-  if (message.includes('requis') || message.includes('required') || message.includes('manquant')) return 400;
+  const lowercaseMessage = message.toLowerCase();
+  if (lowercaseMessage.includes('non trouvé') || lowercaseMessage.includes('not found')) return 404;
+  if (lowercaseMessage.includes('déjà') || lowercaseMessage.includes('already') || lowercaseMessage.includes('existe déjà')) return 409;
+  if (lowercaseMessage.includes('incorrect') || lowercaseMessage.includes('invalide') || lowercaseMessage.includes('invalid') || lowercaseMessage.includes('échec')) return 401;
+  if (lowercaseMessage.includes('autorisé') || lowercaseMessage.includes('unauthorized') || lowercaseMessage.includes('non autorisé')) return 401;
+  if (lowercaseMessage.includes('interdit') || lowercaseMessage.includes('forbidden') || lowercaseMessage.includes('accès refusé')) return 403;
+  if (lowercaseMessage.includes('requis') || lowercaseMessage.includes('required') || lowercaseMessage.includes('manquant')) return 400;
   return 500;
 };
 
@@ -92,7 +95,7 @@ const getErrorTypeFromError = (message) => {
 
 const getAvailableRoutes = (app) => {
   const routes = [];
-  
+
   app._router.stack.forEach((middleware) => {
     if (middleware.route) {
       // Routes directes

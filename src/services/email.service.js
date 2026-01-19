@@ -21,7 +21,7 @@ class EmailService {
   initialize() {
     try {
       const config = configValidation.getConfig();
-      
+
       // Vérifier si le service email est configuré
       if (!configValidation.isServiceConfigured('email')) {
         logger.warn('Email service not configured - using fallback');
@@ -71,7 +71,7 @@ class EmailService {
     try {
       if (!this.isConfigured) {
         // En développement, logger le code mais ne PAS retourner de succès
-        if (configValidation.getConfig().NODE_ENV === 'development') {
+        if (configValidation.getConfig().NODE_ENV === 'development' || configValidation.getConfig().NODE_ENV === 'test') {
           logger.warn('OTP email fallback - service not configured', {
             email,
             purpose,
@@ -80,7 +80,7 @@ class EmailService {
           console.log(`🔐 [DEV] OTP pour ${email}: ${otpCode} (purpose: ${purpose})`);
           return true; // En développement uniquement
         }
-        
+
         // En production, lever une erreur si le service n'est pas configuré
         throw new Error('Service email non configuré - impossible d\'envoyer l\'OTP');
       }
@@ -96,7 +96,7 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      
+
       logger.auth('OTP email sent successfully', {
         email,
         purpose,
@@ -112,7 +112,7 @@ class EmailService {
         error: error.message,
         ip: options.ip
       });
-      
+
       // NE PAS utiliser de fallback - lever l'erreur pour que l'API échoue
       throw new Error(`Échec d'envoi de l'OTP par email: ${error.message}`);
     }
@@ -142,7 +142,7 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      
+
       logger.info('Welcome email sent', {
         email,
         userId: user.id,
@@ -156,7 +156,7 @@ class EmailService {
         userId: user.id,
         error: error.message
       });
-      
+
       return this.fallbackWelcome(email, user);
     }
   }
@@ -185,7 +185,7 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      
+
       logger.security('Password reset email sent', {
         email,
         ip: options.ip,
@@ -199,7 +199,7 @@ class EmailService {
         error: error.message,
         ip: options.ip
       });
-      
+
       return this.fallbackPasswordReset(email, resetToken);
     }
   }
@@ -223,7 +223,7 @@ class EmailService {
     const expiresIn = options.expiresIn || 5;
 
     const subject = `Code de ${purposeText} - Event Planner`;
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -300,7 +300,7 @@ Ce code expire dans ${expiresIn} minutes.
    */
   generateWelcomeTemplate(user, options = {}) {
     const subject = 'Bienvenue sur Event Planner !';
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -371,7 +371,7 @@ Pour commencer, connectez-vous à votre espace.
   generatePasswordResetTemplate(email, resetToken, options = {}) {
     const resetUrl = options.resetUrl || `http://localhost:3000/reset-password?token=${resetToken}`;
     const subject = 'Réinitialisation de votre mot de passe';
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -456,12 +456,12 @@ Pour définir un nouveau mot de passe, visitez : ${resetUrl}
       purpose,
       otpCode: otpCode.substring(0, 3) + '***' // Masquer partiellement le code
     });
-    
+
     // En développement, on peut afficher le code dans les logs
     if (configValidation.getConfig().NODE_ENV === 'development') {
       console.log(`🔐 [FALLBACK] OTP pour ${email}: ${otpCode} (purpose: ${purpose})`);
     }
-    
+
     return true;
   }
 
@@ -476,7 +476,7 @@ Pour définir un nouveau mot de passe, visitez : ${resetUrl}
       email,
       userId: user.id
     });
-    
+
     return true;
   }
 
@@ -491,7 +491,7 @@ Pour définir un nouveau mot de passe, visitez : ${resetUrl}
       email,
       resetToken: resetToken.substring(0, 8) + '***'
     });
-    
+
     return true;
   }
 

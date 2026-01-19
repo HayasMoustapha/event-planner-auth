@@ -110,6 +110,9 @@ app.use((req, res, next) => {
     '/api/auth/otp/phone/verify',
     '/api/auth/otp/password-reset/generate',
     '/api/auth/otp/password-reset/verify',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/auth/refresh',
     '/api/auth/check-email',
     '/api/auth/check-username',
     '/api/auth/login',
@@ -122,7 +125,7 @@ app.use((req, res, next) => {
     '/',
     '/api/docs'
   ];
-  
+
   // Si c'est une route publique, appliquer une sécurité plus légère
   if (publicRoutes.some(route => req.path.startsWith(route))) {
     return securityMiddleware.security({
@@ -132,7 +135,7 @@ app.use((req, res, next) => {
       sanitizeInput: true
     })(req, res, next);
   }
-  
+
   // Pour les autres routes, appliquer la sécurité complète
   return securityMiddleware.security({
     enabled: true,
@@ -157,14 +160,19 @@ app.get('/', (req, res) => {
 });
 
 // Routes API
-app.use('/api/auth', 
-  securityMiddleware.bruteForceProtection({
-    identifier: 'email',
-    maxAttempts: 5,
-    windowMs: 900000, // 15 minutes
-    lockoutMs: 1800000  // 30 minutes
-  }), 
-  authLimiter, 
+app.use('/api/auth',
+  (req, res, next) => {
+    if (process.env.NODE_ENV === 'test') {
+      return next();
+    }
+    return securityMiddleware.bruteForceProtection({
+      identifier: 'email',
+      maxAttempts: 5,
+      windowMs: 900000, // 15 minutes
+      lockoutMs: 1800000  // 30 minutes
+    })(req, res, next);
+  },
+  authLimiter,
   authRoutes
 );
 // app.use('/api/auth', registrationRoutes);

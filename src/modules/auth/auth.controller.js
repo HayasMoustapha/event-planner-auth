@@ -24,9 +24,9 @@ class AuthController {
   async login(req, res, next) {
     try {
       const { email, password } = req.body;
-      
+
       const result = await authService.authenticate(email, password);
-      
+
       res.status(200).json(createResponse(
         true,
         result.message,
@@ -46,7 +46,7 @@ class AuthController {
   async logout(req, res, next) {
     try {
       const token = req.headers.authorization?.replace('Bearer ', '');
-      
+
       if (!token) {
         return res.status(401).json(createResponse(
           false,
@@ -54,9 +54,9 @@ class AuthController {
           { code: 'TOKEN_REQUIRED' }
         ));
       }
-      
+
       const result = await sessionService.logoutSession(token);
-      
+
       res.status(200).json(createResponse(
         true,
         result.message
@@ -75,7 +75,7 @@ class AuthController {
   async refreshToken(req, res, next) {
     try {
       const { refreshToken } = req.body;
-      
+
       if (!refreshToken) {
         return res.status(400).json(createResponse(
           false,
@@ -84,7 +84,7 @@ class AuthController {
       }
 
       const newToken = authService.refreshToken(refreshToken);
-      
+
       res.status(200).json(createResponse(
         true,
         'Token rafraîchi avec succès',
@@ -104,7 +104,7 @@ class AuthController {
   async generateEmailOtp(req, res, next) {
     try {
       const { email, personId, expiresInMinutes = 15 } = req.body;
-      
+
       if (!email && !personId) {
         return res.status(400).json(createResponse(
           false,
@@ -113,7 +113,7 @@ class AuthController {
       }
 
       let targetPersonId = personId;
-      
+
       // Si seul l'email est fourni, récupérer la personne
       if (!personId && email) {
         const peopleRepository = require('../people/people.repository');
@@ -135,18 +135,18 @@ class AuthController {
       });
 
       const otp = await otpService.generateEmailOtp(targetPersonId, email, expiresInMinutes, req.user?.id || null);
-      
+
       // Envoyer l'OTP par email
       try {
         const emailSent = await emailService.sendOTP(email, otp.code, 'login', {
           ip: req.ip,
           userAgent: req.get('User-Agent')
         });
-        
+
         if (!emailSent) {
           throw new Error('Échec d\'envoi de l\'email OTP');
         }
-        
+
         logger.auth('OTP email sent successfully', {
           email,
           personId: targetPersonId,
@@ -161,13 +161,13 @@ class AuthController {
           error: emailError.message,
           ip: req.ip
         });
-        
+
         // Supprimer l'OTP généré si l'envoi échoue
         await otpService.invalidateOtp(otp.id);
-        
+
         throw new Error(`Échec d'envoi de l'OTP par email: ${emailError.message}`);
       }
-      
+
       res.status(201).json(createResponse(
         true,
         'OTP généré avec succès',
@@ -191,7 +191,7 @@ class AuthController {
   async loginWithRememberToken(req, res, next) {
     try {
       const { token } = req.body;
-      
+
       if (!token) {
         return res.status(400).json(createResponse(
           false,
@@ -201,7 +201,7 @@ class AuthController {
       }
 
       const result = await authService.loginWithRememberToken(token);
-      
+
       res.status(200).json(createResponse(
         true,
         'Connexion réussie',
@@ -221,7 +221,7 @@ class AuthController {
   async generatePhoneOtp(req, res, next) {
     try {
       const { phone, personId, expiresInMinutes = 15 } = req.body;
-      
+
       if (!phone && !personId) {
         return res.status(400).json(createResponse(
           false,
@@ -230,7 +230,7 @@ class AuthController {
       }
 
       let targetPersonId = personId;
-      
+
       // Si seul le téléphone est fourni, récupérer la personne
       if (!personId && phone) {
         const peopleRepository = require('../people/people.repository');
@@ -245,7 +245,7 @@ class AuthController {
       }
 
       const otp = await otpService.generatePhoneOtp(targetPersonId, phone, expiresInMinutes, req.user?.id);
-      
+
       // TODO: Envoyer l'OTP par SMS (service SMS)
       logger.auth('OTP phone generated', {
         phone,
@@ -253,7 +253,7 @@ class AuthController {
         expiresInMinutes,
         ip: req.ip
       });
-      
+
       res.status(201).json(createResponse(
         true,
         'OTP généré avec succès',
@@ -277,7 +277,7 @@ class AuthController {
   async verifyEmailOtp(req, res, next) {
     try {
       const { email, code, personId } = req.body;
-      
+
       if (!email || !code) {
         return res.status(400).json(createResponse(
           false,
@@ -286,7 +286,7 @@ class AuthController {
       }
 
       const result = await otpService.verifyEmailOtp(code, email, personId);
-      
+
       res.status(200).json(createResponse(
         true,
         'OTP vérifié avec succès',
@@ -306,7 +306,7 @@ class AuthController {
   async verifyPhoneOtp(req, res, next) {
     try {
       const { phone, code, personId } = req.body;
-      
+
       if (!phone || !code) {
         return res.status(400).json(createResponse(
           false,
@@ -315,7 +315,7 @@ class AuthController {
       }
 
       const result = await otpService.verifyPhoneOtp(code, phone, personId);
-      
+
       res.status(200).json(createResponse(
         true,
         'OTP vérifié avec succès',
@@ -335,7 +335,7 @@ class AuthController {
   async loginWithOtp(req, res, next) {
     try {
       const { contactInfo, code, type = 'email' } = req.body;
-      
+
       if (!contactInfo || !code) {
         return res.status(400).json(createResponse(
           false,
@@ -345,17 +345,17 @@ class AuthController {
 
       // Vérifier l'OTP
       const otpResult = await otpService.verifyOtp(code, contactInfo, type);
-      
+
       // Récupérer l'utilisateur
       const usersRepository = require('../users/users.repository');
       let user;
-      
+
       if (type === 'email') {
         user = await usersRepository.findByEmail(contactInfo);
       } else if (type === 'phone') {
         user = await usersRepository.findByPhone(contactInfo);
       }
-      
+
       if (!user) {
         return res.status(404).json(createResponse(
           false,
@@ -412,7 +412,7 @@ class AuthController {
   async generatePasswordResetOtp(req, res, next) {
     try {
       const { email } = req.body;
-      
+
       if (!email) {
         return res.status(400).json(createResponse(
           false,
@@ -422,7 +422,7 @@ class AuthController {
 
       const peopleRepository = require('../people/people.repository');
       const person = await peopleRepository.findByEmail(email);
-      
+
       if (!person) {
         return res.status(404).json(createResponse(
           false,
@@ -431,19 +431,19 @@ class AuthController {
       }
 
       const otp = await otpService.generatePasswordResetOtp(person.id, email);
-      
+
       // Envoyer l'OTP par email
       await emailService.sendPasswordResetEmail(email, otp.code, {
         ip: req.ip,
         userAgent: req.get('User-Agent')
       });
-      
+
       logger.security('Password reset OTP generated', {
         email,
         personId: person.id,
         ip: req.ip
       });
-      
+
       res.status(201).json(createResponse(
         true,
         'OTP de réinitialisation généré avec succès',
@@ -465,9 +465,10 @@ class AuthController {
    */
   async resetPasswordWithOtp(req, res, next) {
     try {
-      const { email, code, newPassword } = req.body;
-      
-      if (!email || !code || !newPassword) {
+      const { email, code, token, newPassword } = req.body;
+      const otpCode = code || token;
+
+      if (!email || !otpCode || !newPassword) {
         return res.status(400).json(createResponse(
           false,
           'Email, code OTP et nouveau mot de passe requis'
@@ -477,7 +478,7 @@ class AuthController {
       // Récupérer la personne
       const peopleRepository = require('../people/people.repository');
       const person = await peopleRepository.findByEmail(email);
-      
+
       if (!person) {
         return res.status(404).json(createResponse(
           false,
@@ -486,12 +487,12 @@ class AuthController {
       }
 
       // Vérifier l'OTP de réinitialisation
-      const otpResult = await otpService.verifyPasswordResetOtp(code, email, person.id);
-      
+      const otpResult = await otpService.verifyPasswordResetOtp(otpCode, email, person.id);
+
       // Récupérer l'utilisateur associé
       const usersRepository = require('../users/users.repository');
       const user = await usersRepository.findByEmail(email);
-      
+
       if (!user) {
         return res.status(404).json(createResponse(
           false,
@@ -501,7 +502,7 @@ class AuthController {
 
       // Mettre à jour le mot de passe
       const updatedUser = await usersRepository.updatePassword(user.id, newPassword, user.id);
-      
+
       // Retourner l'utilisateur sans le mot de passe
       const userResponse = { ...updatedUser };
       delete userResponse.password;
@@ -529,7 +530,7 @@ class AuthController {
     try {
       const { personId } = req.params;
       const { type } = req.query;
-      
+
       if (!personId) {
         return res.status(400).json(createResponse(
           false,
@@ -538,7 +539,7 @@ class AuthController {
       }
 
       const otps = await otpService.getPersonOtps(parseInt(personId), type);
-      
+
       res.status(200).json(createResponse(
         true,
         'OTP récupérés avec succès',
@@ -559,7 +560,7 @@ class AuthController {
     try {
       const { personId } = req.params;
       const { type } = req.body;
-      
+
       if (!personId) {
         return res.status(400).json(createResponse(
           false,
@@ -568,7 +569,7 @@ class AuthController {
       }
 
       const invalidatedCount = await otpService.invalidatePersonOtps(parseInt(personId), type);
-      
+
       res.status(200).json(createResponse(
         true,
         `${invalidatedCount} OTP invalidés avec succès`,
@@ -589,7 +590,7 @@ class AuthController {
     try {
       const { userId } = req.params;
       const { type } = req.query;
-      
+
       if (!userId) {
         return res.status(400).json(createResponse(
           false,
@@ -598,7 +599,7 @@ class AuthController {
       }
 
       const hasActive = await otpService.hasActiveOtp(parseInt(userId), type);
-      
+
       res.status(200).json(createResponse(
         true,
         'Vérification des OTP actifs',
@@ -618,7 +619,7 @@ class AuthController {
   async cleanupExpiredOtps(req, res, next) {
     try {
       const deletedCount = await otpService.cleanupExpiredOtps();
-      
+
       res.status(200).json(createResponse(
         true,
         `${deletedCount} OTP expirés supprimés`,
@@ -638,7 +639,7 @@ class AuthController {
   async getOtpStats(req, res, next) {
     try {
       const stats = await otpService.getOtpStats();
-      
+
       res.status(200).json(createResponse(
         true,
         'Statistiques OTP récupérées avec succès',
@@ -659,7 +660,7 @@ class AuthController {
     try {
       const { currentPassword, newPassword } = req.body;
       const userId = req.user?.id || req.body.userId;
-      
+
       if (!userId || !currentPassword || !newPassword) {
         return res.status(400).json(createResponse(
           false,
@@ -668,7 +669,7 @@ class AuthController {
       }
 
       const result = await authService.changePassword(userId, currentPassword, newPassword, userId);
-      
+
       res.status(200).json(createResponse(
         true,
         result.message,
@@ -688,7 +689,7 @@ class AuthController {
   async validateToken(req, res, next) {
     try {
       const { token } = req.body;
-      
+
       if (!token) {
         return res.status(400).json(createResponse(
           false,
@@ -697,7 +698,7 @@ class AuthController {
       }
 
       const result = authService.validateToken(token);
-      
+
       res.status(200).json(createResponse(
         true,
         'Validation du token',
@@ -717,7 +718,7 @@ class AuthController {
   async getProfile(req, res, next) {
     try {
       const userId = req.user?.id;
-      
+
       if (!userId) {
         return res.status(401).json(createResponse(
           false,
@@ -727,7 +728,7 @@ class AuthController {
 
       const usersRepository = require('../users/users.repository');
       const user = await usersRepository.findById(userId);
-      
+
       if (!user) {
         return res.status(404).json(createResponse(
           false,
