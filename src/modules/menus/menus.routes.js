@@ -16,6 +16,12 @@ router.use(authMiddleware.authenticate);
  * Routes de lecture - accessibles aux utilisateurs authentifiés
  */
 
+// Récupérer les statistiques des menus (doit être avant /:id)
+router.get('/stats', 
+  rbacMiddleware.requirePermission('menus.view_stats'),
+  menuController.getMenuStats
+);
+
 // Récupérer tous les menus avec pagination et filtres
 router.get('/', 
   menuValidation.validateGetMenus,
@@ -118,6 +124,11 @@ router.delete('/:id/permissions',
  */
 
 // Récupérer les statistiques des menus
+router.get('/stats', 
+  rbacMiddleware.requirePermission('menus.view_stats'),
+  menuController.getMenuStats
+);
+
 router.get('/admin/stats', 
   rbacMiddleware.requirePermission('menus.view_stats'),
   menuController.getMenuStats

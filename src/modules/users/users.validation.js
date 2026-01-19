@@ -74,7 +74,7 @@ const validateCreate = [
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
 
-  body('userCode')
+  body('user_code')
     .trim()
     .notEmpty()
     .withMessage('Le code utilisateur est requis')
@@ -87,6 +87,18 @@ const validateCreate = [
     .trim()
     .matches(/^[+]?[\d\s\-\(\)]+$/)
     .withMessage('Format de numéro de téléphone invalide'),
+
+  body('firstName')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Le prénom doit contenir entre 1 et 50 caractères'),
+
+  body('lastName')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Le nom doit contenir entre 1 et 50 caractères'),
 
   body('status')
     .optional()

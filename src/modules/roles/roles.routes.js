@@ -16,6 +16,12 @@ router.use(authMiddleware.authenticate);
  * Routes de lecture - accessibles aux utilisateurs authentifiés
  */
 
+// Récupérer les statistiques des rôles (doit être avant /:id)
+router.get('/stats', 
+  rbacMiddleware.requirePermission('roles.view_stats'),
+  roleController.getRoleStats
+);
+
 // Récupérer tous les rôles avec pagination et filtres
 router.get('/', 
   roleValidation.validateGetRoles,
@@ -114,6 +120,11 @@ router.delete('/:id/permissions',
  */
 
 // Récupérer les statistiques des rôles
+router.get('/stats', 
+  rbacMiddleware.requirePermission('roles.view_stats'),
+  roleController.getRoleStats
+);
+
 router.get('/admin/stats', 
   rbacMiddleware.requirePermission('roles.view_stats'),
   roleController.getRoleStats

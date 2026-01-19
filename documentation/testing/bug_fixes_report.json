@@ -1,0 +1,72 @@
+{
+  "summary": {
+    "total_fixes": 5,
+    "successful_fixes": 3,
+    "failed_fixes": 2,
+    "success_rate": 60.0
+  },
+  "fixes_applied": [
+    {
+      "fix": "cache_invalidation",
+      "description": "Cache Redis vidé",
+      "success": true
+    },
+    {
+      "fix": "super_admin_permissions",
+      "description": "Permissions Super Admin vérifiées/corrigées",
+      "success": true
+    },
+    {
+      "fix": "route_paths_verification",
+      "description": "Vérification des chemins: 8/12 fonctionnels (66.7%)",
+      "success": false,
+      "working_routes": [
+        "GET users",
+        "GET users/stats",
+        "GET people",
+        "GET people/stats",
+        "GET roles",
+        "GET permissions",
+        "GET menus",
+        "GET sessions/current"
+      ],
+      "failing_routes": [
+        {
+          "method": "GET",
+          "path": "roles/stats",
+          "status": 400,
+          "error": "{\"success\":false,\"message\":\"Erreur de validation\",\"errors\":[{\"message\":\"L'ID du rôle doit être un entier positif\",\"value\":\"stats\"}],\"timestamp\":\"2026-01-19T12:02:20.279Z\"}"
+        },
+        {
+          "method": "GET",
+          "path": "permissions/stats",
+          "status": 400,
+          "error": "{\"success\":false,\"message\":\"Erreur de validation\",\"errors\":[{\"message\":\"L'ID de la permission doit être un entier positif\",\"value\":\"stats\"}],\"timestamp\":\"2026-01-19T12:02:20.334Z\"}"
+        },
+        {
+          "method": "GET",
+          "path": "menus/stats",
+          "status": 400,
+          "error": "{\"success\":false,\"message\":\"Erreur de validation\",\"errors\":[{\"message\":\"L'ID du menu doit être un entier positif\",\"value\":\"stats\"}],\"timestamp\":\"2026-01-19T12:02:20.386Z\"}"
+        },
+        {
+          "method": "GET",
+          "path": "sessions/stats",
+          "status": 500,
+          "error": "{\"success\":false,\"error\":\"Erreur\",\"message\":\"sessionRepository.getStats is not a function\"}"
+        }
+      ]
+    },
+    {
+      "fix": "crud_operations",
+      "description": "Opérations CRUD: Échec création",
+      "success": false
+    },
+    {
+      "fix": "validation_errors",
+      "description": "Validation: correcte (status 400)",
+      "success": true
+    }
+  ],
+  "timestamp": "2026-01-19T13:02:22.007745"
+}

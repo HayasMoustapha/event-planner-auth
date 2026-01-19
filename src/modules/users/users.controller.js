@@ -125,7 +125,13 @@ class UsersController {
    */
   async create(req, res, next) {
     try {
-      const userData = req.body;
+      let userData = req.body;
+      
+      // Convertir user_code en userCode pour le service
+      if (userData.user_code && !userData.userCode) {
+        userData.userCode = userData.user_code;
+        delete userData.user_code;
+      }
       
       // Récupérer l'ID de l'utilisateur authentifié si disponible
       const createdBy = req.user?.id || null;

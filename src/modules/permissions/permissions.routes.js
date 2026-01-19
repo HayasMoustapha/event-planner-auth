@@ -16,6 +16,12 @@ router.use(authMiddleware.authenticate);
  * Routes de lecture - accessibles aux utilisateurs authentifiés
  */
 
+// Récupérer les statistiques des permissions (doit être avant /:id)
+router.get('/stats', 
+  rbacMiddleware.requirePermission('permissions.view_stats'),
+  permissionController.getPermissionStats
+);
+
 // Récupérer toutes les permissions avec pagination et filtres
 router.get('/', 
   permissionValidation.validateGetPermissions,
@@ -106,6 +112,11 @@ router.post('/check/all',
  */
 
 // Récupérer les statistiques des permissions
+router.get('/stats', 
+  rbacMiddleware.requirePermission('permissions.view_stats'),
+  permissionController.getPermissionStats
+);
+
 router.get('/admin/stats', 
   rbacMiddleware.requirePermission('permissions.view_stats'),
   permissionController.getPermissionStats

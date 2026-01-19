@@ -111,7 +111,9 @@ class UsersService {
       userCode = null,
       phone = null,
       status = 'active',
-      personId = null
+      personId = null,
+      firstName = null,
+      lastName = null
     } = userData;
 
     // Validation des champs obligatoires
@@ -126,6 +128,43 @@ class UsersService {
     }
     if (!userCode || !userCode.trim()) {
       throw new Error('Le userCode est obligatoire');
+    }
+
+    // Créer une personne si personId n'est pas fourni
+    let finalPersonId = personId;
+    if (!finalPersonId) {
+      try {
+        const peopleRepository = require('../people/people.repository');
+        // Créer une personne par défaut avec les données disponibles
+        const defaultFirstName = firstName || 'Utilisateur';
+        const defaultLastName = lastName || 'Anonyme';
+        const defaultEmail = email || `user_${Date.now()}@system.local`; // Email par défaut
+        
+        const person = await peopleRepository.create({
+          firstName: defaultFirstName.trim(),
+          lastName: defaultLastName.trim(),
+          email: defaultEmail,
+          phone: phone || null,
+          createdBy
+        });
+        finalPersonId = person.id;
+      } catch (error) {
+        // Si la création de personne échoue, créer une personne minimale
+        console.warn('Création personne détaillée échouée, tentative minimale:', error.message);
+        try {
+          const peopleRepository = require('../people/people.repository');
+          const person = await peopleRepository.create({
+            firstName: 'Utilisateur',
+            lastName: 'System',
+            email: `system_${Date.now()}@default.local`,
+            phone: null,
+            createdBy
+          });
+          finalPersonId = person.id;
+        } catch (fallbackError) {
+          throw new Error('Impossible de créer une personne pour l\'utilisateur');
+        }
+      }
     }
 
     // Validation des formats
@@ -157,7 +196,7 @@ class UsersService {
       userCode: userCode.trim(),
       phone: phone ? phone.trim() : null,
       status,
-      personId,
+      personId: finalPersonId,  // Utiliser le personId final (créé ou fourni)
       createdBy
     };
 
