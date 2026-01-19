@@ -1,0 +1,65 @@
+{
+  "summary": {
+    "total": 5,
+    "successful": 0,
+    "failed": 5,
+    "successRate": 0
+  },
+  "tests": [
+    {
+      "name": "Base de données vide",
+      "success": false,
+      "duration": 5053,
+      "error": "database \"event_planner_auth\" is being accessed by other users",
+      "details": {}
+    },
+    {
+      "name": "Base de données partielle",
+      "success": false,
+      "duration": 5045,
+      "error": "database \"event_planner_auth\" is being accessed by other users",
+      "details": {}
+    },
+    {
+      "name": "Redémarrages multiples",
+      "success": false,
+      "duration": 5019,
+      "error": "database \"event_planner_auth\" is being accessed by other users",
+      "details": {}
+    },
+    {
+      "name": "Démarrage du serveur",
+      "success": false,
+      "duration": 5020,
+      "error": "database \"event_planner_auth\" is being accessed by other users",
+      "details": {}
+    },
+    {
+      "name": "Bootstraps concurrents",
+      "success": false,
+      "duration": 5024,
+      "error": "database \"event_planner_auth\" is being accessed by other users",
+      "details": {}
+    }
+  ],
+  "finalDatabaseState": {
+    "tables": [
+      "accesses",
+      "authorizations",
+      "menus",
+      "otps",
+      "password_histories",
+      "password_reset_tokens",
+      "people",
+      "permissions",
+      "personal_access_tokens",
+      "roles",
+      "schema_migrations",
+      "sessions",
+      "users"
+    ],
+    "tableCount": 13,
+    "adminExists": true,
+    "migrations": "1"
+  }
+}

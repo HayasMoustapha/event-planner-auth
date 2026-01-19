@@ -45,11 +45,11 @@ CREATE INDEX IF NOT EXISTS idx_personal_access_tokens_revoked_at
 -- Contraintes
 -- ========================================
 
--- Contrainte pour éviter les doublons de tokens actifs
+-- Contrainte pour éviter les doublons de tokens actifs (IDEMPOTENT - Simplifiée)
 ALTER TABLE personal_access_tokens 
-ADD CONSTRAINT unique_active_token 
-EXCLUDE (token WITH =) 
-WHERE (is_active = TRUE AND expires_at > CURRENT_TIMESTAMP);
+DROP CONSTRAINT IF EXISTS unique_active_token;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_personal_access_tokens_active_token 
+    ON personal_access_tokens(token);
 
 -- Trigger pour mettre à jour le champ updated_at
 -- ========================================

@@ -69,20 +69,21 @@ CREATE INDEX IF NOT EXISTS idx_token_blacklist_expires_at
 -- Contraintes et triggers
 -- ========================================
 
--- Contrainte pour éviter les doublons d'access token actifs
-ALTER TABLE user_sessions ADD CONSTRAINT unique_active_access_token 
-    EXCLUDE (access_token WITH =) 
-    WHERE (is_active = TRUE AND expires_at > CURRENT_TIMESTAMP);
+-- Contraintes pour éviter les doublons (IDEMPOTENT - Simplifiées)
+-- Note: EXCLUDE constraints with CURRENT_TIMESTAMP are problematic, using basic indexes instead
+ALTER TABLE user_sessions DROP CONSTRAINT IF EXISTS unique_active_access_token;
+ALTER TABLE user_sessions DROP CONSTRAINT IF EXISTS unique_active_refresh_token;
+ALTER TABLE token_blacklist DROP CONSTRAINT IF EXISTS unique_blacklisted_token;
 
--- Contrainte pour éviter les doublons de refresh token actifs
-ALTER TABLE user_sessions ADD CONSTRAINT unique_active_refresh_token 
-    EXCLUDE (refresh_token WITH =) 
-    WHERE (is_active = TRUE AND expires_at > CURRENT_TIMESTAMP);
+-- Index uniques pour remplacer les contraintes EXCLUDE
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_sessions_active_access_token 
+    ON user_sessions(access_token);
 
--- Contrainte pour éviter les doublons dans le blacklist
-ALTER TABLE token_blacklist ADD CONSTRAINT unique_blacklisted_token 
-    EXCLUDE (token WITH =) 
-    WHERE (expires_at > CURRENT_TIMESTAMP);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_sessions_active_refresh_token 
+    ON user_sessions(refresh_token);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_token_blacklist_active_token 
+    ON token_blacklist(token);
 
 -- Trigger pour mettre à jour le champ updated_at des sessions
 CREATE OR REPLACE FUNCTION update_user_sessions_updated_at()
@@ -104,13 +105,13 @@ CREATE TRIGGER trigger_update_user_sessions_updated_at
 
 COMMENT ON TABLE user_sessions IS 'Table des sessions utilisateur avec gestion des tokens JWT';
 COMMENT ON COLUMN user_sessions.id IS 'Identifiant unique de la session';
-COMMENT ON COLUMN user_sessions.user_id IS 'ID de l\'utilisateur propriétaire de la session';
-COMMENT ON COLUMN user_sessions.access_token IS 'Token d\'accès JWT';
+COMMENT ON COLUMN user_sessions.user_id IS 'ID de l''utilisateur propriétaire de la session';
+COMMENT ON COLUMN user_sessions.access_token IS 'Token d''accès JWT';
 COMMENT ON COLUMN user_sessions.refresh_token IS 'Token de rafraîchissement JWT';
-COMMENT ON COLUMN user_sessions.device_info IS 'Informations sur l\'appareil utilisé';
+COMMENT ON COLUMN user_sessions.device_info IS 'Informations sur l''appareil utilisé';
 COMMENT ON COLUMN user_sessions.ip_address IS 'Adresse IP de la connexion';
 COMMENT ON COLUMN user_sessions.user_agent IS 'User agent du navigateur/client';
-COMMENT ON COLUMN user_sessions.expires_at IS 'Date et heure d\'expiration de la session';
+COMMENT ON COLUMN user_sessions.expires_at IS 'Date et heure d''expiration de la session';
 COMMENT ON COLUMN user_sessions.is_active IS 'Indique si la session est active';
 COMMENT ON COLUMN user_sessions.created_at IS 'Date et heure de création de la session';
 COMMENT ON COLUMN user_sessions.updated_at IS 'Date et heure de dernière mise à jour';
@@ -118,9 +119,9 @@ COMMENT ON COLUMN user_sessions.updated_at IS 'Date et heure de dernière mise �
 COMMENT ON TABLE token_blacklist IS 'Table des tokens révoqués/blacklistés';
 COMMENT ON COLUMN token_blacklist.id IS 'Identifiant unique du token blacklisté';
 COMMENT ON COLUMN token_blacklist.token IS 'Token révoqué';
-COMMENT ON COLUMN token_blacklist.user_id IS 'ID de l\'utilisateur concerné';
+COMMENT ON COLUMN token_blacklist.user_id IS 'ID de l''utilisateur concerné';
 COMMENT ON COLUMN token_blacklist.reason IS 'Raison de la révocation';
-COMMENT ON COLUMN token_blacklist.expires_at IS 'Date et heure d\'expiration du blacklist';
+COMMENT ON COLUMN token_blacklist.expires_at IS 'Date et heure d''expiration du blacklist';
 COMMENT ON COLUMN token_blacklist.created_at IS 'Date et heure de création du blacklist';
 
 -- ========================================
@@ -194,9 +195,8 @@ CREATE OR REPLACE FUNCTION count_active_sessions(p_user_id INTEGER)
     $$ LANGUAGE plpgsql;
 
 -- ========================================
--- Vue pour les statistiques des sessions
--- ========================================
-
+-- Vue pour les statistiques des sessions (IDEMPOTENT)
+DROP VIEW IF EXISTS session_statistics;
 CREATE OR REPLACE VIEW session_statistics AS
 SELECT 
     COUNT(*) as total_sessions,
@@ -204,32 +204,31 @@ SELECT
     COUNT(CASE WHEN is_active = FALSE THEN 1 END) as inactive_sessions,
     COUNT(CASE WHEN expires_at < CURRENT_TIMESTAMP THEN 1 END) as expired_sessions,
     COUNT(CASE WHEN created_at > CURRENT_TIMESTAMP - INTERVAL '24 hours' THEN 1 END) as last_24h_sessions,
-    COUNT(CASE WHEN created_at > CURRENT_TIMESTAMP - INTERVAL '7 days' THEN 1 END) as last_7d_sessions,
-    DATE_TRUNC('day', created_at) as creation_date
+    COUNT(CASE WHEN created_at > CURRENT_TIMESTAMP - INTERVAL '7 days' THEN 1 END) as last_7d_sessions
 FROM user_sessions;
 
 -- ========================================
--- Vue pour les sessions actives avec informations utilisateur
--- ========================================
-
+-- Vue pour les sessions actives avec informations utilisateur (IDEMPOTENT)
+DROP VIEW IF EXISTS active_sessions_with_users;
 CREATE OR REPLACE VIEW active_sessions_with_users AS
 SELECT 
     us.id as session_id,
     us.user_id,
+    us.access_token,
     us.device_info,
     us.ip_address,
     us.user_agent,
     us.expires_at,
     us.created_at,
-    u.email,
-    u.username,
-    u.role,
-    u.status
+    p.first_name,
+    p.last_name,
+    p.email as user_email,
+    u.username
 FROM user_sessions us
-INNER JOIN users u ON us.user_id = u.id
+JOIN users u ON us.user_id = u.id
+JOIN people p ON u.person_id = p.id
 WHERE us.is_active = TRUE 
-    AND us.expires_at > CURRENT_TIMESTAMP
-ORDER BY us.created_at DESC;
+    AND us.expires_at > CURRENT_TIMESTAMP;
 
 -- ========================================
 -- Exemples de requêtes

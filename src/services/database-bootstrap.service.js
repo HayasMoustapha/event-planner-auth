@@ -39,6 +39,8 @@ class DatabaseBootstrap {
    * @throws {Error} Si échec critique d'initialisation
    */
   async initialize() {
+    let lockAcquired = false;
+    
     try {
       // Vérification de sécurité : le bootstrap doit être explicitement activé
       if (process.env.DB_AUTO_BOOTSTRAP !== 'true') {
@@ -50,8 +52,9 @@ class DatabaseBootstrap {
       const startTime = Date.now();
       const actions = [];
 
-      // Phase 1: Connexion et verrouillage
+      // Phase 1: Connexion et verrouillage (avec garantie de libération)
       await this.acquireLock();
+      lockAcquired = true;
       actions.push('Verrouillage de la base de données');
 
       // Phase 2: Création de la table de contrôle
@@ -74,7 +77,9 @@ class DatabaseBootstrap {
       await this.ensureSuperAdminPermissions();
       actions.push('Garantie des permissions super-admin');
 
+      // Libération du verrou
       await this.releaseLock();
+      lockAcquired = false;
 
       const duration = Date.now() - startTime;
       console.log(`✅ Bootstrap terminé en ${duration}ms`);
@@ -89,7 +94,16 @@ class DatabaseBootstrap {
       };
 
     } catch (error) {
-      await this.releaseLock();
+      // GARANTIE: Libération du verrou même en cas d'erreur
+      if (lockAcquired) {
+        try {
+          await this.releaseLock();
+          console.log('🔓 Verrou libéré après erreur');
+        } catch (lockError) {
+          console.error('❌ Erreur lors de la libération du verrou:', lockError.message);
+        }
+      }
+      
       console.error('❌ Erreur lors du bootstrap:', error.message);
       throw error;
     }
@@ -141,113 +155,178 @@ class DatabaseBootstrap {
   }
 
   /**
-   * Applique les migrations en attente
+   * Applique les migrations en attente (TRANSACTION PAR MIGRATION)
    */
   async applyMigrations() {
-    const client = await connection.connect();
     const appliedMigrations = [];
-
-    try {
-      // Récupérer les fichiers de migration dans l'ordre
-      const migrationFiles = await this.getMigrationFiles();
+    
+    // Récupérer les fichiers de migration dans l'ordre
+    const migrationFiles = await this.getMigrationFiles();
+    
+    for (const file of migrationFiles) {
+      const migrationName = path.basename(file);
       
-      for (const file of migrationFiles) {
-        const migrationName = path.basename(file);
-        
-        // Vérifier si la migration est déjà appliquée
-        const isApplied = await this.isMigrationApplied(migrationName);
-        if (isApplied) {
-          console.log(`⏭️  Migration ${migrationName} déjà appliquée`);
-          continue;
-        }
-
-        // Appliquer la migration
-        const startTime = Date.now();
-        await client.query('BEGIN');
-        
-        try {
-          const migrationSql = await fs.readFile(file, 'utf8');
-          await client.query(migrationSql);
-          
-          // Calculer le checksum et enregistrer la migration
-          const stats = await fs.stat(file);
-          const checksum = await this.calculateFileChecksum(file);
-          
-          await client.query(`
-            INSERT INTO schema_migrations (migration_name, checksum, file_size, execution_time_ms)
-            VALUES ($1, $2, $3, $4)
-          `, [migrationName, checksum, stats.size, Date.now() - startTime]);
-          
-          await client.query('COMMIT');
-          appliedMigrations.push(migrationName);
-          console.log(`✅ Migration ${migrationName} appliquée`);
-          
-        } catch (error) {
-          await client.query('ROLLBACK');
-          throw new Error(`Erreur lors de la migration ${migrationName}: ${error.message}`);
-        }
+      // Vérifier si la migration est déjà appliquée
+      const isApplied = await this.isMigrationApplied(migrationName);
+      if (isApplied) {
+        console.log(`⏭️  Migration ${migrationName} déjà appliquée`);
+        continue;
       }
-    } finally {
-      client.release();
+
+      // Appliquer la migration avec sa propre transaction
+      const applied = await this.applySingleMigration(file, migrationName);
+      if (applied) {
+        appliedMigrations.push(migrationName);
+      }
     }
 
     return appliedMigrations;
   }
 
   /**
-   * Exécute les seeds si la base vient d'être initialisée
+   * Applique une seule migration dans sa propre transaction
    */
-  async executeSeeds() {
-    // Vérifier si c'est la première initialisation
-    const isFirstInit = await this.isFirstInitialization();
-    if (!isFirstInit) {
-      console.log('⏭️  Seeds non nécessaires (base déjà initialisée)');
-      return [];
-    }
-
+  async applySingleMigration(file, migrationName) {
     const client = await connection.connect();
-    const executedSeeds = [];
-
+    const startTime = Date.now();
+    
     try {
-      // Ordre strict d'exécution des seeds
-      const seedOrder = [
-        'roles.seed.sql',
-        'permissions.seed.sql', 
-        'menus.seed.sql',
-        'admin.seed.sql'
-      ];
-
-      for (const seedFile of seedOrder) {
-        const seedPath = path.join(this.seedsPath, 'seeds', seedFile);
-        
-        try {
-          await fs.access(seedPath);
-        } catch {
-          console.warn(`⚠️  Fichier seed non trouvé: ${seedFile}`);
-          continue;
-        }
-
-        const startTime = Date.now();
-        await client.query('BEGIN');
-        
-        try {
-          const seedSql = await fs.readFile(seedPath, 'utf8');
-          await client.query(seedSql);
-          await client.query('COMMIT');
-          
-          executedSeeds.push(seedFile);
-          console.log(`✅ Seed ${seedFile} exécuté`);
-          
-        } catch (error) {
-          await client.query('ROLLBACK');
-          throw new Error(`Erreur lors du seed ${seedFile}: ${error.message}`);
-        }
-      }
+      console.log(`🔄 Début de la migration ${migrationName}...`);
+      await client.query('BEGIN');
+      
+      const migrationSql = await fs.readFile(file, 'utf8');
+      console.log(`📝 Fichier ${migrationName} lu (${migrationSql.length} caractères)`);
+      
+      await client.query(migrationSql);
+      console.log(`⚡ SQL exécuté pour ${migrationName}`);
+      
+      // Calculer le checksum et enregistrer la migration
+      const stats = await fs.stat(file);
+      const checksum = await this.calculateFileChecksum(file);
+      
+      await client.query(`
+        INSERT INTO schema_migrations (migration_name, checksum, file_size, execution_time_ms)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (migration_name) DO NOTHING
+      `, [migrationName, checksum, stats.size, Date.now() - startTime]);
+      
+      await client.query('COMMIT');
+      const duration = Date.now() - startTime;
+      console.log(`✅ Migration ${migrationName} appliquée en ${duration}ms`);
+      return true;
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error(`❌ Erreur lors de la migration ${migrationName}:`, error.message);
+      console.error(`🔍 Détails: Fichier=${file}, Durée=${Date.now() - startTime}ms`);
+      throw new Error(`Erreur lors de la migration ${migrationName}: ${error.message}`);
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * Exécute les seeds si nécessaire (TRANSACTION PAR SEED)
+   */
+  async executeSeeds() {
+    // Vérifier si les données de base sont complètes
+    const needsSeeds = await this.needsSeeds();
+    if (!needsSeeds) {
+      console.log('⏭️  Seeds non nécessaires (données déjà présentes)');
+      return [];
+    }
+
+    const executedSeeds = [];
+    
+    // Ordre strict d'exécution des seeds
+    const seedOrder = [
+      'roles.seed.sql',
+      'permissions.seed.sql', 
+      'menus.seed.sql',
+      'admin.seed.sql'
+    ];
+
+    for (const seedFile of seedOrder) {
+      const seedPath = path.join(this.seedsPath, 'seeds', seedFile);
+      
+      try {
+        await fs.access(seedPath);
+      } catch {
+        console.warn(`⚠️  Fichier seed non trouvé: ${seedFile}`);
+        continue;
+      }
+
+      // Exécuter chaque seed dans sa propre transaction
+      const executed = await this.executeSingleSeed(seedPath, seedFile);
+      if (executed) {
+        executedSeeds.push(seedFile);
+      }
+    }
 
     return executedSeeds;
+  }
+
+  /**
+   * Détermine si les seeds sont nécessaires
+   */
+  async needsSeeds() {
+    const client = await connection.connect();
+    try {
+      // Vérifier si les rôles de base existent
+      const rolesResult = await client.query(`
+        SELECT COUNT(*) as count FROM roles 
+        WHERE code IN ('super_admin', 'admin', 'user')
+      `);
+      
+      const rolesCount = parseInt(rolesResult.rows[0].count);
+      
+      // Vérifier si l'admin par défaut existe
+      const adminResult = await client.query(`
+        SELECT COUNT(*) as count FROM users u
+        JOIN people p ON u.person_id = p.id
+        WHERE u.username = 'admin'
+      `);
+      
+      const adminCount = parseInt(adminResult.rows[0].count);
+      
+      // Les seeds sont nécessaires si les rôles de base ou l'admin manquent
+      return rolesCount < 3 || adminCount === 0;
+      
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Exécute un seul seed dans sa propre transaction
+   */
+  async executeSingleSeed(seedPath, seedFile) {
+    const client = await connection.connect();
+    const startTime = Date.now();
+    
+    try {
+      console.log(`🌱 Début du seed ${seedFile}...`);
+      await client.query('BEGIN');
+      
+      const seedSql = await fs.readFile(seedPath, 'utf8');
+      console.log(`📝 Fichier seed ${seedFile} lu (${seedSql.length} caractères)`);
+      
+      await client.query(seedSql);
+      console.log(`⚡ SQL exécuté pour ${seedFile}`);
+      
+      await client.query('COMMIT');
+      const duration = Date.now() - startTime;
+      console.log(`✅ Seed ${seedFile} exécuté en ${duration}ms`);
+      return true;
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error(`❌ Erreur lors du seed ${seedFile}:`, error.message);
+      console.error(`🔍 Détails: Fichier=${seedPath}, Durée=${Date.now() - startTime}ms`);
+      throw new Error(`Erreur lors du seed ${seedFile}: ${error.message}`);
+    } finally {
+      client.release();
+    }
   }
 
   /**

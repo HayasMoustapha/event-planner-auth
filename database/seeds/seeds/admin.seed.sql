@@ -5,7 +5,7 @@
 -- Compatible avec le schéma PostgreSQL actuel
 
 -- ========================================
--- 👤 CRÉATION DE LA PERSONNE ADMIN
+-- 👤 CRÉATION DE LA PERSONNE ADMIN (IDEMPOTENT)
 -- ========================================
 INSERT INTO people (
     first_name, 
@@ -23,10 +23,11 @@ INSERT INTO people (
     'active',
     NOW(), 
     NOW()
-) RETURNING id AS admin_person_id;
+) ON CONFLICT (email) DO NOTHING
+RETURNING id AS admin_person_id;
 
 -- ========================================
--- 👤 CRÉATION DE L'UTILISATEUR ADMIN
+-- 👤 CRÉATION DE L'UTILISATEUR ADMIN (IDEMPOTENT)
 -- ========================================
 INSERT INTO users (
     person_id,
@@ -48,10 +49,11 @@ INSERT INTO users (
     NOW(),
     NOW(),
     NOW()
-) RETURNING id AS admin_user_id;
+) ON CONFLICT (email) DO NOTHING
+RETURNING id AS admin_user_id;
 
 -- ========================================
--- 🔗 ASSOCIATION AU RÔLE SUPER_ADMIN
+-- 🔗 ASSOCIATION AU RÔLE SUPER_ADMIN (IDEMPOTENT)
 -- ========================================
 INSERT INTO accesses (
     user_id,
@@ -65,7 +67,7 @@ INSERT INTO accesses (
     'active',
     NOW(),
     NOW()
-);
+) ON CONFLICT (user_id, role_id) DO NOTHING;
 
 -- Afficher confirmation
 DO $$

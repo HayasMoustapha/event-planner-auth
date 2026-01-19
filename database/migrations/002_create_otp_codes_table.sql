@@ -45,12 +45,15 @@ CREATE INDEX IF NOT EXISTS idx_otp_codes_is_used
 -- Contraintes et triggers
 -- ========================================
 
--- Contrainte pour éviter les doublons d'OTP non utilisés pour le même utilisateur et type
-ALTER TABLE otp_codes ADD CONSTRAINT unique_active_otp_per_user_type 
-    EXCLUDE (user_id, type) 
-    WHERE (is_used = FALSE AND expires_at > CURRENT_TIMESTAMP);
+-- Contrainte pour éviter les doublons d'OTP non utilisés pour le même utilisateur et type (IDEMPOTENT)
+-- Simplified: Using basic index instead of partial index with CURRENT_TIMESTAMP
+ALTER TABLE otp_codes DROP CONSTRAINT IF EXISTS unique_active_otp_per_user_type;
+-- Note: Partial index with CURRENT_TIMESTAMP is problematic, using basic index instead
+CREATE INDEX IF NOT EXISTS idx_otp_codes_user_type_active 
+    ON otp_codes(user_id, type, is_used, expires_at);
 
--- Trigger pour mettre à jour le champ updated_at
+-- Trigger pour mettre à jour le champ updated_at (IDEMPOTENT)
+DROP TRIGGER IF EXISTS trigger_update_otp_codes_updated_at ON otp_codes;
 CREATE OR REPLACE FUNCTION update_otp_codes_updated_at()
     RETURNS TRIGGER AS $$
     BEGIN
@@ -58,7 +61,6 @@ CREATE OR REPLACE FUNCTION update_otp_codes_updated_at()
         RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
-
 CREATE TRIGGER trigger_update_otp_codes_updated_at
     BEFORE UPDATE ON otp_codes
     FOR EACH ROW
@@ -68,18 +70,18 @@ CREATE TRIGGER trigger_update_otp_codes_updated_at
 -- Commentaires sur la table
 -- ========================================
 
-COMMENT ON TABLE otp_codes IS 'Table des codes OTP pour l\'authentification à deux facteurs';
-COMMENT ON COLUMN otp_codes.id IS 'Identifiant unique de l\'OTP';
-COMMENT ON COLUMN otp_codes.user_id IS 'ID de l\'utilisateur concerné';
-COMMENT ON COLUMN otp_codes.type IS 'Type d\'OTP (email ou téléphone)';
+COMMENT ON TABLE otp_codes IS 'Table des codes OTP pour l''authentification à deux facteurs';
+COMMENT ON COLUMN otp_codes.id IS 'Identifiant unique de l''OTP';
+COMMENT ON COLUMN otp_codes.user_id IS 'ID de l''utilisateur concerné';
+COMMENT ON COLUMN otp_codes.type IS 'Type d''OTP (email ou téléphone)';
 COMMENT ON COLUMN otp_codes.identifier IS 'Email ou numéro de téléphone';
 COMMENT ON COLUMN otp_codes.code IS 'Code OTP à usage unique';
-COMMENT ON COLUMN otp_codes.expires_at IS 'Date et heure d\'expiration du code';
+COMMENT ON COLUMN otp_codes.expires_at IS 'Date et heure d''expiration du code';
 COMMENT ON COLUMN otp_codes.is_used IS 'Indique si le code a été utilisé';
-COMMENT ON COLUMN otp_codes.used_at IS 'Date et heure d\'utilisation du code';
-COMMENT ON COLUMN otp_codes.used_by IS 'ID de l\'utilisateur qui a utilisé le code';
+COMMENT ON COLUMN otp_codes.used_at IS 'Date et heure d''utilisation du code';
+COMMENT ON COLUMN otp_codes.used_by IS 'ID de l''utilisateur qui a utilisé le code';
 COMMENT ON COLUMN otp_codes.created_at IS 'Date et heure de création du code';
-COMMENT ON COLUMN otp_codes.created_by IS 'ID de l\'utilisateur qui a créé le code';
+COMMENT ON COLUMN otp_codes.created_by IS 'ID de l''utilisateur qui a créé le code';
 COMMENT ON COLUMN otp_codes.updated_at IS 'Date et heure de dernière mise à jour';
 
 -- ========================================
@@ -138,9 +140,8 @@ CREATE OR REPLACE FUNCTION invalidate_user_otp_codes(p_user_id INTEGER, p_type V
     $$ LANGUAGE plpgsql;
 
 -- ========================================
--- Vue pour les statistiques OTP
--- ========================================
-
+-- Vue pour les statistiques OTP (IDEMPOTENT)
+DROP VIEW IF EXISTS otp_statistics;
 CREATE OR REPLACE VIEW otp_statistics AS
 SELECT 
     COUNT(*) as total_otp,
@@ -148,8 +149,7 @@ SELECT
     COUNT(CASE WHEN is_used = FALSE AND expires_at > CURRENT_TIMESTAMP THEN 1 END) as active_otp,
     COUNT(CASE WHEN expires_at < CURRENT_TIMESTAMP THEN 1 END) as expired_otp,
     COUNT(CASE WHEN type = 'email' THEN 1 END) as email_otp,
-    COUNT(CASE WHEN type = 'phone' THEN 1 END) as phone_otp,
-    DATE_TRUNC('day', created_at) as creation_date
+    COUNT(CASE WHEN type = 'phone' THEN 1 END) as phone_otp
 FROM otp_codes;
 
 -- ========================================
