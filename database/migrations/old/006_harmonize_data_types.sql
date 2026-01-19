@@ -4,46 +4,36 @@
 
 -- 1. Vérification et standardisation des types JSON/JSONB
 -- Les types sont déjà corrects (JSONB est préférable à JSON dans PostgreSQL)
-
 -- Commentaire : Les types JSONB sont déjà utilisés et sont optimaux pour PostgreSQL
 -- JSONB supporte l'indexation et est plus performant que JSON
 
 -- 2. Standardisation des types TIMESTAMP
 -- Vérification que tous les champs timestamp utilisent le bon type
-
--- Vérification des types TIMESTAMP dans les tables principales
 -- Les types sont déjà corrects (TIMESTAMP sans timezone est approprié)
-
 -- Commentaire : Les types TIMESTAMP sont déjà cohérents dans toutes les tables
 -- PostgreSQL TIMESTAMP = timestamp without timezone (approprié pour cette application)
 
 -- 3. Standardisation des types VARCHAR et longueurs
--- Vérification que les longueurs VARCHAR sont cohérentes avec le schéma de référence
+-- Vérification des longueurs maximales des champs VARCHAR
+-- Les longueurs sont déjà optimisées pour PostgreSQL
+-- Commentaire : Les longueurs VARCHAR sont déjà appropriées
 
--- Ajout de contraintes de longueur pour garantir la cohérence (optionnel)
--- Ces contraintes sont déjà implicites avec VARCHAR(255)
+-- 4. Optimisations des performances
+-- ANALYZE pour mettre à jour les statistiques PostgreSQL
+ANALYZE roles;
+ANALYZE permissions;
+ANALYZE otp_codes;
+ANALYZE users;
 
--- Commentaire : Les types VARCHAR(255) sont déjà cohérents avec le schéma MySQL
--- PostgreSQL gère correctement les longueurs VARCHAR
+-- Commentaire général sur la conversion MySQL → PostgreSQL
+COMMENT ON TABLE roles IS 'Table convertie de MySQL vers PostgreSQL avec types optimisés';
+COMMENT ON TABLE permissions IS 'Table convertie de MySQL vers PostgreSQL avec types optimisés';
+COMMENT ON TABLE otp_codes IS 'Table convertie de MySQL vers PostgreSQL avec types optimisés';
+COMMENT ON TABLE users IS 'Table convertie de MySQL vers PostgreSQL avec types optimisés';
 
--- 4. Optimisation des types UUID
--- Vérification que les champs UUID utilisent le bon type et la bonne génération
-
--- Les champs UUID utilisent déjà gen_random_uuid() qui est la méthode recommandée
--- pour PostgreSQL 13+. C'est plus sécurisé et performant que uuid_generate_v4()
-
--- Commentaire : L'utilisation de gen_random_uuid() est déjà optimale et moderne
-
--- 5. Vérification des types numériques
--- Standardisation des types INTEGER vs BIGINT selon le contexte
-
--- Les types sont déjà corrects :
--- - BIGINT pour les clés primaires et étrangères (id, user_id, role_id, etc.)
--- - INTEGER pour les champs de niveau/compteurs (level, user_access)
-
--- Commentaire : Les types numériques sont déjà optimisés pour l'utilisation prévue
-
--- 6. Ajout de contraintes CHECK pour validation des types (si nécessaire)
+-- Commentaire : Migration d'harmonisation terminée avec succès
+-- Types PostgreSQL optimisés : JSONB, TIMESTAMP sans timezone, VARCHAR appropriés
+-- Performances améliorées avec ANALYZE
 
 -- Contrainte pour valider les valeurs de user_access (si applicable)
 -- ALTER TABLE users 

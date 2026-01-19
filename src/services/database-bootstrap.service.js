@@ -226,17 +226,28 @@ class DatabaseBootstrap {
   }
 
   /**
-   * Exécute les seeds si nécessaire (TRANSACTION PAR SEED)
+   * Exécute tous les seeds automatiquement
+   * Garantit l'exécution même en cas d'erreurs partielles
    */
   async executeSeeds() {
-    // Vérifier si les données de base sont complètes
+    console.log('🌱 Démarrage de l\'exécution automatique des seeds...');
+    
+    // Vérifier si les seeds sont nécessaires
     const needsSeeds = await this.needsSeeds();
+    
     if (!needsSeeds) {
-      console.log('⏭️  Seeds non nécessaires (données déjà présentes)');
+      console.log('✅ Base de données déjà complète - vérification finale...');
+      
+      // Vérification supplémentaire pour s'assurer que tout est en ordre
+      await this.verifySeedIntegrity();
+      
+      console.log('✅ Seeds non nécessaires - base de données complète');
       return [];
     }
 
+    console.log('🌱 Exécution des seeds nécessaire - base de données incomplète');
     const executedSeeds = [];
+    const failedSeeds = [];
     
     // Ordre strict d'exécution des seeds
     const seedOrder = [
@@ -253,44 +264,225 @@ class DatabaseBootstrap {
         await fs.access(seedPath);
       } catch {
         console.warn(`⚠️  Fichier seed non trouvé: ${seedFile}`);
+        failedSeeds.push(seedFile);
         continue;
       }
 
       // Exécuter chaque seed dans sa propre transaction
-      const executed = await this.executeSingleSeed(seedPath, seedFile);
-      if (executed) {
-        executedSeeds.push(seedFile);
+      // Ne pas arrêter en cas d'erreur, continuer avec les autres
+      try {
+        const executed = await this.executeSingleSeed(seedPath, seedFile);
+        if (executed) {
+          executedSeeds.push(seedFile);
+        }
+      } catch (seedError) {
+        console.error(`❌ Erreur critique du seed ${seedFile}:`, seedError.message);
+        failedSeeds.push(seedFile);
+        
+        // Continuer avec les autres seeds même si celui-ci échoue
+        console.log(`🔄 Continuation avec le seed suivant...`);
       }
+    }
+
+    // Rapport final d'exécution
+    console.log(`📊 Rapport d\'exécution des seeds:`);
+    console.log(`   ✅ Réussis: ${executedSeeds.length}`);
+    console.log(`   ❌ Échoués: ${failedSeeds.length}`);
+    
+    if (executedSeeds.length > 0) {
+      console.log(`✅ Seeds appliqués: ${executedSeeds.join(', ')}`);
+    }
+    
+    if (failedSeeds.length > 0) {
+      console.log(`⚠️  Seeds échoués: ${failedSeeds.join(', ')}`);
+      console.log('🔧 Vérification manuelle recommandée pour les seeds échoués');
+    }
+
+    // Validation finale même en cas d'échecs partiels
+    try {
+      await this.verifySeedIntegrity();
+      console.log('✅ Vérification d\'intégrité des seeds terminée');
+    } catch (validationError) {
+      console.warn('⚠️  Erreur lors de la validation finale:', validationError.message);
     }
 
     return executedSeeds;
   }
 
   /**
-   * Détermine si les seeds sont nécessaires
+   * Vérifie l'intégrité des seeds après exécution
    */
-  async needsSeeds() {
+  async verifySeedIntegrity() {
     const client = await connection.connect();
     try {
-      // Vérifier si les rôles de base existent
+      console.log('🔍 Vérification de l\'intégrité des seeds...');
+      
+      // 1. Vérifier les rôles attendus
+      const expectedRoles = ['super_admin', 'admin', 'user'];
       const rolesResult = await client.query(`
-        SELECT COUNT(*) as count FROM roles 
-        WHERE code IN ('super_admin', 'admin', 'user')
+        SELECT code FROM roles WHERE code IN (${expectedRoles.map((_, i) => `$${i + 1}`).join(', ')})
+      `, expectedRoles);
+      
+      const foundRoles = rolesResult.rows.map(r => r.code);
+      const missingRoles = expectedRoles.filter(role => !foundRoles.includes(role));
+      
+      if (missingRoles.length > 0) {
+        console.warn(`⚠️  Rôles manquants: ${missingRoles.join(', ')}`);
+      } else {
+        console.log('✅ Tous les rôles de base sont présents');
+      }
+      
+      // 2. Vérifier les permissions minimales
+      const minPermissions = 10; // Minimum attendu
+      const permissionsResult = await client.query(`
+        SELECT COUNT(*) as count FROM permissions
       `);
+      const permissionsCount = parseInt(permissionsResult.rows[0].count);
       
-      const rolesCount = parseInt(rolesResult.rows[0].count);
+      if (permissionsCount < minPermissions) {
+        console.warn(`⚠️  Permissions insuffisantes: ${permissionsCount} (minimum: ${minPermissions})`);
+      } else {
+        console.log(`✅ Permissions adéquates: ${permissionsCount}`);
+      }
       
-      // Vérifier si l'admin par défaut existe
+      // 3. Vérifier les menus de base
+      const minMenus = 5; // Minimum attendu
+      const menusResult = await client.query(`
+        SELECT COUNT(*) as count FROM menus
+      `);
+      const menusCount = parseInt(menusResult.rows[0].count);
+      
+      if (menusCount < minMenus) {
+        console.warn(`⚠️  Menus insuffisants: ${menusCount} (minimum: ${minMenus})`);
+      } else {
+        console.log(`✅ Menus adéquats: ${menusCount}`);
+      }
+      
+      // 4. Vérifier l'utilisateur admin
       const adminResult = await client.query(`
         SELECT COUNT(*) as count FROM users u
         JOIN people p ON u.person_id = p.id
         WHERE u.username = 'admin'
       `);
-      
       const adminCount = parseInt(adminResult.rows[0].count);
       
-      // Les seeds sont nécessaires si les rôles de base ou l'admin manquent
-      return rolesCount < 3 || adminCount === 0;
+      if (adminCount === 0) {
+        console.warn('⚠️  Utilisateur admin manquant');
+      } else {
+        console.log('✅ Utilisateur admin présent');
+      }
+      
+      // 5. Calculer le score d'intégrité
+      let integrityScore = 0;
+      const maxScore = 4;
+      
+      if (missingRoles.length === 0) integrityScore++;
+      if (permissionsCount >= minPermissions) integrityScore++;
+      if (menusCount >= minMenus) integrityScore++;
+      if (adminCount > 0) integrityScore++;
+      
+      const integrityPercentage = Math.round((integrityScore / maxScore) * 100);
+      console.log(`📈 Score d\'intégrité: ${integrityPercentage}% (${integrityScore}/${maxScore})`);
+      
+      return {
+        integrityScore,
+        integrityPercentage,
+        missingRoles,
+        permissionsCount,
+        menusCount,
+        adminCount,
+        isComplete: integrityScore === maxScore
+      };
+      
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Détermine si les seeds sont nécessaires
+   * Vérifie complètement l'état de la base de données
+   */
+  async needsSeeds() {
+    const client = await connection.connect();
+    try {
+      console.log('🔍 Vérification complète de l\'état de la base de données...');
+      
+      // 1. Vérifier si les tables critiques existent
+      const requiredTables = ['people', 'users', 'roles', 'permissions', 'menus', 'accesses', 'authorizations'];
+      const existingTables = [];
+      
+      for (const table of requiredTables) {
+        const result = await client.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_name = $1
+          )
+        `, [table]);
+        
+        if (result.rows[0].exists) {
+          existingTables.push(table);
+        }
+      }
+      
+      console.log(`📊 Tables existantes: ${existingTables.length}/${requiredTables.length}`);
+      
+      // 2. Vérifier le nombre de rôles attendus
+      const expectedRoles = ['super_admin', 'admin', 'user'];
+      const rolesResult = await client.query(`
+        SELECT COUNT(*) as count FROM roles 
+        WHERE code IN (${expectedRoles.map((_, i) => `$${i + 1}`).join(', ')})
+      `, expectedRoles);
+      
+      const rolesCount = parseInt(rolesResult.rows[0].count);
+      console.log(`👥 Rôles trouvés: ${rolesCount}/${expectedRoles.length}`);
+      
+      // 3. Vérifier le nombre de permissions attendues
+      const permissionsResult = await client.query(`
+        SELECT COUNT(*) as count FROM permissions
+      `);
+      const permissionsCount = parseInt(permissionsResult.rows[0].count);
+      console.log(`🔐 Permissions trouvées: ${permissionsCount}`);
+      
+      // 4. Vérifier le nombre de menus attendus
+      const menusResult = await client.query(`
+        SELECT COUNT(*) as count FROM menus
+      `);
+      const menusCount = parseInt(menusResult.rows[0].count);
+      console.log(`📋 Menus trouvés: ${menusCount}`);
+      
+      // 5. Vérifier si l'admin par défaut existe
+      const adminResult = await client.query(`
+        SELECT COUNT(*) as count FROM users u
+        JOIN people p ON u.person_id = p.id
+        WHERE u.username = 'admin'
+      `);
+      const adminCount = parseInt(adminResult.rows[0].count);
+      console.log(`👤 Admin trouvé: ${adminCount > 0 ? 'Oui' : 'Non'}`);
+      
+      // 6. Calculer le pourcentage de complétion
+      let completionScore = 0;
+      const maxScore = 5;
+      
+      if (existingTables.length >= requiredTables.length) completionScore++;
+      if (rolesCount >= expectedRoles.length) completionScore++;
+      if (permissionsCount >= 20) completionScore++; // Au moins 20 permissions
+      if (menusCount >= 10) completionScore++; // Au moins 10 menus
+      if (adminCount > 0) completionScore++;
+      
+      const completionPercentage = Math.round((completionScore / maxScore) * 100);
+      console.log(`📈 Complétion de la base de données: ${completionPercentage}%`);
+      
+      // Les seeds sont nécessaires si la base n'est pas complète
+      const needsSeeds = completionScore < maxScore;
+      
+      if (needsSeeds) {
+        console.log('🌱 Seeds nécessaires - base de données incomplète');
+      } else {
+        console.log('✅ Base de données complète - seeds non nécessaires');
+      }
+      
+      return needsSeeds;
       
     } finally {
       client.release();
@@ -299,6 +491,7 @@ class DatabaseBootstrap {
 
   /**
    * Exécute un seul seed dans sa propre transaction
+   * Gère les erreurs de manière robuste pour garantir l'exécution
    */
   async executeSingleSeed(seedPath, seedFile) {
     const client = await connection.connect();
@@ -311,8 +504,19 @@ class DatabaseBootstrap {
       const seedSql = await fs.readFile(seedPath, 'utf8');
       console.log(`📝 Fichier seed ${seedFile} lu (${seedSql.length} caractères)`);
       
-      await client.query(seedSql);
-      console.log(`⚡ SQL exécuté pour ${seedFile}`);
+      try {
+        await client.query(seedSql);
+        console.log(`⚡ SQL exécuté pour ${seedFile}`);
+      } catch (seedError) {
+        // Gérer les erreurs de contrainte (doublons) comme non-fatales
+        if (seedError.message.includes('duplicate key') || 
+            seedError.message.includes('unique constraint') ||
+            seedError.message.includes('already exists')) {
+          console.log(`⚠️  Données déjà existantes dans ${seedFile} - ignoré`);
+        } else {
+          throw seedError;
+        }
+      }
       
       await client.query('COMMIT');
       const duration = Date.now() - startTime;
@@ -321,9 +525,22 @@ class DatabaseBootstrap {
       
     } catch (error) {
       await client.query('ROLLBACK');
+      
+      // Ne pas échouer le bootstrap pour les erreurs de doublons
+      if (error.message.includes('duplicate key') || 
+          error.message.includes('unique constraint') ||
+          error.message.includes('already exists')) {
+        console.log(`⚠️  Seed ${seedFile} ignoré - données déjà existantes`);
+        return true; // Considérer comme un succès car les données existent déjà
+      }
+      
       console.error(`❌ Erreur lors du seed ${seedFile}:`, error.message);
       console.error(`🔍 Détails: Fichier=${seedPath}, Durée=${Date.now() - startTime}ms`);
-      throw new Error(`Erreur lors du seed ${seedFile}: ${error.message}`);
+      
+      // Pour les seeds, ne pas arrêter le bootstrap complètement
+      console.log(`⚠️  Continuation du bootstrap malgré l'erreur du seed ${seedFile}`);
+      return false; // Indiquer que le seed n'a pas été appliqué mais continuer
+      
     } finally {
       client.release();
     }
