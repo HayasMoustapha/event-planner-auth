@@ -21,8 +21,10 @@ try {
 
 // Import des routes
 const authRoutes = require('./modules/auth/auth.routes');
+const registrationRoutes = require('./modules/auth/registration.routes');
 const peopleRoutes = require('./modules/people/people.routes');
 const usersRoutes = require('./modules/users/users.routes');
+const accessesRoutes = require('./modules/accesses/accesses.routes');
 const authorizationRoutes = require('./modules/authorizations/authorizations.routes');
 const menuRoutes = require('./modules/menus/menus.routes');
 const permissionRoutes = require('./modules/permissions/permissions.routes');
@@ -190,9 +192,10 @@ app.use('/api/auth',
   authLimiter,
   authRoutes
 );
-// app.use('/api/auth', registrationRoutes);
+app.use('/api/auth/registration', registrationRoutes);
 app.use('/api/people', peopleRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/accesses', accessesRoutes);
 app.use('/api/authorizations', authorizationRoutes);
 app.use('/api/menus', menuRoutes);
 app.use('/api/permissions', permissionRoutes);
@@ -220,8 +223,14 @@ app.get('/api/docs', (req, res) => {
     message: 'Documentation API',
     endpoints: {
       auth: '/api/auth',
+      registration: '/api/auth/registration',
       people: '/api/people',
       users: '/api/users',
+      accesses: '/api/accesses',
+      authorizations: '/api/authorizations',
+      menus: '/api/menus',
+      permissions: '/api/permissions',
+      roles: '/api/roles',
       sessions: '/api/sessions',
       sessionsMonitoring: '/api/sessions/monitoring',
       health: '/health',

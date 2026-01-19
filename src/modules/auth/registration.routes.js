@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const registrationController = require('./registration.controller');
 const { body, param } = require('express-validator');
-const validate = require('../../config/validation');
+const validate = require('../../middlewares/validation.middleware');
 
 /**
  * Routes pour l'inscription et la vérification des comptes

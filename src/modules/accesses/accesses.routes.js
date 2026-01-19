@@ -3,7 +3,7 @@ const router = express.Router();
 const accessesController = require('./accesses.controller');
 const accessesValidation = require('./accesses.validation');
 const { asyncAccessesErrorHandler } = require('./accesses.errorHandler');
-const rbacMiddleware = require('../../middleware/rbac.middleware');
+const rbacMiddleware = require('../../middlewares/rbac.middleware');
 
 // Middleware de gestion d'erreurs pour toutes les routes
 router.use(asyncAccessesErrorHandler);
