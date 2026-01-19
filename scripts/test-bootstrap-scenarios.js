@@ -206,12 +206,26 @@ class BootstrapTester {
   async createPartialSetup() {
     const client = await this.pool.connect();
     try {
-      // Créer seulement quelques tables
+      // Créer l'extension UUID nécessaire
+      await client.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
+      
+      // Créer seulement quelques tables avec le schéma exact attendu par la migration
       await client.query(`
         CREATE TABLE IF NOT EXISTS people (
           id BIGSERIAL PRIMARY KEY,
           first_name VARCHAR(255) NOT NULL,
-          email VARCHAR(255) UNIQUE
+          last_name VARCHAR(255),
+          phone VARCHAR(255) UNIQUE,
+          email VARCHAR(255) UNIQUE,
+          photo VARCHAR(255),
+          status VARCHAR(20) CHECK (status IN ('active', 'inactive')) NOT NULL DEFAULT 'active',
+          uid UUID NOT NULL DEFAULT gen_random_uuid(),
+          created_by BIGINT,
+          updated_by BIGINT,
+          deleted_by BIGINT,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          deleted_at TIMESTAMP
         )
       `);
       
