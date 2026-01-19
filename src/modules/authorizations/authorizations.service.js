@@ -555,6 +555,300 @@ class AuthorizationService {
     console.log(`🗑️ Cache des autorisations invalidé pour l'utilisateur ${userId}`);
     return true;
   }
+
+  /**
+   * Récupère toutes les autorisations avec pagination et filtres
+   * @param {Object} options - Options de recherche et pagination
+   * @returns {Promise<Object>} Autorisations et pagination
+   */
+  async getAllAuthorizations(options = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      search = null,
+      roleId = null,
+      permissionId = null,
+      menuId = null,
+      sortBy = 'created_at',
+      sortOrder = 'DESC'
+    } = options;
+
+    // Validation de la pagination
+    if (page < 1) {
+      throw new Error('Le numéro de page doit être supérieur à 0');
+    }
+
+    if (limit < 1 || limit > 100) {
+      throw new Error('La limite doit être entre 1 et 100');
+    }
+
+    return await authorizationRepository.findAll({
+      page,
+      limit,
+      search,
+      roleId,
+      permissionId,
+      menuId,
+      sortBy,
+      sortOrder
+    });
+  }
+
+  /**
+   * Récupère une autorisation par son ID
+   * @param {number} id - ID de l'autorisation
+   * @returns {Promise<Object|null>} Données de l'autorisation
+   */
+  async getAuthorizationById(id) {
+    if (!id || id <= 0) {
+      throw new Error('ID d\'autorisation invalide');
+    }
+
+    const authorization = await authorizationRepository.findById(id);
+    if (!authorization) {
+      throw new Error('Autorisation non trouvée');
+    }
+
+    return authorization;
+  }
+
+  /**
+   * Crée une nouvelle autorisation
+   * @param {Object} authorizationData - Données de l'autorisation
+   * @param {number} createdBy - ID de l'utilisateur qui crée
+   * @returns {Promise<Object>} Autorisation créée
+   */
+  async createAuthorization(authorizationData, createdBy = null) {
+    const {
+      roleId,
+      permissionId,
+      menuId
+    } = authorizationData;
+
+    // Validation des IDs
+    if (!roleId || roleId <= 0) {
+      throw new Error('ID de rôle invalide');
+    }
+
+    if (!permissionId || permissionId <= 0) {
+      throw new Error('ID de permission invalide');
+    }
+
+    if (!menuId || menuId <= 0) {
+      throw new Error('ID de menu invalide');
+    }
+
+    // Vérifier si le rôle existe
+    const roleExists = await roleRepository.findById(roleId);
+    if (!roleExists) {
+      throw new Error('Le rôle spécifié n\'existe pas');
+    }
+
+    // Vérifier si la permission existe
+    const permissionExists = await permissionRepository.findById(permissionId);
+    if (!permissionExists) {
+      throw new Error('La permission spécifiée n\'existe pas');
+    }
+
+    // Vérifier si le menu existe
+    const menuExists = await menuRepository.findById(menuId);
+    if (!menuExists) {
+      throw new Error('Le menu spécifié n\'existe pas');
+    }
+
+    // Vérifier si l'autorisation existe déjà
+    const existingAuthorization = await authorizationRepository.findByRolePermissionMenu(
+      roleId, permissionId, menuId
+    );
+    if (existingAuthorization) {
+      throw new Error('Cette autorisation existe déjà');
+    }
+
+    // Créer l'autorisation
+    return await authorizationRepository.create({
+      roleId,
+      permissionId,
+      menuId,
+      createdBy
+    });
+  }
+
+  /**
+   * Met à jour une autorisation
+   * @param {number} id - ID de l'autorisation
+   * @param {Object} updateData - Données de mise à jour
+   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
+   * @returns {Promise<Object>} Autorisation mise à jour
+   */
+  async updateAuthorization(id, updateData, updatedBy = null) {
+    if (!id || id <= 0) {
+      throw new Error('ID d\'autorisation invalide');
+    }
+
+    const {
+      roleId,
+      permissionId,
+      menuId
+    } = updateData;
+
+    // Vérifier si l'autorisation existe
+    const existingAuthorization = await authorizationRepository.findById(id);
+    if (!existingAuthorization) {
+      throw new Error('Autorisation non trouvée');
+    }
+
+    // Validation des nouvelles données
+    if (roleId && roleId <= 0) {
+      throw new Error('ID de rôle invalide');
+    }
+
+    if (permissionId && permissionId <= 0) {
+      throw new Error('ID de permission invalide');
+    }
+
+    if (menuId && menuId <= 0) {
+      throw new Error('ID de menu invalide');
+    }
+
+    // Vérifier l'existence des entités si elles sont spécifiées
+    if (roleId) {
+      const roleExists = await roleRepository.findById(roleId);
+      if (!roleExists) {
+        throw new Error('Le rôle spécifié n\'existe pas');
+      }
+    }
+
+    if (permissionId) {
+      const permissionExists = await permissionRepository.findById(permissionId);
+      if (!permissionExists) {
+        throw new Error('La permission spécifiée n\'existe pas');
+      }
+    }
+
+    if (menuId) {
+      const menuExists = await menuRepository.findById(menuId);
+      if (!menuExists) {
+        throw new Error('Le menu spécifié n\'existe pas');
+      }
+    }
+
+    // Vérifier l'unicité si les trois éléments sont spécifiés
+    if (roleId && permissionId && menuId) {
+      const duplicateAuthorization = await authorizationRepository.findByRolePermissionMenu(
+        roleId, permissionId, menuId
+      );
+      if (duplicateAuthorization && duplicateAuthorization.id !== id) {
+        throw new Error('Cette autorisation existe déjà');
+      }
+    }
+
+    // Mettre à jour l'autorisation
+    await authorizationRepository.update(id, {
+      roleId,
+      permissionId,
+      menuId,
+      updatedBy
+    });
+
+    // Retourner l'autorisation mise à jour
+    return await authorizationRepository.findById(id);
+  }
+
+  /**
+   * Supprime une autorisation (soft delete)
+   * @param {number} id - ID de l'autorisation
+   * @param {number} deletedBy - ID de l'utilisateur qui supprime
+   * @returns {Promise<boolean>} Succès de l'opération
+   */
+  async deleteAuthorization(id, deletedBy = null) {
+    if (!id || id <= 0) {
+      throw new Error('ID d\'autorisation invalide');
+    }
+
+    // Vérifier si l'autorisation existe
+    const existingAuthorization = await authorizationRepository.findById(id);
+    if (!existingAuthorization) {
+      throw new Error('Autorisation non trouvée');
+    }
+
+    return await authorizationRepository.softDelete(id, deletedBy);
+  }
+
+  /**
+   * Supprime définitivement une autorisation
+   * @param {number} id - ID de l'autorisation
+   * @returns {Promise<boolean>} Succès de l'opération
+   */
+  async hardDeleteAuthorization(id) {
+    if (!id || id <= 0) {
+      throw new Error('ID d\'autorisation invalide');
+    }
+
+    // Vérifier si l'autorisation existe
+    const existingAuthorization = await authorizationRepository.findById(id);
+    if (!existingAuthorization) {
+      throw new Error('Autorisation non trouvée');
+    }
+
+    return await authorizationRepository.delete(id);
+  }
+
+  /**
+   * Récupère les autorisations d'un rôle
+   * @param {number} roleId - ID du rôle
+   * @returns {Promise<Array>} Liste des autorisations du rôle
+   */
+  async getAuthorizationsByRole(roleId) {
+    if (!roleId || roleId <= 0) {
+      throw new Error('ID de rôle invalide');
+    }
+
+    // Vérifier si le rôle existe
+    const roleExists = await roleRepository.findById(roleId);
+    if (!roleExists) {
+      throw new Error('Le rôle spécifié n\'existe pas');
+    }
+
+    return await authorizationRepository.findByRoleId(roleId);
+  }
+
+  /**
+   * Récupère les autorisations d'une permission
+   * @param {number} permissionId - ID de la permission
+   * @returns {Promise<Array>} Liste des autorisations de la permission
+   */
+  async getAuthorizationsByPermission(permissionId) {
+    if (!permissionId || permissionId <= 0) {
+      throw new Error('ID de permission invalide');
+    }
+
+    // Vérifier si la permission existe
+    const permissionExists = await permissionRepository.findById(permissionId);
+    if (!permissionExists) {
+      throw new Error('La permission spécifiée n\'existe pas');
+    }
+
+    return await authorizationRepository.findByPermissionId(permissionId);
+  }
+
+  /**
+   * Récupère les autorisations d'un menu
+   * @param {number} menuId - ID du menu
+   * @returns {Promise<Array>} Liste des autorisations du menu
+   */
+  async getAuthorizationsByMenu(menuId) {
+    if (!menuId || menuId <= 0) {
+      throw new Error('ID de menu invalide');
+    }
+
+    // Vérifier si le menu existe
+    const menuExists = await menuRepository.findById(menuId);
+    if (!menuExists) {
+      throw new Error('Le menu spécifié n\'existe pas');
+    }
+
+    return await authorizationRepository.findByMenuId(menuId);
+  }
 }
 
 module.exports = new AuthorizationService();

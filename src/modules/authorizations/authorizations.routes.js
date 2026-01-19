@@ -120,4 +120,71 @@ router.post('/cache/invalidate',
   authorizationController.invalidateUserAuthorizationCache
 );
 
+/**
+ * Routes CRUD de base pour les autorisations
+ */
+
+// Lister toutes les autorisations avec pagination et filtres
+router.get('/', 
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationValidation.validateGetAuthorizations,
+  authorizationController.getAllAuthorizations
+);
+
+// Récupérer une autorisation par son ID
+router.get('/:id', 
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationValidation.validateAuthorizationId,
+  authorizationController.getAuthorizationById
+);
+
+// Créer une nouvelle autorisation
+router.post('/', 
+  rbacMiddleware.requirePermission('authorizations.create'),
+  authorizationValidation.validateCreateAuthorization,
+  authorizationController.createAuthorization
+);
+
+// Mettre à jour une autorisation
+router.put('/:id', 
+  rbacMiddleware.requirePermission('authorizations.update'),
+  authorizationValidation.validateUpdateAuthorization,
+  authorizationController.updateAuthorization
+);
+
+// Supprimer une autorisation (soft delete)
+router.delete('/:id', 
+  rbacMiddleware.requirePermission('authorizations.delete'),
+  authorizationValidation.validateAuthorizationId,
+  authorizationController.deleteAuthorization
+);
+
+// Supprimer définitivement une autorisation
+router.delete('/:id/hard', 
+  rbacMiddleware.requirePermission('authorizations.hard_delete'),
+  authorizationValidation.validateAuthorizationId,
+  authorizationController.hardDeleteAuthorization
+);
+
+// Lister les autorisations d'un rôle
+router.get('/role/:roleId', 
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationValidation.validateRoleId,
+  authorizationController.getAuthorizationsByRole
+);
+
+// Lister les autorisations d'une permission
+router.get('/permission/:permissionId', 
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationValidation.validatePermissionId,
+  authorizationController.getAuthorizationsByPermission
+);
+
+// Lister les autorisations d'un menu
+router.get('/menu/:menuId', 
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationValidation.validateMenuId,
+  authorizationController.getAuthorizationsByMenu
+);
+
 module.exports = router;

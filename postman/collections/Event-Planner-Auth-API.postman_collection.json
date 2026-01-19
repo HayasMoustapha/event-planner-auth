@@ -1356,7 +1356,272 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "🔑 Gestion Authorizations CRUD",
+      "item": [
+        {
+          "name": "1. Lister toutes les autorisations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "authorizations"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Créer une autorisation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": 1,\n  \"permissionId\": 1,\n  \"menuId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "authorizations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Voir une autorisation par ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "authorizations",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Mettre à jour une autorisation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": 2,\n  \"permissionId\": 2,\n  \"menuId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "authorizations",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Supprimer une autorisation (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "authorizations",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Supprimer définitivement une autorisation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/1/hard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "authorizations",
+                "1",
+                "hard"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Lister les autorisations d'un rôle",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/role/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "authorizations",
+                "role",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Lister les autorisations d'une permission",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/permission/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "authorizations",
+                "permission",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9. Lister les autorisations d'un menu",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/authorizations/menu/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "authorizations",
+                "menu",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
-  "description": "Collection complète pour l'API d'authentification Event Planner avec inscription, connexion, OTP, gestion des comptes, rôles, permissions, accès et hardening de validation (Rule 3) - PRODUCTION READY v1.0"
+  "description": "Collection complète pour l'API d'authentification Event Planner avec inscription, connexion, OTP, gestion des comptes, rôles, permissions, accès, autorisations et hardening de validation (Rule 3) - PRODUCTION READY v1.1"
 }

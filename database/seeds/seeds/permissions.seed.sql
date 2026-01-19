@@ -91,7 +91,30 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 ('admin.security.read', '{"fr": "Security admin", "en": "Security admin"}', 'admin', '{"fr": "Voir les informations de sécurité administrateur", "en": "View administrator security information"}', NOW(), NOW()),
 
 -- Permissions Développeur
-('developer.docs.read', '{"fr": "Documentation développeur", "en": "Developer documentation"}', 'developer', '{"fr": "Accéder à la documentation développeur", "en": "Access developer documentation"}', NOW(), NOW());
+('developer.docs.read', '{"fr": "Documentation développeur", "en": "Developer documentation"}', 'developer', '{"fr": "Accéder à la documentation développeur", "en": "Access developer documentation"}', NOW(), NOW()),
+
+-- Permissions ACCESSES (User-Role Management)
+('accesses.read', '{"fr": "Lire les accès", "en": "Read accesses"}', 'accesses', '{"fr": "Permet de lire les associations utilisateur-rôle", "en": "Allows reading user-role associations"}', NOW(), NOW()),
+('accesses.create', '{"fr": "Créer des accès", "en": "Create accesses"}', 'accesses', '{"fr": "Permet de créer de nouvelles associations utilisateur-rôle", "en": "Allows creating new user-role associations"}', NOW(), NOW()),
+('accesses.update', '{"fr": "Mettre à jour les accès", "en": "Update accesses"}', 'accesses', '{"fr": "Permet de modifier les associations utilisateur-rôle existantes", "en": "Allows modifying existing user-role associations"}', NOW(), NOW()),
+('accesses.delete', '{"fr": "Supprimer les accès", "en": "Delete accesses"}', 'accesses', '{"fr": "Permet de supprimer (soft delete) les associations utilisateur-rôle", "en": "Allows soft deleting user-role associations"}', NOW(), NOW()),
+('accesses.hard_delete', '{"fr": "Supprimer définitivement les accès", "en": "Hard delete accesses"}', 'accesses', '{"fr": "Permet de supprimer définitivement les associations utilisateur-rôle", "en": "Allows hard deleting user-role associations"}', NOW(), NOW()),
+('accesses.assign', '{"fr": "Assigner des rôles", "en": "Assign roles"}', 'accesses', '{"fr": "Permet d''assigner plusieurs rôles à un utilisateur", "en": "Allows assigning multiple roles to a user"}', NOW(), NOW()),
+('accesses.remove', '{"fr": "Retirer des rôles", "en": "Remove roles"}', 'accesses', '{"fr": "Permet de retirer plusieurs rôles d''un utilisateur", "en": "Allows removing multiple roles from a user"}', NOW(), NOW()),
+
+-- Permissions AUTHORIZATIONS (Role-Permission-Menu Management)
+('authorizations.read', '{"fr": "Lire les autorisations", "en": "Read authorizations"}', 'authorizations', '{"fr": "Permet de lire les associations rôle-permission-menu", "en": "Allows reading role-permission-menu associations"}', NOW(), NOW()),
+('authorizations.create', '{"fr": "Créer des autorisations", "en": "Create authorizations"}', 'authorizations', '{"fr": "Permet de créer de nouvelles associations rôle-permission-menu", "en": "Allows creating new role-permission-menu associations"}', NOW(), NOW()),
+('authorizations.update', '{"fr": "Mettre à jour les autorisations", "en": "Update authorizations"}', 'authorizations', '{"fr": "Permet de modifier les associations rôle-permission-menu existantes", "en": "Allows modifying existing role-permission-menu associations"}', NOW(), NOW()),
+('authorizations.delete', '{"fr": "Supprimer les autorisations", "en": "Delete authorizations"}', 'authorizations', '{"fr": "Permet de supprimer (soft delete) les associations rôle-permission-menu", "en": "Allows soft deleting role-permission-menu associations"}', NOW(), NOW()),
+('authorizations.hard_delete', '{"fr": "Supprimer définitivement les autorisations", "en": "Hard delete authorizations"}', 'authorizations', '{"fr": "Permet de supprimer définitivement les associations rôle-permission-menu", "en": "Allows hard deleting role-permission-menu associations"}', NOW(), NOW()),
+('authorizations.check', '{"fr": "Vérifier les autorisations", "en": "Check authorizations"}', 'authorizations', '{"fr": "Permet de vérifier les permissions d''un utilisateur", "en": "Allows checking user permissions"}', NOW(), NOW()),
+('authorizations.cache', '{"fr": "Gérer le cache d''autorisations", "en": "Manage authorization cache"}', 'authorizations', '{"fr": "Permet de gérer le cache des autorisations utilisateur", "en": "Allows managing user authorization cache"}', NOW(), NOW()),
+
+-- Permissions Système avancées
+('system.admin', '{"fr": "Administration système", "en": "System administration"}', 'system', '{"fr": "Accès complet à l''administration du système", "en": "Full system administration access"}', NOW(), NOW()),
+('system.monitoring', '{"fr": "Monitoring système", "en": "System monitoring"}', 'system', '{"fr": "Permet d''accéder aux outils de monitoring", "en": "Allows accessing monitoring tools"}', NOW(), NOW()),
+('system.audit', '{"fr": "Audit système", "en": "System audit"}', 'system', '{"fr": "Permet d''accéder aux logs et rapports d''audit", "en": "Allows accessing audit logs and reports"}', NOW(), NOW());
 
 -- Afficher confirmation
 DO $$

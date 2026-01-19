@@ -260,6 +260,156 @@ const validateInvalidateUserAuthorizationCache = [
   handleValidationErrors
 ];
 
+/**
+ * Validation pour la récupération des autorisations (query params)
+ */
+const validateGetAuthorizations = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Le numéro de page doit être un entier positif'),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('La limite doit être un entier entre 1 et 100'),
+
+  query('search')
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage('Le terme de recherche ne peut pas dépasser 255 caractères'),
+
+  query('roleId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID du rôle doit être un entier positif'),
+
+  query('permissionId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID de la permission doit être un entier positif'),
+
+  query('menuId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID du menu doit être un entier positif'),
+
+  query('sortBy')
+    .optional()
+    .trim()
+    .isIn(['created_at', 'updated_at', 'role_id', 'permission_id', 'menu_id'])
+    .withMessage('Le champ de tri doit être created_at, updated_at, role_id, permission_id ou menu_id'),
+
+  query('sortOrder')
+    .optional()
+    .trim()
+    .isIn(['ASC', 'DESC'])
+    .withMessage('L\'ordre de tri doit être ASC ou DESC'),
+
+  handleValidationErrors
+];
+
+/**
+ * Validation pour l'ID d'autorisation dans les paramètres de route
+ */
+const validateAuthorizationId = [
+  param('id')
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID de l\'autorisation doit être un entier positif'),
+
+  handleValidationErrors
+];
+
+/**
+ * Validation pour la création d'une autorisation
+ */
+const validateCreateAuthorization = [
+  body('roleId')
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID du rôle doit être un entier positif'),
+
+  body('permissionId')
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID de la permission doit être un entier positif'),
+
+  body('menuId')
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID du menu doit être un entier positif'),
+
+  handleValidationErrors
+];
+
+/**
+ * Validation pour la mise à jour d'une autorisation
+ */
+const validateUpdateAuthorization = [
+  param('id')
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID de l\'autorisation doit être un entier positif'),
+
+  body('roleId')
+    .optional()
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID du rôle doit être un entier positif'),
+
+  body('permissionId')
+    .optional()
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID de la permission doit être un entier positif'),
+
+  body('menuId')
+    .optional()
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID du menu doit être un entier positif'),
+
+  handleValidationErrors
+];
+
+/**
+ * Validation pour l'ID de rôle dans les paramètres de route
+ */
+const validateRoleId = [
+  param('roleId')
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID du rôle doit être un entier positif'),
+
+  handleValidationErrors
+];
+
+/**
+ * Validation pour l'ID de permission dans les paramètres de route
+ */
+const validatePermissionId = [
+  param('permissionId')
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID de la permission doit être un entier positif'),
+
+  handleValidationErrors
+];
+
+/**
+ * Validation pour l'ID de menu dans les paramètres de route
+ */
+const validateMenuId = [
+  param('menuId')
+    .trim()
+    .isInt({ min: 1 })
+    .withMessage('L\'ID du menu doit être un entier positif'),
+
+  handleValidationErrors
+];
+
 module.exports = {
   validateCheckPermission,
   validateCheckPermissions,
@@ -272,5 +422,12 @@ module.exports = {
   validateCheckPolicy,
   validateCacheUserAuthorizations,
   validateInvalidateUserAuthorizationCache,
+  validateGetAuthorizations,
+  validateAuthorizationId,
+  validateCreateAuthorization,
+  validateUpdateAuthorization,
+  validateRoleId,
+  validatePermissionId,
+  validateMenuId,
   handleValidationErrors
 };

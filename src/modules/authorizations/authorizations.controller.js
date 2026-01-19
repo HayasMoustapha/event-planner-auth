@@ -487,6 +487,247 @@ class AuthorizationController {
       next(error);
     }
   }
+
+  /**
+   * Récupère toutes les autorisations avec pagination et filtres
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async getAllAuthorizations(req, res, next) {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        search,
+        roleId,
+        permissionId,
+        menuId,
+        sortBy = 'created_at',
+        sortOrder = 'DESC'
+      } = req.query;
+
+      const result = await authorizationService.getAllAuthorizations({
+        page: parseInt(page),
+        limit: parseInt(limit),
+        search,
+        roleId: roleId ? parseInt(roleId) : null,
+        permissionId: permissionId ? parseInt(permissionId) : null,
+        menuId: menuId ? parseInt(menuId) : null,
+        sortBy,
+        sortOrder
+      });
+
+      res.status(200).json(createResponse(
+        true,
+        'Autorisations récupérées avec succès',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère une autorisation par son ID
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async getAuthorizationById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const result = await authorizationService.getAuthorizationById(parseInt(id));
+
+      res.status(200).json(createResponse(
+        true,
+        'Autorisation récupérée avec succès',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Crée une nouvelle autorisation
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async createAuthorization(req, res, next) {
+    try {
+      const { roleId, permissionId, menuId } = req.body;
+      const createdBy = req.user?.id;
+
+      const result = await authorizationService.createAuthorization({
+        roleId,
+        permissionId,
+        menuId
+      }, createdBy);
+
+      res.status(201).json(createResponse(
+        true,
+        'Autorisation créée avec succès',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Met à jour une autorisation
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async updateAuthorization(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { roleId, permissionId, menuId } = req.body;
+      const updatedBy = req.user?.id;
+
+      const result = await authorizationService.updateAuthorization(
+        parseInt(id),
+        {
+          roleId,
+          permissionId,
+          menuId
+        },
+        updatedBy
+      );
+
+      res.status(200).json(createResponse(
+        true,
+        'Autorisation mise à jour avec succès',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Supprime une autorisation (soft delete)
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async deleteAuthorization(req, res, next) {
+    try {
+      const { id } = req.params;
+      const deletedBy = req.user?.id;
+
+      await authorizationService.deleteAuthorization(parseInt(id), deletedBy);
+
+      res.status(200).json(createResponse(
+        true,
+        'Autorisation supprimée avec succès'
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Supprime définitivement une autorisation
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async hardDeleteAuthorization(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      await authorizationService.hardDeleteAuthorization(parseInt(id));
+
+      res.status(200).json(createResponse(
+        true,
+        'Autorisation supprimée définitivement avec succès'
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les autorisations d'un rôle
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async getAuthorizationsByRole(req, res, next) {
+    try {
+      const { roleId } = req.params;
+
+      const result = await authorizationService.getAuthorizationsByRole(parseInt(roleId));
+
+      res.status(200).json(createResponse(
+        true,
+        'Autorisations du rôle récupérées avec succès',
+        {
+          roleId: parseInt(roleId),
+          authorizations: result,
+          count: result.length
+        }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les autorisations d'une permission
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async getAuthorizationsByPermission(req, res, next) {
+    try {
+      const { permissionId } = req.params;
+
+      const result = await authorizationService.getAuthorizationsByPermission(parseInt(permissionId));
+
+      res.status(200).json(createResponse(
+        true,
+        'Autorisations de la permission récupérées avec succès',
+        {
+          permissionId: parseInt(permissionId),
+          authorizations: result,
+          count: result.length
+        }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les autorisations d'un menu
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async getAuthorizationsByMenu(req, res, next) {
+    try {
+      const { menuId } = req.params;
+
+      const result = await authorizationService.getAuthorizationsByMenu(parseInt(menuId));
+
+      res.status(200).json(createResponse(
+        true,
+        'Autorisations du menu récupérées avec succès',
+        {
+          menuId: parseInt(menuId),
+          authorizations: result,
+          count: result.length
+        }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AuthorizationController();

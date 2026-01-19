@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-01-19T16:54:46.028Z",
+  "module": "authorizations_crud",
+  "operation": "added",
+  "endpoints_count": 9,
+  "endpoints": [
+    {
+      "name": "1. Lister toutes les autorisations",
+      "method": "GET",
+      "url": "{{baseUrl}}/api/authorizations?page=1&limit=10"
+    },
+    {
+      "name": "2. Créer une autorisation",
+      "method": "POST",
+      "url": "{{baseUrl}}/api/authorizations"
+    },
+    {
+      "name": "3. Voir une autorisation par ID",
+      "method": "GET",
+      "url": "{{baseUrl}}/api/authorizations/1"
+    },
+    {
+      "name": "4. Mettre à jour une autorisation",
+      "method": "PUT",
+      "url": "{{baseUrl}}/api/authorizations/1"
+    },
+    {
+      "name": "5. Supprimer une autorisation (soft delete)",
+      "method": "DELETE",
+      "url": "{{baseUrl}}/api/authorizations/1"
+    },
+    {
+      "name": "6. Supprimer définitivement une autorisation",
+      "method": "DELETE",
+      "url": "{{baseUrl}}/api/authorizations/1/hard"
+    },
+    {
+      "name": "7. Lister les autorisations d'un rôle",
+      "method": "GET",
+      "url": "{{baseUrl}}/api/authorizations/role/1"
+    },
+    {
+      "name": "8. Lister les autorisations d'une permission",
+      "method": "GET",
+      "url": "{{baseUrl}}/api/authorizations/permission/1"
+    },
+    {
+      "name": "9. Lister les autorisations d'un menu",
+      "method": "GET",
+      "url": "{{baseUrl}}/api/authorizations/menu/1"
+    }
+  ],
+  "features": [
+    "CRUD complet des autorisations rôle-permission-menu",
+    "Soft delete et hard delete",
+    "Filtrage par rôle, permission, menu",
+    "Pagination et recherche avancée",
+    "Validation complète avec RBAC",
+    "Gestion des relations complexes",
+    "Tri personnalisable"
+  ],
+  "next_steps": [
+    "Tester chaque endpoint dans Postman",
+    "Valider les permissions RBAC",
+    "Vérifier la cohérence avec le schéma SQL",
+    "Documenter les cas d'usage avancés"
+  ]
+}
