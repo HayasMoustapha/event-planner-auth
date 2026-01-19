@@ -10,7 +10,7 @@ INSERT INTO people (first_name, last_name, email, phone, status, created_at, upd
 
 -- Création de l'utilisateur admin
 INSERT INTO users (person_id, user_code, username, email, password, status, email_verified_at, created_at, updated_at) VALUES
-((SELECT id FROM people WHERE email = 'admin@eventplanner.com'), 'ADMIN001', 'admin', 'admin@eventplanner.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.Gm.F5e', 'active', NOW(), NOW(), NOW());
+((SELECT id FROM people WHERE email = 'admin@eventplanner.com'), 'ADMIN001', 'admin', 'admin@eventplanner.com', '$2b$12$o2YoqvCJC4h724K0ZtIyMObi1UDWX0xmvTrvTdkv.yLAl/PtFW19y', 'active', NOW(), NOW(), NOW());
 
 -- Association au rôle super_admin
 INSERT INTO accesses (user_id, role_id, status, created_at, updated_at) VALUES

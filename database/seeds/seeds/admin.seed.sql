@@ -44,7 +44,7 @@ INSERT INTO users (
     'ADMIN001',
     'admin',
     'admin@eventplanner.com',
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.Gm.F5e', -- admin123
+    '$2b$12$o2YoqvCJC4h724K0ZtIyMObi1UDWX0xmvTrvTdkv.yLAl/PtFW19y', -- Admin123!
     'active',
     NOW(),
     NOW(),
@@ -83,5 +83,5 @@ BEGIN
     RAISE NOTICE '   ID Rôle: %', admin_role_id;
     RAISE NOTICE '   Email: admin@eventplanner.com';
     RAISE NOTICE '   Username: admin';
-    RAISE NOTICE '   Mot de passe: admin123';
+    RAISE NOTICE '   Mot de passe: Admin123!';
 END $$;
