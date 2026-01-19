@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-01-19T16:28:50.823Z",
+  "timestamp": "2026-01-19T16:38:55.592Z",
   "summary": {
-    "total_routes": 25,
+    "total_routes": 29,
     "updated_examples": 14,
     "skipped_examples": 2
   },
@@ -129,6 +129,26 @@
     {
       "route": "/api/people/{id}",
       "method": "PUT",
+      "has_body": true
+    },
+    {
+      "route": "/api/accesses",
+      "method": "POST",
+      "has_body": true
+    },
+    {
+      "route": "/api/accesses/{id}",
+      "method": "PUT",
+      "has_body": true
+    },
+    {
+      "route": "/api/accesses/user/{userId}/roles/assign",
+      "method": "POST",
+      "has_body": true
+    },
+    {
+      "route": "/api/accesses/user/{userId}/roles/remove",
+      "method": "POST",
       "has_body": true
     }
   ],

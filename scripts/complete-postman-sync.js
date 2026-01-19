@@ -246,6 +246,34 @@ const ROUTE_EXAMPLES = {
       "phone": "+33612345679",
       "status": "active"
     }
+  },
+
+  // Accesses routes
+  '/api/accesses': {
+    method: 'POST',
+    body: {
+      "userId": 1,
+      "roleId": 2,
+      "status": "active"
+    }
+  },
+  '/api/accesses/{id}': {
+    method: 'PUT',
+    body: {
+      "status": "inactive"
+    }
+  },
+  '/api/accesses/user/{userId}/roles/assign': {
+    method: 'POST',
+    body: {
+      "roleIds": [1, 2, 3]
+    }
+  },
+  '/api/accesses/user/{userId}/roles/remove': {
+    method: 'POST',
+    body: {
+      "roleIds": [1, 2]
+    }
   }
 };
 

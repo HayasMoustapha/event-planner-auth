@@ -314,6 +314,31 @@ class AccessesRepository {
       throw new Error(`Erreur lors de la vérification du rôle: ${error.message}`);
     }
   }
+
+  /**
+   * Trouve un accès spécifique par utilisateur et rôle
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number} roleId - ID du rôle
+   * @returns {Promise<Object|null>} Accès trouvé ou null
+   */
+  async findByUserIdAndRoleId(userId, roleId) {
+    const query = `
+      SELECT a.id, a.user_id, a.role_id, a.status, a.created_at, a.updated_at,
+             u.username, u.email, u.user_code,
+             r.code as role_code, r.label as role_label
+      FROM accesses a
+      LEFT JOIN users u ON a.user_id = u.id
+      LEFT JOIN roles r ON a.role_id = r.id
+      WHERE a.user_id = $1 AND a.role_id = $2 AND a.deleted_at IS NULL
+    `;
+
+    try {
+      const result = await connection.query(query, [userId, roleId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      throw new Error(`Erreur lors de la recherche de l'accès: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new AccessesRepository();

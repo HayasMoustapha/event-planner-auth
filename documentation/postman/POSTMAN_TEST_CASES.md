@@ -1,6 +1,6 @@
 # Cas de Test Postman - Event Planner Auth API
 
-*Généré le: 2026-01-19T16:28:50.825Z*
+*Généré le: 2026-01-19T16:38:55.593Z*
 
 ## Authentication
 
