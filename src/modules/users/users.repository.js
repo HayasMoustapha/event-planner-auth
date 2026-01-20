@@ -184,6 +184,14 @@ class UsersRepository {
       createdBy = null
     } = userData;
 
+    console.log('🔍 Debug users.repository.create - userData:', userData);
+    console.log('🔍 Debug users.repository.create - person_id:', person_id);
+    console.log('🔍 Debug users.repository.create - typeof person_id:', typeof person_id);
+
+    if (!person_id) {
+      throw new Error('person_id est requis pour créer un utilisateur');
+    }
+
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -194,6 +202,7 @@ class UsersRepository {
     `;
 
     try {
+      console.log('🔍 Debug users.repository.create - Avant requête SQL');
       const result = await connection.query(query, [
         person_id,
         username,
@@ -204,6 +213,8 @@ class UsersRepository {
         status,
         createdBy
       ]);
+
+      console.log('🔍 Debug users.repository.create - result.rows[0]:', result.rows[0]);
 
       // Ajouter à l'historique des mots de passe
       await this.addPasswordHistory(result.rows[0].id, hashedPassword);
@@ -219,7 +230,7 @@ class UsersRepository {
           throw new Error('Ce nom d\'utilisateur est déjà utilisé');
         }
       }
-      throw new Error(`Erreur lors de la création de l'utilisateur: ${error.message}`);
+      throw new Error(`Erreur lors de la création de l'utilisateur: ${error.message}, person_id: ${userData.person_id}`);
     }
   }
 

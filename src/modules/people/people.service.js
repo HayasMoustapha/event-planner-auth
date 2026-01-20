@@ -103,9 +103,10 @@ class PeopleService {
     if (!first_name || !first_name.trim()) {
       throw new Error('Le prénom est obligatoire');
     }
-    if (!last_name || !last_name.trim()) {
-      throw new Error('Le nom de famille est obligatoire');
-    }
+    // last_name est optionnel pour l'inscription
+    // if (!last_name || !last_name.trim()) {
+    //   throw new Error('Le nom de famille est obligatoire');
+    // }
     if (!email) {
       throw new Error('L\'email est obligatoire');
     }
@@ -147,7 +148,20 @@ class PeopleService {
       }
     }
 
-    return await peopleRepository.create(cleanData);
+    console.log('🔍 Debug people.service.create - cleanData:', cleanData);
+    const person = await peopleRepository.create(cleanData);
+    console.log('🔍 Debug people.service.create - person retournée:', person);
+    console.log('🔍 Debug people.service.create - person.id:', person.id);
+    console.log('🔍 Debug people.service.create - typeof person.id:', typeof person.id);
+    
+    // Attendre un peu pour être sûr que la base de données a eu le temps de se mettre à jour
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Vérification en base que la personne est bien créée
+    const personCheck = await peopleRepository.findById(person.id);
+    console.log('🔍 Debug people.service.create - personCheck après création:', personCheck);
+    
+    return person;
   }
 
   /**

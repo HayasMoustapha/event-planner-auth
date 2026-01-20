@@ -154,7 +154,12 @@ class PeopleRepository {
         createdBy
       ]);
 
-      return result.rows[0];
+      console.log('🔍 Debug people.create - result.rows[0]:', JSON.stringify(result.rows[0]));
+      const createdPerson = result.rows[0];
+      console.log('🔍 Debug people.repository.create - createdPerson.id:', createdPerson.id);
+      console.log('🔍 Debug people.repository.create - typeof createdPerson.id:', typeof createdPerson.id);
+      
+      return createdPerson;
     } catch (error) {
       // Gestion des erreurs de contrainte unique
       if (error.code === '23505') {

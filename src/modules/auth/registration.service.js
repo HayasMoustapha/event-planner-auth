@@ -1,14 +1,13 @@
 const bcrypt = require('bcrypt');
-const peopleRepository = require('../people/people.repository');
-const usersRepository = require('../users/users.repository');
+const { connection } = require('../../config/database');
 const otpService = require('./otp.service');
 const { createResponse } = require('../../utils/response');
-const logger = require('../../utils/logger'); // Utiliser le logger direct pour éviter le cercle vicieux
+const logger = require('../../utils/logger');
 const serviceContainer = require('../../services/index');
 
 /**
  * Service d'inscription pour gérer la création complète d'un utilisateur
- * Gère la création people + users + génération OTP
+ * Gère la création people + users + génération OTP de manière robuste
  */
 class RegistrationService {
   constructor() {
@@ -18,11 +17,11 @@ class RegistrationService {
 
   /**
    * Obtient les services de manière paresseuse
+   * @returns {Object} Services injectés
    */
   get services() {
     if (!this._services) {
       this._services = {
-        logger: serviceContainer.get('logger'),
         emailService: serviceContainer.get('emailService'),
         smsService: serviceContainer.get('smsService'),
         cacheService: serviceContainer.get('cacheService')
@@ -32,18 +31,25 @@ class RegistrationService {
   }
 
   /**
-   * Obtient le logger
+   * Génère un code utilisateur basé sur le nom
+   * @param {string} first_name - Prénom
+   * @param {string} last_name - Nom de famille
+   * @returns {string} Code utilisateur généré
    */
-  get logger() {
-    return logger; // Utiliser le logger direct
+  generateUserCode(first_name, last_name) {
+    const firstName = first_name?.trim() || '';
+    const lastName = last_name?.trim() || '';
+    const base = `${firstName.toLowerCase()}${lastName.toLowerCase()}`.replace(/[^a-z0-9]/g, '');
+    return base || 'user';
   }
 
   /**
-   * Inscrit un nouvel utilisateur avec validation OTP
+   * Inscrit un nouvel utilisateur avec création de personne et utilisateur
    * @param {Object} registrationData - Données d'inscription
+   * @param {Object} options - Options supplémentaires (IP, UserAgent, etc.)
    * @returns {Promise<Object>} Résultat de l'inscription
    */
-  async register(registrationData) {
+  async register(registrationData, options = {}) {
     const {
       first_name,
       last_name,
@@ -51,77 +57,101 @@ class RegistrationService {
       phone,
       password,
       username,
-      userCode = null,
-      options = {}
+      userCode
     } = registrationData;
 
-    try {
-      // 1. Valider les données d'entrée
-      this.validateRegistrationData(registrationData);
+    // Validation des données de base
+    if (!first_name || !first_name.trim()) {
+      throw new Error('Le prénom est obligatoire');
+    }
+    if (!email || !email.trim()) {
+      throw new Error('L\'email est obligatoire');
+    }
+    if (!password || password.length < 8) {
+      throw new Error('Le mot de passe doit contenir au moins 8 caractères');
+    }
 
-      // 2. Vérifier si l'email n'est pas déjà utilisé dans people ou users
-      const existingPerson = await peopleRepository.findByEmail(email);
-      if (existingPerson) {
+    const client = await connection.connect();
+    let person, user;
+
+    try {
+      // Démarrer une transaction pour garantir la cohérence
+      await client.query('BEGIN');
+
+      // ÉTAPE 1: Vérifier si l'email n'existe pas déjà
+      const emailCheckQuery = `SELECT id FROM people WHERE email = $1`;
+      const emailCheckResult = await client.query(emailCheckQuery, [email.trim().toLowerCase()]);
+      if (emailCheckResult.rows.length > 0) {
         throw new Error('Cet email est déjà utilisé');
       }
 
-      const existingUser = await usersRepository.findByEmail(email);
-      if (existingUser) {
-        throw new Error('Un compte utilisateur existe déjà avec cet email');
+      // ÉTAPE 2: Créer la personne
+      const personQuery = `
+        INSERT INTO people (first_name, last_name, email, phone, status, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING id, first_name, last_name, email, phone, status, created_at
+      `;
+      
+      const personResult = await client.query(personQuery, [
+        first_name.trim(),
+        last_name?.trim() || null,
+        email.trim().toLowerCase(),
+        phone?.trim() || null,
+        'active',
+        null
+      ]);
+      
+      person = personResult.rows[0];
+      
+      if (!person || !person.id) {
+        throw new Error('Erreur lors de la création de la personne: ID non généré');
       }
 
-      // 3. Vérifier si le username n'est pas déjà utilisé
-      if (username) {
-        const existingUsername = await usersRepository.findByUsername(username);
-        if (existingUsername) {
-          throw new Error('Ce nom d\'utilisateur est déjà utilisé');
-        }
-      }
-
-      // 4. Vérifier si le téléphone n'est pas déjà utilisé (optionnel)
-      if (phone) {
-        const existingPhone = await peopleRepository.findByPhone(phone);
-        if (existingPhone) {
-          throw new Error('Ce numéro de téléphone est déjà utilisé');
-        }
-
-        // Vérifier aussi dans la table users
-        const existingUserPhone = await usersRepository.findByPhone(phone);
-        if (existingUserPhone) {
-          throw new Error('Ce numéro de téléphone est déjà utilisé par un autre utilisateur');
-        }
-      }
-
-      // 5. Créer la personne
-      const personData = {
-        first_name: first_name.trim(),
-        last_name: last_name?.trim() || null,
-        email: email.trim().toLowerCase(),
-        phone: phone?.trim() || null,
-        status: 'active'
-      };
-
-      const person = await peopleRepository.create(personData);
       logger.info(`Personne créée: ${person.id} - ${person.email}`);
 
-      // 6. Créer l'utilisateur associé
+      // ÉTAPE 3: Créer l'utilisateur associé
       const userData = {
-        username: username?.trim() || email.split('@')[0], // Utiliser la partie email comme username par défaut
+        username: username?.trim() || email.split('@')[0],
         email: email.trim().toLowerCase(),
         password: password,
         userCode: userCode || this.generateUserCode(first_name, last_name),
         phone: phone?.trim() || null,
         status: 'inactive', // Inactif jusqu'à validation OTP
-        personId: person.id
+        person_id: person.id
       };
 
-      const user = await usersRepository.create(userData);
+      // Hasher le mot de passe
+      const hashedPassword = await bcrypt.hash(password, 12);
+      
+      const userQuery = `
+        INSERT INTO users (person_id, username, email, password, user_code, phone, status, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING id, person_id, username, email, user_code, phone, status, created_at
+      `;
+      
+      const userResult = await client.query(userQuery, [
+        userData.person_id,
+        userData.username,
+        userData.email,
+        hashedPassword,
+        userData.userCode,
+        userData.phone,
+        userData.status,
+        null
+      ]);
+      
+      user = userResult.rows[0];
+      
+      if (!user || !user.id) {
+        throw new Error('Erreur lors de la création de l\'utilisateur: ID non généré');
+      }
+
       logger.info(`Utilisateur créé: ${user.id} - ${user.email}`);
 
-      // 7. Générer et envoyer l'OTP
-      const otpResult = await otpService.generateEmailOtp(person.id, person.email);
+      // ÉTAPE 4: Générer et envoyer l'OTP
+      const otpResult = await otpService.generateEmailOtp(user.id, person.email);
       
-      // 8. Envoyer l'OTP par email
+      // ÉTAPE 5: Envoyer l'OTP par email
       try {
         const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.otp_code, 'verification', {
           ip: options.ip,
@@ -149,8 +179,11 @@ class RegistrationService {
         
         throw new Error(`Échec d'envoi de l'email de vérification: ${emailError.message}`);
       }
-      
-      // 8. Retourner le résultat sans données sensibles
+
+      // Valider la transaction
+      await client.query('COMMIT');
+
+      // ÉTAPE 6: Retourner le résultat sans données sensibles
       return {
         success: true,
         message: 'Inscription réussie. Un code de vérification a été envoyé à votre email.',
@@ -165,170 +198,125 @@ class RegistrationService {
             id: user.id,
             username: user.username,
             email: user.email,
-            userCode: user.user_code,
             status: user.status
           },
           otp: {
+            id: otpResult.id,
             purpose: otpResult.purpose,
-            expiresAt: otpResult.expiresAt
-            // Ne pas inclure le code OTP lui-même
+            expires_at: otpResult.expires_at
           }
-        },
-        timestamp: new Date().toISOString()
+        }
       };
 
     } catch (error) {
-      logger.error(`Erreur lors de l'inscription: ${error.message}`);
-      throw new Error(`Erreur lors de l'inscription: ${error.message}`);
+      // Annuler la transaction en cas d'erreur
+      await client.query('ROLLBACK');
+      
+      logger.error('Erreur lors de l\'inscription', {
+        error: error.message,
+        email: email,
+        step: 'registration'
+      });
+      
+      throw error;
+    } finally {
+      // Libérer la connexion
+      client.release();
     }
   }
 
   /**
-   * Valide les données d'inscription
-   * @param {Object} data - Données à valider
-   */
-  validateRegistrationData(data) {
-    const { first_name, email, password } = data;
-
-    // Validation des champs requis
-    if (!first_name || !first_name.trim()) {
-      throw new Error('Le prénom est requis');
-    }
-
-    if (!email || !email.trim()) {
-      throw new Error('L\'email est requis');
-    }
-
-    if (!password || !password.trim()) {
-      throw new Error('Le mot de passe est requis');
-    }
-
-    // Validation format email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      throw new Error('Format d\'email invalide');
-    }
-
-    // Validation mot de passe
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(password)) {
-      throw new Error('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre');
-    }
-
-    // Validation téléphone si fourni
-    if (data.phone && data.phone.trim()) {
-      const phoneRegex = /^[+]?[\d\s\-\(\)]+$/;
-      if (!phoneRegex.test(data.phone.trim())) {
-        throw new Error('Format de numéro de téléphone invalide');
-      }
-    }
-
-    // Validation username si fourni
-    if (data.username && data.username.trim()) {
-      const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-      if (!usernameRegex.test(data.username.trim())) {
-        throw new Error('Le nom d\'utilisateur doit contenir entre 3 et 20 caractères alphanumériques et underscores');
-      }
-    }
-  }
-
-  /**
-   * Génère un user_code à partir du nom
-   * @param {string} first_name - Prénom
-   * @param {string} last_name - Nom
-   * @returns {string} User code généré
-   */
-  generateUserCode(first_name, last_name) {
-    const base = `${first_name?.toLowerCase() || ''}${last_name?.toLowerCase() || ''}`.replace(/[^a-z0-9]/g, '');
-    const timestamp = Date.now().toString(36);
-    return `${base}_${timestamp}`;
-  }
-
-  /**
-   * Vérifie un OTP et active le compte utilisateur
+   * Vérifie un code OTP et active le compte utilisateur
    * @param {string} email - Email de l'utilisateur
    * @param {string} otpCode - Code OTP à vérifier
    * @returns {Promise<Object>} Résultat de la vérification
    */
   async verifyEmail(email, otpCode) {
     try {
-      // 1. Récupérer la personne par email
-      const person = await peopleRepository.findByEmail(email);
-      if (!person) {
+      // Récupérer la personne par email
+      const personQuery = `SELECT id, email FROM people WHERE email = $1`;
+      const personResult = await connection.query(personQuery, [email.trim().toLowerCase()]);
+      
+      if (personResult.rows.length === 0) {
         throw new Error('Aucun compte trouvé avec cet email');
       }
-
-      // 2. Vérifier l'OTP
-      const otpVerification = await otpService.verifyEmailOtp(otpCode, email, person.id);
-      // Si pas d'erreur, l'OTP est valide
-
-      // 3. Récupérer l'utilisateur associé
-      const user = await usersRepository.findByEmail(email);
-      if (!user) {
+      
+      const person = personResult.rows[0];
+      
+      // Vérifier l'OTP
+      const otpVerification = await otpService.verifyEmailOtp(otpCode, person.id);
+      
+      if (!otpVerification.valid) {
+        throw new Error('Code OTP invalide ou expiré');
+      }
+      
+      // Activer l'utilisateur
+      const userUpdateQuery = `
+        UPDATE users 
+        SET status = 'active', email_verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE person_id = $1
+        RETURNING id, username, email, status
+      `;
+      
+      const userUpdateResult = await connection.query(userUpdateQuery, [person.id]);
+      
+      if (userUpdateResult.rows.length === 0) {
         throw new Error('Utilisateur non trouvé');
       }
-
-      // 4. Activer le compte utilisateur
-      const activatedUser = await usersRepository.update(user.id, {
-        status: 'active',
-        updatedBy: user.id // Utiliser l'ID de l'utilisateur comme updatedBy
+      
+      const user = userUpdateResult.rows[0];
+      
+      logger.info('Email vérifié et compte activé', {
+        personId: person.id,
+        userId: user.id,
+        email: person.email
       });
       
-      // 5. Marquer l'email comme vérifié
-      await usersRepository.update(user.id, {
-        emailVerifiedAt: new Date(),
-        updatedBy: user.id // Utiliser l'ID de l'utilisateur comme updatedBy
-      });
-      
-      logger.info(`Compte activé: ${user.id} - ${user.email}`);
-
       return {
         success: true,
         message: 'Email vérifié avec succès. Votre compte est maintenant actif.',
         data: {
           user: {
-            id: activatedUser.id,
-            username: activatedUser.username,
-            email: activatedUser.email,
-            status: activatedUser.status
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            status: user.status
           }
-        },
-        timestamp: new Date().toISOString()
+        }
       };
-
+      
     } catch (error) {
-      logger.error(`Erreur lors de la vérification email: ${error.message}`);
-      throw new Error(`Erreur lors de la vérification: ${error.message}`);
+      logger.error('Erreur lors de la vérification email', {
+        error: error.message,
+        email: email
+      });
+      
+      throw error;
     }
   }
 
   /**
-   * Renvoie un code OTP pour un email existant
+   * Renvoie un code OTP à un utilisateur
    * @param {string} email - Email de l'utilisateur
+   * @param {Object} options - Options supplémentaires
    * @returns {Promise<Object>} Résultat de l'envoi
    */
-  async resendOTP(email, options = {}) {
+  async resendOtp(email, options = {}) {
     try {
-      // 1. Vérifier si la personne existe
-      const person = await peopleRepository.findByEmail(email);
-      if (!person) {
+      // Récupérer la personne par email
+      const personQuery = `SELECT id, email FROM people WHERE email = $1`;
+      const personResult = await connection.query(personQuery, [email.trim().toLowerCase()]);
+      
+      if (personResult.rows.length === 0) {
         throw new Error('Aucun compte trouvé avec cet email');
       }
-
-      // 2. Vérifier si l'utilisateur existe et est inactif
-      const user = await usersRepository.findByEmail(email);
-      if (!user) {
-        throw new Error('Utilisateur non trouvé');
-      }
-
-      if (user.status === 'active') {
-        throw new Error('Ce compte est déjà actif');
-      }
-
-      // 3. Générer un nouvel OTP
+      
+      const person = personResult.rows[0];
+      
+      // Générer un nouvel OTP
       const otpResult = await otpService.generateEmailOtp(person.id, person.email);
-
-      // 4. Envoyer l'OTP par email
+      
+      // Envoyer l'OTP par email
       try {
         const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.otp_code, 'verification', {
           ip: options.ip,
@@ -339,38 +327,38 @@ class RegistrationService {
           throw new Error('Échec d\'envoi de l\'email de vérification');
         }
         
-        logger.info('OTP email sent successfully during resend', {
+        logger.info('OTP email resent successfully', {
           personId: person.id,
           email: person.email,
           otpId: otpResult.id
         });
-      } catch (emailError) {
-        logger.error('Failed to send OTP email during resend', {
-          personId: person.id,
-          email: person.email,
-          error: emailError.message
-        });
         
+        return {
+          success: true,
+          message: 'Un nouveau code de vérification a été envoyé à votre email.',
+          data: {
+            otp: {
+              id: otpResult.id,
+              purpose: otpResult.purpose,
+              expires_at: otpResult.expires_at
+            }
+          }
+        };
+        
+      } catch (emailError) {
         // Supprimer l'OTP généré si l'envoi échoue
         await otpService.invalidateOtp(otpResult.id);
         
         throw new Error(`Échec d'envoi de l'email de vérification: ${emailError.message}`);
       }
-
-      return {
-        success: true,
-        message: 'Un nouveau code de vérification a été envoyé à votre email.',
-        data: {
-          email: email,
-          purpose: otpResult.purpose,
-          expiresAt: otpResult.expiresAt
-        },
-        timestamp: new Date().toISOString()
-      };
-
+      
     } catch (error) {
-      logger.error(`Erreur lors du renvoi OTP: ${error.message}`);
-      throw new Error(`Erreur lors du renvoi du code: ${error.message}`);
+      logger.error('Erreur lors du renvoi OTP', {
+        error: error.message,
+        email: email
+      });
+      
+      throw error;
     }
   }
 }

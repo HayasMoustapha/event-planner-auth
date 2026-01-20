@@ -65,6 +65,7 @@ class OtpService {
     const otpData = {
       personId,
       purpose,
+      identifier: contactInfo, // L'identifier est l'email ou le téléphone
       otpCode,
       expiresAt,
       createdBy
