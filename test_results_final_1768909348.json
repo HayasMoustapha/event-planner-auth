@@ -1,0 +1,116 @@
+{
+  "test_email": "test_1768909343_9nms0f@example.com",
+  "timestamp": "2026-01-20 12:42:23",
+  "base_url": "http://localhost:3007",
+  "steps": {
+    "registration": {
+      "success": true,
+      "result": {
+        "success": true,
+        "message": "Inscription réussie. Un code de vérification a été envoyé à votre email.",
+        "timestamp": "2026-01-20T11:42:27.664Z",
+        "data": {
+          "person": {
+            "id": "24",
+            "email": "test_1768909343_9nms0f@example.com",
+            "first_name": "Test",
+            "last_name": "User"
+          },
+          "user": {
+            "id": "19",
+            "username": "test_1768909343_9nms0f",
+            "email": "test_1768909343_9nms0f@example.com",
+            "status": "inactive"
+          },
+          "otp": {
+            "id": "5",
+            "purpose": "email",
+            "expires_at": "2026-01-20T11:57:23.823Z"
+          }
+        }
+      }
+    },
+    "edge_cases": {
+      "edge_cases": [
+        {
+          "case": "Email manquant",
+          "success": false,
+          "result": {
+            "success": false,
+            "message": "Erreur de validation",
+            "errors": [
+              {
+                "message": "Format d'email invalide",
+                "value": ""
+              }
+            ],
+            "timestamp": "2026-01-20T11:42:27.677Z"
+          }
+        },
+        {
+          "case": "Mot de passe trop court",
+          "success": false,
+          "result": {
+            "success": false,
+            "message": "Erreur de validation",
+            "errors": [
+              {
+                "message": "Le mot de passe doit contenir au moins 8 caractères",
+                "value": "123"
+              },
+              {
+                "message": "Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre",
+                "value": "123"
+              }
+            ],
+            "timestamp": "2026-01-20T11:42:27.691Z"
+          }
+        },
+        {
+          "case": "Prénom manquant",
+          "success": true
+        },
+        {
+          "case": "Email déjà utilisé",
+          "success": true
+        }
+      ]
+    },
+    "login_before_verification": {
+      "success": false,
+      "result": {
+        "success": false,
+        "error": "HTTP 500"
+      }
+    },
+    "verification": {
+      "success": false,
+      "result": {
+        "success": false,
+        "error": "HTTP 400"
+      }
+    },
+    "resend_otp": {
+      "success": false,
+      "result": {
+        "success": false,
+        "error": "HTTP 500"
+      }
+    },
+    "database_consistency": {
+      "success": false,
+      "result": {
+        "success": false,
+        "message": "Base de données incohérente"
+      }
+    }
+  },
+  "summary": {
+    "successful_steps": 1,
+    "total_steps": 6,
+    "success_rate": "16.7%",
+    "edge_cases_success": 2,
+    "edge_cases_total": 4,
+    "edge_cases_rate": "50.0%"
+  }
+}

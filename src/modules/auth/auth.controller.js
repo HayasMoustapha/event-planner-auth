@@ -152,7 +152,7 @@ class AuthController {
 
       // Envoyer l'OTP par email
       try {
-        const emailSent = await emailService.sendOTP(email, otp.otp_code, 'login', {
+        const emailSent = await emailService.sendOTP(email, otp.code, 'login', {
           ip: req.ip,
           userAgent: req.get('User-Agent')
         });
@@ -447,7 +447,7 @@ class AuthController {
       const otp = await otpService.generatePasswordResetOtp(person.id, email);
 
       // Envoyer l'OTP par email
-      await emailService.sendPasswordResetEmail(email, otp.otp_code, {
+      await emailService.sendPasswordResetEmail(email, otp.code, {
         ip: req.ip,
         userAgent: req.get('User-Agent')
       });

@@ -153,7 +153,7 @@ class RegistrationService {
       
       // ÉTAPE 5: Envoyer l'OTP par email
       try {
-        const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.otp_code, 'verification', {
+        const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.code, 'verification', {
           ip: options.ip,
           userAgent: options.userAgent
         });
@@ -203,10 +203,19 @@ class RegistrationService {
           otp: {
             id: otpResult.id,
             purpose: otpResult.purpose,
-            expires_at: otpResult.expires_at
+            expires_at: otpResult.expires_at,
+            // En développement uniquement, inclure le code pour débogage
+            ...(process.env.NODE_ENV === 'development' && { code: otpResult.code })
           }
         }
       };
+
+      // Debug: Afficher l'environnement et le code OTP
+      logger.info('Debug OTP Info', {
+        nodeEnv: process.env.NODE_ENV,
+        otpCode: otpResult.code,
+        otpResult: otpResult
+      });
 
     } catch (error) {
       // Annuler la transaction en cas d'erreur
@@ -244,7 +253,7 @@ class RegistrationService {
       const person = personResult.rows[0];
       
       // Vérifier l'OTP
-      const otpVerification = await otpService.verifyEmailOtp(otpCode, person.id);
+      const otpVerification = await otpService.verifyEmailOtp(otpCode, email, person.id);
       
       if (!otpVerification.valid) {
         throw new Error('Code OTP invalide ou expiré');
@@ -296,7 +305,17 @@ class RegistrationService {
   }
 
   /**
-   * Renvoie un code OTP à un utilisateur
+   * Renvoie un code OTP (alias pour resendOtp)
+   * @param {string} email - Email de l'utilisateur
+   * @param {Object} options - Options supplémentaires
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async resendOTP(email, options = {}) {
+    return await this.resendOtp(email, options);
+  }
+
+  /**
+   * Renvoie un code OTP
    * @param {string} email - Email de l'utilisateur
    * @param {Object} options - Options supplémentaires
    * @returns {Promise<Object>} Résultat de l'envoi

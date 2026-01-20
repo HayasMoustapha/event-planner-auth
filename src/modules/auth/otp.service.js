@@ -125,10 +125,10 @@ class OtpService {
    * @param {string} otpCode - Code OTP à vérifier
    * @param {string} contactInfo - Email ou téléphone
    * @param {string} purpose - Purpose de l'OTP ('email' ou 'phone')
-   * @param {number} personId - ID de la personne (optionnel, pour validation)
+   * @param {number} userId - ID de l'utilisateur (optionnel, pour validation)
    * @returns {Promise<Object>} OTP validé et marqué comme utilisé
    */
-  async verifyOtp(otpCode, contactInfo, purpose, personId = null) {
+  async verifyOtp(otpCode, contactInfo, purpose, userId = null) {
     // Validation des paramètres
     if (!otpCode || !otpCode.trim()) {
       throw new Error('Code OTP requis');
@@ -152,13 +152,13 @@ class OtpService {
     // Debug logs
     console.log('🔍 Debug OTP Validation:', {
       otpCode,
-      personId,
+      userId,
       purpose,
       normalizedContact
     });
 
     // Vérifier et marquer comme utilisé
-    const otp = await otpRepository.validateOtp(otpCode, personId, purpose);
+    const otp = await otpRepository.validateOtp(otpCode, userId, purpose);
 
     console.log('🔍 Debug OTP Result:', otp ? 'OTP trouvé' : 'OTP non trouvé');
 
@@ -167,8 +167,8 @@ class OtpService {
     }
 
     // Validation optionnelle de la personne
-    if (personId && otp.person_id !== personId) {
-      throw new Error('Ce code OTP n\'est pas associé à cette personne');
+    if (otp.identifier !== normalizedContact) {
+      throw new Error('OTP non correspondant au contact');
     }
 
     // Vérifier si l'OTP n'est pas expiré
@@ -177,6 +177,7 @@ class OtpService {
     }
 
     return {
+      valid: true,
       id: otp.id,
       purpose: otp.purpose,
       contactInfo: normalizedContact,
@@ -202,7 +203,15 @@ class OtpService {
       personId = person.id;
     }
 
-    return await this.verifyOtp(otpCode, email, 'email', personId);
+    // Récupérer l'utilisateur associé à la personne
+    const usersRepository = require('../users/users.repository');
+    const user = await usersRepository.findByPersonId(personId);
+    
+    if (!user) {
+      throw new Error('Aucun utilisateur trouvé pour cette personne');
+    }
+
+    return await this.verifyOtp(otpCode, email, 'email', user.id);
   }
 
   /**

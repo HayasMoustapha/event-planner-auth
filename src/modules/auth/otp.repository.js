@@ -46,6 +46,52 @@ class OtpRepository {
   }
 
   /**
+   * Récupère un OTP par son code et ID utilisateur
+   * @param {string} otpCode - Code OTP
+   * @param {number} userId - ID de l'utilisateur
+   * @param {string} purpose - Purpose de l'OTP
+   * @returns {Promise<Object|null>} OTP trouvé ou null
+   */
+  // Colonnes selon schéma : id, user_id, purpose, identifier, code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+  async findByCodeAndUserId(otpCode, userId, purpose) {
+    const query = `
+      SELECT * FROM otp_codes 
+      WHERE code = $1 AND user_id = $2 AND purpose = $3 
+        AND is_used = FALSE 
+        AND expires_at > CURRENT_TIMESTAMP
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+
+    // Debug log
+    console.log('🔍 Debug Repository Query:', {
+      otpCode,
+      userId,
+      purpose,
+      query: query.replace(/\s+/g, ' ').trim()
+    });
+
+    try {
+      const result = await connection.query(query, [otpCode, userId, purpose]);
+      console.log('🔍 Debug Repository Result:', result.rows.length, 'OTP(s) trouvé(s)');
+      if (result.rows.length > 0) {
+        console.log('🔍 Debug OTP Details:', {
+          id: result.rows[0].id,
+          code: result.rows[0].code,
+          userId: result.rows[0].user_id,
+          purpose: result.rows[0].purpose,
+          isUsed: result.rows[0].is_used,
+          expiresAt: result.rows[0].expires_at
+        });
+      }
+      return result.rows[0] || null;
+    } catch (error) {
+      console.log('❌ Debug Repository Error:', error.message);
+      throw new Error(`Erreur lors de la recherche de l'OTP: ${error.message}`);
+    }
+  }
+
+  /**
    * Récupère un OTP par son code et identifiant
    * @param {string} otpCode - Code OTP
    * @param {number} personId - ID de la personne
@@ -127,8 +173,8 @@ class OtpRepository {
    */
   async markAsUsed(id, usedBy = null) {
     const query = `
-      UPDATE otps 
-      SET is_used = TRUE, updated_by = $2, updated_at = CURRENT_TIMESTAMP
+      UPDATE otp_codes 
+      SET is_used = TRUE, used_at = CURRENT_TIMESTAMP, used_by = $2, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND is_used = FALSE
     `;
 
@@ -180,12 +226,12 @@ class OtpRepository {
   /**
    * Vérifie si un code OTP est valide
    * @param {string} otpCode - Code OTP à vérifier
-   * @param {number} personId - ID de la personne
+   * @param {number} userId - ID de l'utilisateur
    * @param {string} purpose - Purpose de l'OTP
    * @returns {Promise<Object|null>} OTP valide ou null
    */
-  async validateOtp(otpCode, personId, purpose) {
-    const otp = await this.findByCodeAndPersonId(otpCode, personId, purpose);
+  async validateOtp(otpCode, userId, purpose) {
+    const otp = await this.findByCodeAndUserId(otpCode, userId, purpose);
     
     if (!otp) {
       return null;

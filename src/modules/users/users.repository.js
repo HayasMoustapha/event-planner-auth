@@ -168,6 +168,32 @@ class UsersRepository {
   }
 
   /**
+   * Récupère un utilisateur par son ID de personne
+   * @param {number} personId - ID de la personne
+   * @param {boolean} includePassword - Inclure le mot de passe
+   * @returns {Promise<Object|null>} Données de l'utilisateur
+   */
+  async findByPersonId(personId, includePassword = false) {
+    const fields = includePassword 
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
+    
+    const query = `
+      SELECT ${fields}
+      FROM users u
+      LEFT JOIN people p ON u.person_id = p.id
+      WHERE u.person_id = $1 AND u.deleted_at IS NULL
+    `;
+    
+    try {
+      const result = await connection.query(query, [personId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      throw new Error(`Erreur lors de la recherche de l'utilisateur par person_id: ${error.message}`);
+    }
+  }
+
+  /**
    * Crée un nouvel utilisateur avec mot de passe hashé
    * @param {Object} userData - Données de l'utilisateur
    * @returns {Promise<Object>} Utilisateur créé
