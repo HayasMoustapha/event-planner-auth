@@ -13,6 +13,7 @@ class SessionRepository {
   async create(sessionData) {
     const {
       accessToken,
+      refreshToken,
       userId,
       deviceInfo,
       ipAddress,
@@ -22,6 +23,7 @@ class SessionRepository {
 
     console.log('🔍 Debug repository.create - Données reçues:', {
       accessToken: accessToken ? accessToken.substring(0, 20) + '...' : 'null',
+      refreshToken: refreshToken ? refreshToken.substring(0, 20) + '...' : 'null',
       userId,
       deviceInfo,
       ipAddress,
@@ -29,30 +31,71 @@ class SessionRepository {
       expiresIn
     });
 
-    const query = `
-      INSERT INTO sessions (
-        id, user_id, ip_address, user_agent, payload, last_activity
-      ) VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, user_id, ip_address, user_agent, payload, last_activity
-    `;
-
-    const values = [
-      accessToken, // id
-      userId,       // user_id
-      ipAddress || null,  // ip_address
-      userAgent || null,  // user_agent
-      JSON.stringify({ userId }), // payload
-      Date.now() // last_activity
-    ];
-
-    console.log('🔍 Debug repository.create - Exécution query...');
-    console.log('🔍 Debug repository.create - Valeurs:', values.map((v, i) => i === 0 ? v?.substring(0, 20) + '...' : v));
-
     try {
-      const result = await connection.query(query, values);
-      console.log('🔍 Debug repository.create - Session insérée:', !!result.rows[0]);
-      console.log('🔍 Debug repository.create - Session ID:', result.rows[0]?.id?.substring(0, 20) + '...');
-      return result.rows[0];
+      // Insérer dans la table sessions
+      const sessionQuery = `
+        INSERT INTO sessions (
+          id, user_id, ip_address, user_agent, payload, last_activity
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, user_id, ip_address, user_agent, payload, last_activity
+      `;
+
+      const sessionValues = [
+        accessToken, // id
+        userId,       // user_id
+        ipAddress || null,  // ip_address
+        userAgent || null,  // user_agent
+        JSON.stringify({ userId }), // payload
+        Date.now() // last_activity
+      ];
+
+      console.log('🔍 Debug repository.create - Insertion session...');
+      const sessionResult = await connection.query(sessionQuery, sessionValues);
+      console.log('🔍 Debug repository.create - Session insérée:', !!sessionResult.rows[0]);
+
+      // Insérer dans la table personal_access_tokens (pour le blacklistage)
+      if (accessToken) {
+        const tokenQuery = `
+          INSERT INTO personal_access_tokens (
+            token, user_id, token_type, expires_at, is_active, metadata
+          ) VALUES ($1, $2, $3, $4, $5, $6)
+          ON CONFLICT (token) DO UPDATE SET
+            is_active = EXCLUDED.is_active,
+            updated_at = CURRENT_TIMESTAMP
+        `;
+
+        const expiresAt = new Date(Date.now() + (expiresIn * 1000));
+        const tokenValues = [
+          accessToken,
+          userId,
+          'access',
+          expiresAt,
+          true, // is_active = true initialement
+          JSON.stringify({ deviceInfo, ipAddress, userAgent })
+        ];
+
+        console.log('🔍 Debug repository.create - Insertion token...');
+        await connection.query(tokenQuery, tokenValues);
+        console.log('🔍 Debug repository.create - Token inséré');
+
+        // Insérer le refresh token aussi s'il existe
+        if (refreshToken) {
+          const refreshExpiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 jours
+          const refreshValues = [
+            refreshToken,
+            userId,
+            'refresh',
+            refreshExpiresAt,
+            true,
+            JSON.stringify({ deviceInfo, ipAddress, userAgent })
+          ];
+
+          await connection.query(tokenQuery, refreshValues);
+          console.log('🔍 Debug repository.create - Refresh token inséré');
+        }
+      }
+
+      return sessionResult.rows[0];
     } catch (error) {
       console.log('🔍 Debug repository.create - Erreur query:', error.message);
       throw new Error(`Erreur lors de la création de la session: ${error.message}`);
@@ -300,7 +343,7 @@ class SessionRepository {
   async isTokenBlacklisted(token) {
     const query = `
       SELECT id FROM personal_access_tokens 
-      WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP
+      WHERE token = $1 AND is_active = false AND expires_at > CURRENT_TIMESTAMP
     `;
 
     try {

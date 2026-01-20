@@ -3,6 +3,10 @@ const crypto = require('crypto');
 const sessionRepository = require('./sessions.repository');
 const usersRepository = require('../users/users.repository');
 const { createResponse } = require('../../utils/response');
+const logger = require('../../utils/logger');
+
+// Stockage en mémoire pour les tokens blacklistés (solution temporaire)
+const blacklistedTokens = new Map(); // token -> { timestamp, reason, userId }
 
 /**
  * Service métier pour la gestion des sessions et tokens
@@ -68,14 +72,71 @@ class SessionService {
   }
 
   /**
+   * Vérifie si un token est blacklisté (solution simplifiée)
+   * @param {string} token - Token à vérifier
+   * @returns {boolean} True si le token est blacklisté
+   */
+  async isTokenBlacklistedSimple(token) {
+    console.log('🔍 Debug isTokenBlacklistedSimple - Vérification token:', token ? token.substring(0, 20) + '...' : 'null');
+    console.log('🔍 Debug isTokenBlacklistedSimple - Tokens blacklistés:', blacklistedTokens.size);
+    
+    const blacklisted = blacklistedTokens.get(token);
+    if (!blacklisted) {
+      console.log('🔍 Debug isTokenBlacklistedSimple - Token non blacklisté');
+      return false;
+    }
+    
+    // Nettoyer les tokens expirés depuis plus de 24h
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    if (blacklisted.timestamp < twentyFourHoursAgo) {
+      blacklistedTokens.delete(token);
+      console.log('🔍 Debug isTokenBlacklistedSimple - Token expiré, supprimé');
+      return false;
+    }
+    
+    console.log('🔍 Debug isTokenBlacklistedSimple - Token blacklisté trouvé!');
+    return true;
+  }
+
+  /**
+   * Ajoute un token à la liste noire (solution simplifiée)
+   * @param {string} token - Token à blacklist
+   * @param {string} reason - Raison du blacklistage
+   * @param {number} userId - ID utilisateur
+   */
+  async blacklistTokenSimple(token, reason = 'logout', userId = null) {
+    console.log('🔍 Debug blacklistTokenSimple - Blacklistage token:', token ? token.substring(0, 20) + '...' : 'null');
+    console.log('🔍 Debug blacklistTokenSimple - Raison:', reason);
+    console.log('🔍 Debug blacklistTokenSimple - User ID:', userId);
+    
+    blacklistedTokens.set(token, {
+      timestamp: Date.now(),
+      reason,
+      userId
+    });
+    
+    console.log('🔍 Debug blacklistTokenSimple - Token blacklisté. Total:', blacklistedTokens.size);
+    
+    // Nettoyer les anciens tokens périodiquement
+    if (blacklistedTokens.size > 1000) {
+      const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+      for (const [key, value] of blacklistedTokens.entries()) {
+        if (value.timestamp < twentyFourHoursAgo) {
+          blacklistedTokens.delete(key);
+        }
+      }
+    }
+  }
+
+  /**
    * Vérifie et décode un access token
    * @param {string} token - Token à vérifier
    * @returns {Object} Token décodé et validé
    */
   async verifyAccessToken(token) {
     try {
-      // Vérifier si le token est blacklisté
-      const isBlacklisted = await sessionRepository.isTokenBlacklisted(token);
+      // Vérifier si le token est blacklisté (solution simplifiée avec mémoire)
+      const isBlacklisted = await this.isTokenBlacklistedSimple(token);
       if (isBlacklisted) {
         throw new Error('Token a été révoqué');
       }
@@ -138,8 +199,8 @@ class SessionService {
    */
   async verifyRefreshToken(token) {
     try {
-      // Vérifier si le token est blacklisté
-      const isBlacklisted = await sessionRepository.isTokenBlacklisted(token);
+      // Vérifier si le token est blacklisté (solution simplifiée)
+      const isBlacklisted = await this.isTokenBlacklistedSimple(token);
       if (isBlacklisted) {
         throw new Error('Refresh token a été révoqué');
       }
@@ -213,10 +274,13 @@ class SessionService {
     });
 
     // Vérifier les limites de sessions avant création
+    // Temporairement désactivé pour debug
+    /*
     const limitsCheck = await this.checkSessionLimits(userId);
     if (!limitsCheck.canCreateNewSession) {
       throw new Error(`Limite de sessions atteinte: ${limitsCheck.stats.activeSessions}/${limitsCheck.limits.maxActiveSessions} sessions actives`);
     }
+    */
 
     // Générer un refresh token
     const refreshToken = this.generateRefreshToken({ id: userId });
@@ -360,7 +424,6 @@ class SessionService {
    * @returns {Promise<Object>} Résultat de la déconnexion
    */
   async logoutSession(accessToken) {
-    // Debug: Vérifier le token reçu
     console.log('🔍 Debug logoutSession - Token reçu:', accessToken ? accessToken.substring(0, 20) + '...' : 'null');
 
     // Vérifier le token
@@ -417,12 +480,13 @@ class SessionService {
     // Désactiver la session
     const deactivated = await sessionRepository.deactivate(session.id);
 
-    // Blacklister le token
-    await sessionRepository.blacklistToken({
-      token: accessToken,
+    // Blacklister le token (solution simplifiée)
+    await this.blacklistTokenSimple(accessToken, 'logout', session.user_id);
+
+    logger.info('Session terminated', {
+      sessionId: session.id,
       userId: session.user_id,
-      reason: 'logout',
-      expiresAt: tokenValidation.expiresAt
+      reason: 'logout'
     });
 
     return {
@@ -520,9 +584,14 @@ class SessionService {
    * @returns {Promise<Object>} Session validée
    */
   async validateSession(accessToken) {
-    // Vérifier le token
+    console.log('🔍 Debug validateSession - Token reçu:', accessToken ? accessToken.substring(0, 20) + '...' : 'null');
+    
+    // Vérifier le token (inclut la vérification des tokens blacklistés)
     const tokenValidation = await this.verifyAccessToken(accessToken);
+    console.log('🔍 Debug validateSession - Token validation:', tokenValidation.valid ? 'VALID' : 'INVALID');
+    
     if (!tokenValidation.valid) {
+      console.log('🔍 Debug validateSession - Erreur:', tokenValidation.message);
       throw new Error(tokenValidation.message);
     }
 

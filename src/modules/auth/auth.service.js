@@ -64,14 +64,18 @@ class AuthService {
     let sessionData = null;
     try {
       console.log('🔍 Debug authenticate - Création session...');
+      const refreshToken = this.generateRefreshTokenFromUser(user);
+      console.log('🔍 Debug authenticate - Refresh token généré:', refreshToken ? 'Oui' : 'Non');
       const sessionResult = await sessionService.createSession({
         accessToken: token,
+        refreshToken: refreshToken,
         userId: user.id,
         ipAddress: null, // Sera ajouté par le middleware
         userAgent: null,  // Sera ajouté par le middleware
         expiresIn: 24 * 60 * 60 // 24 heures
       });
       console.log('🔍 Debug authenticate - Session créée:', sessionResult.success);
+      console.log('🔍 Debug authenticate - Session result:', JSON.stringify(sessionResult, null, 2));
       if (sessionResult.success) {
         console.log('🔍 Debug authenticate - Session ID:', sessionResult.session?.id?.substring(0, 20) + '...');
         sessionData = sessionResult.session;
@@ -141,6 +145,32 @@ class AuthService {
       return jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
       throw new Error('Token invalide');
+    }
+  }
+
+  /**
+   * Génère un refresh token pour un utilisateur
+   * @param {Object} user - Données utilisateur
+   * @returns {string} Refresh token
+   */
+  generateRefreshTokenFromUser(user) {
+    try {
+      const payload = {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        type: 'refresh'
+      };
+
+      const options = {
+        expiresIn: '7d', // 7 jours pour le rafraîchissement
+        issuer: process.env.JWT_ISSUER || 'event-planner-auth',
+        audience: process.env.JWT_AUDIENCE || 'event-planner-users'
+      };
+
+      return jwt.sign(payload, process.env.JWT_SECRET, options);
+    } catch (error) {
+      throw new Error('Erreur lors de la génération du refresh token');
     }
   }
 

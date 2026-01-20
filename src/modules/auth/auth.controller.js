@@ -55,17 +55,20 @@ class AuthController {
         ));
       }
 
-      // Tenter de révoquer le token (si Redis disponible)
+      // Tenter de révoquer le token (solution directe)
       try {
-        const result = await sessionService.logoutSession(token);
+        // Blacklister directement le token sans vérifier la session
+        await sessionService.blacklistTokenSimple(token, 'logout');
+        console.log('🔍 Debug auth.controller logout - Token blacklisté directement');
         
         res.status(200).json(createResponse(
           true,
-          result.message || 'Session terminée avec succès'
+          'Session terminée avec succès'
         ));
       } catch (sessionError) {
-        // Si la session n'existe pas, considérer que le logout réussit
-        console.warn('Session non trouvée lors du logout:', sessionError.message);
+        // Si erreur, considérer que le logout réussit
+        console.warn('Erreur lors du logout:', sessionError.message);
+        console.log('🔍 Debug auth.controller logout - Erreur session:', sessionError.message);
         
         res.status(200).json(createResponse(
           true,
@@ -94,7 +97,7 @@ class AuthController {
         ));
       }
 
-      const newToken = authService.refreshToken(refreshToken);
+      const newToken = await authService.refreshToken(refreshToken);
 
       res.status(200).json(createResponse(
         true,

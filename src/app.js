@@ -22,6 +22,7 @@ try {
 // Import des routes
 const authRoutes = require('./modules/auth/auth.routes');
 const registrationRoutes = require('./modules/auth/registration.routes');
+const passwordRoutes = require('./modules/password/password.routes');
 const peopleRoutes = require('./modules/people/people.routes');
 const usersRoutes = require('./modules/users/users.routes');
 const accessesRoutes = require('./modules/accesses/accesses.routes');
@@ -193,6 +194,7 @@ app.use('/api/auth',
   authRoutes
 );
 app.use('/api/auth/registration', registrationRoutes);
+app.use('/api/password', passwordRoutes);
 app.use('/api/people', peopleRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/accesses', accessesRoutes);

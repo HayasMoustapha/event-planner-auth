@@ -64,13 +64,21 @@ class MenuRepository {
    * @returns {Promise<Object>} Données paginées
    */
   async findAll(options = {}) {
-    const { page = 1, limit = 10, search, parentMenuId } = options;
+    const { page = 1, limit = 10, search, parentMenuId, isVisible = true } = options;
     const offset = (page - 1) * limit;
 
     let whereClause = 'WHERE deleted_at IS NULL';
     let countClause = 'WHERE deleted_at IS NULL';
     const params = [];
     let paramIndex = 1;
+
+    // Filtre de visibilité
+    if (isVisible !== undefined) {
+      whereClause += ` AND is_visible = $${paramIndex}`;
+      countClause += ` AND is_visible = $${paramIndex}`;
+      params.push(isVisible);
+      paramIndex++;
+    }
 
     // Filtre de recherche
     if (search) {
