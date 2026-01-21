@@ -14,26 +14,24 @@ class OtpRepository {
     const {
       personId,
       purpose,
-      identifier,
       otpCode,
       expiresAt,
       isUsed = false,
       createdBy = null
     } = otpData;
 
-    // Colonnes selon schéma : id, user_id, purpose, identifier, code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+    // Colonnes selon schéma : id, person_id, otp_code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     const query = `
-      INSERT INTO otp_codes (user_id, purpose, identifier, code, expires_at, is_used, created_at, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, $7)
-      RETURNING id, user_id, purpose, identifier, code, expires_at, is_used, created_at
+      INSERT INTO otps (person_id, purpose, otp_code, expires_at, is_used, created_at, created_by)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
+      RETURNING id, person_id, purpose, otp_code, expires_at, is_used, created_at
     `;
 
     try {
       const result = await connection.query(query, [
-        personId, // user_id (colonne 'user_id' du schéma)
+        personId, // person_id (colonne 'person_id' du schéma)
         purpose, // purpose (colonne 'purpose' du schéma)
-        identifier, // identifier (colonne 'identifier' du schéma)
-        otpCode, // code (colonne 'code' du schéma)
+        otpCode, // otp_code (colonne 'otp_code' du schéma)
         expiresAt,
         isUsed,
         createdBy
@@ -52,15 +50,15 @@ class OtpRepository {
    * @param {string} purpose - Purpose de l'OTP
    * @returns {Promise<Object|null>} OTP trouvé ou null
    */
-  // Colonnes selon schéma : id, user_id, purpose, identifier, code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+  // Colonnes selon schéma : id, person_id, otp_code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
   async findByCodeAndUserId(otpCode, userId, purpose) {
     const query = `
-      SELECT * FROM otp_codes 
-      WHERE code = $1 AND user_id = $2 AND purpose = $3 
-        AND is_used = FALSE 
-        AND expires_at > CURRENT_TIMESTAMP
-      ORDER BY created_at DESC
-      LIMIT 1
+      SELECT * FROM otps 
+        WHERE otp_code = $1 AND person_id = $2 AND purpose = $3 
+          AND is_used = FALSE 
+            AND expires_at > CURRENT_TIMESTAMP
+        ORDER BY created_at DESC
+        LIMIT 1
     `;
 
     // Debug log
@@ -77,8 +75,8 @@ class OtpRepository {
       if (result.rows.length > 0) {
         console.log('🔍 Debug OTP Details:', {
           id: result.rows[0].id,
-          code: result.rows[0].code,
-          userId: result.rows[0].user_id,
+          otp_code: result.rows[0].otp_code,
+          personId: result.rows[0].person_id,
           purpose: result.rows[0].purpose,
           isUsed: result.rows[0].is_used,
           expiresAt: result.rows[0].expires_at
@@ -98,15 +96,15 @@ class OtpRepository {
    * @param {string} purpose - Purpose de l'OTP
    * @returns {Promise<Object|null>} OTP trouvé ou null
    */
-  // Colonnes selon schéma : id, user_id, code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+  // Colonnes selon schéma : id, person_id, otp_code, expires_at, is_used, purpose, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
   async findByCodeAndPersonId(otpCode, personId, purpose) {
     const query = `
-      SELECT * FROM otp_codes 
-      WHERE code = $1 AND user_id = $2 AND purpose = $3 
-        AND is_used = FALSE 
-        AND expires_at > CURRENT_TIMESTAMP
-      ORDER BY created_at DESC
-      LIMIT 1
+      SELECT * FROM otps 
+        WHERE otp_code = $1 AND person_id = $2 AND purpose = $3 
+          AND is_used = FALSE 
+            AND expires_at > CURRENT_TIMESTAMP
+        ORDER BY created_at DESC
+        LIMIT 1
     `;
 
     // Debug log
@@ -123,8 +121,8 @@ class OtpRepository {
       if (result.rows.length > 0) {
         console.log('🔍 Debug OTP Details:', {
           id: result.rows[0].id,
-          code: result.rows[0].code,
-          personId: result.rows[0].user_id,
+          otp_code: result.rows[0].otp_code,
+          personId: result.rows[0].person_id,
           purpose: result.rows[0].purpose,
           isUsed: result.rows[0].is_used,
           expiresAt: result.rows[0].expires_at
@@ -145,8 +143,8 @@ class OtpRepository {
    */
   async findByPersonId(personId, purpose = null) {
     let query = `
-      SELECT * FROM otp_codes 
-      WHERE user_id = $1
+      SELECT * FROM otps 
+      WHERE person_id = $1
     `;
     const params = [personId];
 
@@ -173,7 +171,7 @@ class OtpRepository {
    */
   async markAsUsed(id, usedBy = null) {
     const query = `
-      UPDATE otp_codes 
+      UPDATE otps 
       SET is_used = TRUE, used_at = CURRENT_TIMESTAMP, used_by = $2, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND is_used = FALSE
     `;
@@ -211,8 +209,8 @@ class OtpRepository {
    */
   async deleteByPersonId(personId) {
     const query = `
-      DELETE FROM otp_codes 
-      WHERE user_id = $1
+      DELETE FROM otps 
+        WHERE person_id = $1
     `;
 
     try {
@@ -251,8 +249,8 @@ class OtpRepository {
    */
   async countActiveOtp(personId, purpose = null) {
     let query = `
-      SELECT COUNT(*) as count FROM otp_codes 
-      WHERE user_id = $1 AND is_used = FALSE 
+      SELECT COUNT(*) as count FROM otps 
+      WHERE person_id = $1 AND is_used = FALSE 
         AND expires_at > CURRENT_TIMESTAMP
     `;
     const params = [personId];
