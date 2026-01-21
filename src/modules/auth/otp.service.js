@@ -65,7 +65,6 @@ class OtpService {
     const otpData = {
       personId,
       purpose,
-      identifier: contactInfo, // L'identifier est l'email ou le téléphone
       otpCode,
       expiresAt,
       createdBy
@@ -164,11 +163,6 @@ class OtpService {
 
     if (!otp) {
       throw new Error('Code OTP invalide ou expiré');
-    }
-
-    // Validation optionnelle de la personne
-    if (otp.identifier !== normalizedContact) {
-      throw new Error('OTP non correspondant au contact');
     }
 
     // Vérifier si l'OTP n'est pas expiré

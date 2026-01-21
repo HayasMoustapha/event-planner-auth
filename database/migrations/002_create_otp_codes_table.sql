@@ -2,99 +2,90 @@
 -- Table des codes OTP (One-Time Password)
 -- ========================================
 
-CREATE TABLE IF NOT EXISTS otp_codes (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    type VARCHAR(10) NOT NULL CHECK (type IN ('email', 'phone')),
-    identifier VARCHAR(254) NOT NULL,
-    code VARCHAR(10) NOT NULL,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+CREATE TABLE IF NOT EXISTS otps (
+    id BIGSERIAL PRIMARY KEY,
+    person_id BIGINT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+    purpose VARCHAR(255) DEFAULT NULL,
+    otp_code VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
     is_used BOOLEAN DEFAULT FALSE,
-    used_at TIMESTAMP WITH TIME ZONE,
-    used_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    updated_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    deleted_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    uid UUID NOT NULL DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT NULL
 );
 
 -- ========================================
 -- Index pour optimiser les requêtes
 -- ========================================
 
--- Index pour la recherche par code et identifiant
-CREATE INDEX IF NOT EXISTS idx_otp_codes_code_identifier 
-    ON otp_codes(code, identifier, type, is_used, expires_at);
+-- Index pour la recherche par code et personne
+CREATE INDEX IF NOT EXISTS idx_otps_person_id_code 
+    ON otps(person_id, purpose, is_used, expires_at);
 
--- Index pour la recherche par utilisateur
-CREATE INDEX IF NOT EXISTS idx_otp_codes_user_id 
-    ON otp_codes(user_id, type, created_at DESC);
-
--- Index pour la recherche par identifiant
-CREATE INDEX IF NOT EXISTS idx_otp_codes_identifier 
-    ON otp_codes(identifier, type);
+-- Index pour la recherche par personne
+CREATE INDEX IF NOT EXISTS idx_otps_person_id 
+    ON otps(person_id, purpose, created_at DESC);
 
 -- Index pour la recherche par expiration
-CREATE INDEX IF NOT EXISTS idx_otp_codes_expires_at 
-    ON otp_codes(expires_at, is_used);
+CREATE INDEX IF NOT EXISTS idx_otps_expires_at 
+    ON otps(expires_at, is_used);
 
 -- Index pour la recherche par statut d'utilisation
-CREATE INDEX IF NOT EXISTS idx_otp_codes_is_used 
-    ON otp_codes(is_used, expires_at);
+CREATE INDEX IF NOT EXISTS idx_otps_is_used 
+    ON otps(is_used, expires_at);
+
+-- Index unique sur UID
+CREATE UNIQUE INDEX IF NOT EXISTS otps_uid_unique ON otps(uid);
 
 -- ========================================
 -- Contraintes et triggers
 -- ========================================
 
--- Contrainte pour éviter les doublons d'OTP non utilisés pour le même utilisateur et type (IDEMPOTENT)
--- Simplified: Using basic index instead of partial index with CURRENT_TIMESTAMP
-ALTER TABLE otp_codes DROP CONSTRAINT IF EXISTS unique_active_otp_per_user_type;
--- Note: Partial index with CURRENT_TIMESTAMP is problematic, using basic index instead
-CREATE INDEX IF NOT EXISTS idx_otp_codes_user_type_active 
-    ON otp_codes(user_id, type, is_used, expires_at);
-
--- Trigger pour mettre à jour le champ updated_at (IDEMPOTENT)
-DROP TRIGGER IF EXISTS trigger_update_otp_codes_updated_at ON otp_codes;
-CREATE OR REPLACE FUNCTION update_otp_codes_updated_at()
+-- Trigger pour mettre à jour le champ updated_at
+DROP TRIGGER IF EXISTS trigger_update_otps_updated_at ON otps;
+CREATE OR REPLACE FUNCTION update_otps_updated_at()
     RETURNS TRIGGER AS $$
     BEGIN
         NEW.updated_at = CURRENT_TIMESTAMP;
         RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
-CREATE TRIGGER trigger_update_otp_codes_updated_at
-    BEFORE UPDATE ON otp_codes
+CREATE TRIGGER trigger_update_otps_updated_at
+    BEFORE UPDATE ON otps
     FOR EACH ROW
-    EXECUTE FUNCTION update_otp_codes_updated_at();
+    EXECUTE FUNCTION update_otps_updated_at();
 
 -- ========================================
 -- Commentaires sur la table
 -- ========================================
 
-COMMENT ON TABLE otp_codes IS 'Table des codes OTP pour l''authentification à deux facteurs';
-COMMENT ON COLUMN otp_codes.id IS 'Identifiant unique de l''OTP';
-COMMENT ON COLUMN otp_codes.user_id IS 'ID de l''utilisateur concerné';
-COMMENT ON COLUMN otp_codes.type IS 'Type d''OTP (email ou téléphone)';
-COMMENT ON COLUMN otp_codes.identifier IS 'Email ou numéro de téléphone';
-COMMENT ON COLUMN otp_codes.code IS 'Code OTP à usage unique';
-COMMENT ON COLUMN otp_codes.expires_at IS 'Date et heure d''expiration du code';
-COMMENT ON COLUMN otp_codes.is_used IS 'Indique si le code a été utilisé';
-COMMENT ON COLUMN otp_codes.used_at IS 'Date et heure d''utilisation du code';
-COMMENT ON COLUMN otp_codes.used_by IS 'ID de l''utilisateur qui a utilisé le code';
-COMMENT ON COLUMN otp_codes.created_at IS 'Date et heure de création du code';
-COMMENT ON COLUMN otp_codes.created_by IS 'ID de l''utilisateur qui a créé le code';
-COMMENT ON COLUMN otp_codes.updated_at IS 'Date et heure de dernière mise à jour';
+COMMENT ON TABLE otps IS 'Table des codes OTP pour l''authentification à deux facteurs';
+COMMENT ON COLUMN otps.id IS 'Identifiant unique de l''OTP';
+COMMENT ON COLUMN otps.person_id IS 'ID de la personne concernée';
+COMMENT ON COLUMN otps.purpose IS 'Purpose de l''OTP (email, phone, etc.)';
+COMMENT ON COLUMN otps.otp_code IS 'Code OTP à usage unique';
+COMMENT ON COLUMN otps.expires_at IS 'Date et heure d''expiration du code';
+COMMENT ON COLUMN otps.is_used IS 'Indique si le code a été utilisé';
+COMMENT ON COLUMN otps.created_at IS 'Date et heure de création du code';
+COMMENT ON COLUMN otps.created_by IS 'ID de l''utilisateur qui a créé le code';
+COMMENT ON COLUMN otps.updated_at IS 'Date et heure de dernière mise à jour';
+COMMENT ON COLUMN otps.deleted_at IS 'Date et heure de suppression';
 
 -- ========================================
 -- Procédures stockées utiles
 -- ========================================
 
 -- Procédure pour nettoyer les OTP expirés
-CREATE OR REPLACE FUNCTION cleanup_expired_otp_codes()
+CREATE OR REPLACE FUNCTION cleanup_expired_otps()
     RETURNS INTEGER AS $$
     DECLARE
         deleted_count INTEGER;
     BEGIN
-        DELETE FROM otp_codes 
+        DELETE FROM otps 
         WHERE expires_at < CURRENT_TIMESTAMP;
         
         GET DIAGNOSTICS deleted_count = ROW_COUNT;
@@ -103,16 +94,16 @@ CREATE OR REPLACE FUNCTION cleanup_expired_otp_codes()
     END;
     $$ LANGUAGE plpgsql;
 
--- Procédure pour compter les OTP actifs par utilisateur
-CREATE OR REPLACE FUNCTION count_active_otp_codes(p_user_id INTEGER, p_type VARCHAR(10))
+-- Procédure pour compter les OTP actifs par personne
+CREATE OR REPLACE FUNCTION count_active_otps(p_person_id BIGINT, p_purpose VARCHAR(255))
     RETURNS INTEGER AS $$
     DECLARE
         otp_count INTEGER;
     BEGIN
         SELECT COUNT(*) INTO otp_count
-        FROM otp_codes 
-        WHERE user_id = p_user_id 
-            AND (p_type IS NULL OR type = p_type)
+        FROM otps 
+        WHERE person_id = p_person_id 
+            AND (p_purpose IS NULL OR purpose = p_purpose)
             AND is_used = FALSE 
             AND expires_at > CURRENT_TIMESTAMP;
         
@@ -120,17 +111,17 @@ CREATE OR REPLACE FUNCTION count_active_otp_codes(p_user_id INTEGER, p_type VARC
     END;
     $$ LANGUAGE plpgsql;
 
--- Procédure pour invalider tous les OTP d'un utilisateur
-CREATE OR REPLACE FUNCTION invalidate_user_otp_codes(p_user_id INTEGER, p_type VARCHAR(10))
+-- Procédure pour invalider tous les OTP d'une personne
+CREATE OR REPLACE FUNCTION invalidate_person_otps(p_person_id BIGINT, p_purpose VARCHAR(255))
     RETURNS INTEGER AS $$
     DECLARE
         invalidated_count INTEGER;
     BEGIN
-        UPDATE otp_codes 
+        UPDATE otps 
         SET is_used = TRUE, 
-            used_at = CURRENT_TIMESTAMP
-        WHERE user_id = p_user_id 
-            AND (p_type IS NULL OR type = p_type)
+            updated_at = CURRENT_TIMESTAMP
+        WHERE person_id = p_person_id 
+            AND (p_purpose IS NULL OR purpose = p_purpose)
             AND is_used = FALSE;
         
         GET DIAGNOSTICS invalidated_count = ROW_COUNT;
@@ -158,27 +149,27 @@ FROM otp_codes;
 
 -- Pour trouver un OTP valide
 /*
-SELECT * FROM otp_codes 
-WHERE code = '123456' 
-    AND identifier = 'user@example.com' 
-    AND type = 'email' 
+SELECT * FROM otps 
+WHERE otp_code = '123456' 
+    AND person_id = 1 
+    AND purpose = 'email' 
     AND is_used = FALSE 
     AND expires_at > CURRENT_TIMESTAMP
 ORDER BY created_at DESC
 LIMIT 1;
 */
 
--- Pour les OTP d'un utilisateur
+-- Pour les OTP d'une personne
 /*
-SELECT * FROM otp_codes 
-WHERE user_id = 1 
-    AND type = 'email' 
+SELECT * FROM otps 
+WHERE person_id = 1 
+    AND purpose = 'email' 
 ORDER BY created_at DESC;
 */
 
 -- Pour les OTP expirés
 /*
-SELECT * FROM otp_codes 
+SELECT * FROM otps 
 WHERE expires_at < CURRENT_TIMESTAMP;
 */
 
@@ -189,7 +180,7 @@ SELECT
     COUNT(*) as total,
     COUNT(CASE WHEN is_used = TRUE THEN 1 END) as used,
     COUNT(CASE WHEN is_used = FALSE AND expires_at > CURRENT_TIMESTAMP THEN 1 END) as active
-FROM otp_codes 
+FROM otps 
 GROUP BY DATE_TRUNC('day', created_at)
 ORDER BY date DESC;
 */
