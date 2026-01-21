@@ -415,7 +415,25 @@ class UsersRepository {
    * @returns {Promise<Object|null>} Utilisateur si le mot de passe est correct
    */
   async verifyPassword(email, password) {
-    const user = await this.findByEmail(email, true);
+    // D'abord chercher par email utilisateur exact
+    let user = await this.findByEmail(email, true);
+    
+    // Si pas trouvé, chercher par email de personne
+    if (!user) {
+      const query = `
+        SELECT u.*, p.first_name, p.last_name, p.phone as person_phone
+        FROM users u
+        LEFT JOIN people p ON u.person_id = p.id
+        WHERE p.email = $1 AND u.deleted_at IS NULL
+      `;
+      
+      try {
+        const result = await connection.query(query, [email]);
+        user = result.rows[0] || null;
+      } catch (error) {
+        throw new Error(`Erreur lors de la recherche par email personne ${email}: ${error.message}`);
+      }
+    }
     
     if (!user) {
       return null;
