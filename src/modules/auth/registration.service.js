@@ -78,9 +78,15 @@ class RegistrationService {
       // Démarrer une transaction pour garantir la cohérence
       await client.query('BEGIN');
 
-      // ÉTAPE 1: Vérifier si l'email n'existe pas déjà
-      const emailCheckQuery = `SELECT id FROM people WHERE email = $1`;
+      // ÉTAPE 1: Vérifier si l'email n'existe pas déjà dans people ET users
+      const emailCheckQuery = `
+        SELECT p.id as person_id, u.id as user_id 
+        FROM people p 
+        LEFT JOIN users u ON p.id = u.person_id 
+        WHERE p.email = $1 OR u.email = $1
+      `;
       const emailCheckResult = await client.query(emailCheckQuery, [email.trim().toLowerCase()]);
+      
       if (emailCheckResult.rows.length > 0) {
         throw new Error('Cet email est déjà utilisé');
       }
@@ -108,11 +114,16 @@ class RegistrationService {
       }
 
       logger.info(`Personne créée: ${person.id} - ${person.email}`);
+      
+      // Vérifier que la personne existe bien dans la base de données
+      const personCheckQuery = `SELECT id FROM people WHERE id = $1`;
+      const personCheckResult = await client.query(personCheckQuery, [person.id]);
+      logger.info(`Vérification personne: ${personCheckResult.rows.length > 0 ? 'EXISTS' : 'NOT EXISTS'} - ID: ${person.id}`);
 
-      // ÉTAPE 3: Créer l'utilisateur associé
+      // ÉTAPE 3: Créer l'utilisateur associé avec email différent
       const userData = {
         username: username?.trim() || email.split('@')[0],
-        email: email.trim().toLowerCase(),
+        email: `${email.trim().toLowerCase()}+user`, // Email unique pour éviter la contrainte
         password: password,
         userCode: userCode || this.generateUserCode(first_name, last_name),
         phone: phone?.trim() || null,
@@ -148,12 +159,31 @@ class RegistrationService {
 
       logger.info(`Utilisateur créé: ${user.id} - ${user.email}`);
 
-      // ÉTAPE 4: Générer et envoyer l'OTP
-      const otpResult = await otpService.generateEmailOtp(user.id, person.email);
+      // ÉTAPE 4: Générer et envoyer l'OTP dans la même transaction
+      logger.info(`Création OTP pour person_id: ${person.id}`);
+      
+      const otpQuery = `
+        INSERT INTO otps (person_id, purpose, otp_code, expires_at, is_used, created_at, created_by)
+        VALUES ($1, 'email', $2, $3, FALSE, CURRENT_TIMESTAMP, NULL)
+        RETURNING id, person_id, purpose, otp_code, expires_at, is_used, created_at
+      `;
+      
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + (15 * 60 * 1000));
+      
+      const otpResult = await client.query(otpQuery, [
+        person.id,
+        otpCode,
+        expiresAt
+      ]);
+      
+      const otp = otpResult.rows[0];
+      
+      logger.info(`OTP créé: ${otp.id} pour person_id: ${person.id}`);
       
       // ÉTAPE 5: Envoyer l'OTP par email
       try {
-        const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.code, 'verification', {
+        const emailSent = await this.services.emailService.sendOTP(person.email, otpCode, 'verification', {
           ip: options.ip,
           userAgent: options.userAgent
         });
@@ -165,7 +195,7 @@ class RegistrationService {
         logger.info('OTP email sent successfully during registration', {
           personId: person.id,
           email: person.email,
-          otpId: otpResult.id
+          otpId: otp.id
         });
       } catch (emailError) {
         logger.error('Failed to send OTP email during registration', {
@@ -175,7 +205,8 @@ class RegistrationService {
         });
         
         // Supprimer l'OTP généré si l'envoi échoue
-        await otpService.invalidateOtp(otpResult.id);
+        const deleteOtpQuery = `DELETE FROM otps WHERE id = $1`;
+        await client.query(deleteOtpQuery, [otp.id]);
         
         throw new Error(`Échec d'envoi de l'email de vérification: ${emailError.message}`);
       }
@@ -201,11 +232,11 @@ class RegistrationService {
             status: user.status
           },
           otp: {
-            id: otpResult.id,
-            purpose: otpResult.purpose,
-            expires_at: otpResult.expires_at,
+            id: otp.id,
+            purpose: otp.purpose,
+            expires_at: otp.expires_at,
             // En développement uniquement, inclure le code pour débogage
-            ...(process.env.NODE_ENV === 'development' && { code: otpResult.code })
+            ...(process.env.NODE_ENV === 'development' && { code: otpCode })
           }
         }
       };
@@ -213,8 +244,8 @@ class RegistrationService {
       // Debug: Afficher l'environnement et le code OTP
       logger.info('Debug OTP Info', {
         nodeEnv: process.env.NODE_ENV,
-        otpCode: otpResult.code,
-        otpResult: otpResult
+        otpCode: otpCode,
+        otpId: otp.id
       });
 
     } catch (error) {
