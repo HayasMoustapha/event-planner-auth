@@ -172,7 +172,7 @@ class OtpRepository {
   async markAsUsed(id, usedBy = null) {
     const query = `
       UPDATE otps 
-      SET is_used = TRUE, used_at = CURRENT_TIMESTAMP, used_by = $2, updated_at = CURRENT_TIMESTAMP
+      SET is_used = TRUE, updated_by = $2, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND is_used = FALSE
     `;
 

@@ -124,10 +124,10 @@ class OtpService {
    * @param {string} otpCode - Code OTP à vérifier
    * @param {string} contactInfo - Email ou téléphone
    * @param {string} purpose - Purpose de l'OTP ('email' ou 'phone')
-   * @param {number} userId - ID de l'utilisateur (optionnel, pour validation)
+   * @param {number} personId - ID de la personne (pour validation)
    * @returns {Promise<Object>} OTP validé et marqué comme utilisé
    */
-  async verifyOtp(otpCode, contactInfo, purpose, userId = null) {
+  async verifyOtp(otpCode, contactInfo, purpose, personId = null) {
     // Validation des paramètres
     if (!otpCode || !otpCode.trim()) {
       throw new Error('Code OTP requis');
@@ -151,13 +151,13 @@ class OtpService {
     // Debug logs
     console.log('🔍 Debug OTP Validation:', {
       otpCode,
-      userId,
+      personId,
       purpose,
       normalizedContact
     });
 
     // Vérifier et marquer comme utilisé
-    const otp = await otpRepository.validateOtp(otpCode, userId, purpose);
+    const otp = await otpRepository.validateOtp(otpCode, personId, purpose);
 
     console.log('🔍 Debug OTP Result:', otp ? 'OTP trouvé' : 'OTP non trouvé');
 
@@ -205,7 +205,8 @@ class OtpService {
       throw new Error('Aucun utilisateur trouvé pour cette personne');
     }
 
-    return await this.verifyOtp(otpCode, email, 'email', user.id);
+    // Utiliser personId pour la validation OTP (pas user.id)
+    return await this.verifyOtp(otpCode, email, 'email', personId);
   }
 
   /**
