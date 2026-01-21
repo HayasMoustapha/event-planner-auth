@@ -63,7 +63,7 @@ async function createSchemaMigrationsTable() {
       'accesses',
       'authorizations',
       'menus',
-      'otp_codes',
+      'otps',
       'personal_access_tokens',
       'password_histories'
     ];

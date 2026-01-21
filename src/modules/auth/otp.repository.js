@@ -190,7 +190,7 @@ class OtpRepository {
    */
   async deleteExpired() {
     const query = `
-      DELETE FROM otp_codes 
+      DELETE FROM otps 
       WHERE expires_at < CURRENT_TIMESTAMP
     `;
 
@@ -287,10 +287,10 @@ class OtpRepository {
    */
   async getStats() {
     try {
-      const [total] = await connection.query('SELECT COUNT(*) as count FROM otp_codes');
-      const [active] = await connection.query('SELECT COUNT(*) as count FROM otp_codes WHERE is_used = FALSE AND expires_at > CURRENT_TIMESTAMP');
-      const [used] = await connection.query('SELECT COUNT(*) as count FROM otp_codes WHERE is_used = TRUE');
-      const [expired] = await connection.query('SELECT COUNT(*) as count FROM otp_codes WHERE expires_at < CURRENT_TIMESTAMP');
+      const [total] = await connection.query('SELECT COUNT(*) as count FROM otps');
+      const [active] = await connection.query('SELECT COUNT(*) as count FROM otps WHERE is_used = FALSE AND expires_at > CURRENT_TIMESTAMP');
+      const [used] = await connection.query('SELECT COUNT(*) as count FROM otps WHERE is_used = TRUE');
+      const [expired] = await connection.query('SELECT COUNT(*) as count FROM otps WHERE expires_at < CURRENT_TIMESTAMP');
 
       return {
         total: parseInt(total.rows[0].count),

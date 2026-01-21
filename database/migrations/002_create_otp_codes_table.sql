@@ -139,9 +139,9 @@ SELECT
     COUNT(CASE WHEN is_used = TRUE THEN 1 END) as used_otp,
     COUNT(CASE WHEN is_used = FALSE AND expires_at > CURRENT_TIMESTAMP THEN 1 END) as active_otp,
     COUNT(CASE WHEN expires_at < CURRENT_TIMESTAMP THEN 1 END) as expired_otp,
-    COUNT(CASE WHEN type = 'email' THEN 1 END) as email_otp,
-    COUNT(CASE WHEN type = 'phone' THEN 1 END) as phone_otp
-FROM otp_codes;
+    COUNT(CASE WHEN purpose = 'email' THEN 1 END) as email_otp,
+    COUNT(CASE WHEN purpose = 'phone' THEN 1 END) as phone_otp
+FROM otps;
 
 -- ========================================
 -- Exemples de requêtes

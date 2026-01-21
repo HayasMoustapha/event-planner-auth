@@ -85,7 +85,7 @@ users          -- Profil utilisateur principal
 people          -- Informations personnelles  
 sessions        -- Sessions utilisateur actives
 personal_access_tokens -- Tokens d'accès personnels
-otp_codes       -- Codes à usage unique
+otps           -- Codes à usage unique
 ```
 
 ### 👑 **Gestion des Accès**
