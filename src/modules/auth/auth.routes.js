@@ -199,6 +199,20 @@ router.get('/check-username/:username',
  */
 router.use(authMiddleware.authenticate);
 
+router.get('/change-password',
+  authController.getChangePasswordForm
+);
+
+router.get('/check-email/:email',
+  authValidation.validateEmailParam,
+  registrationController.checkEmailAvailability
+);
+
+router.get('/check-username/:username',
+  authValidation.validateUsernameParam,
+  registrationController.checkUsernameAvailability
+);
+
 // Déconnexion
 router.post('/logout', authController.logout);
 

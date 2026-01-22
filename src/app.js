@@ -33,6 +33,7 @@ const roleRoutes = require('./modules/roles/roles.routes');
 const sessionRoutes = require('./modules/sessions/sessions.routes');
 const sessionMonitoringRoutes = require('./modules/sessions/session-monitoring.routes');
 const testRoutes = require('./modules/test/test.routes');
+const systemRoutes = require('./modules/system/system.routes');
 const healthRoutes = require('./health/health.routes');
 const metricsRoutes = require('./metrics/metrics.routes');
 const docsRoutes = require('./docs/docs.routes');
@@ -209,6 +210,9 @@ app.use('/api/sessions/monitoring', sessionMonitoringRoutes);
 // Routes de test
 app.use('/api/test', testRoutes);
 
+// Routes système
+app.use('/api/system', systemRoutes);
+
 // Routes de monitoring et santé
 app.use('/health', healthRoutes);
 app.use('/metrics', metricsRoutes);
@@ -240,6 +244,7 @@ app.get('/api/docs', (req, res) => {
       sessions: '/api/sessions',
       sessionsMonitoring: '/api/sessions/monitoring',
       test: '/api/test',
+      system: '/api/system',
       health: '/health',
       metrics: '/metrics',
       docs: '/docs',

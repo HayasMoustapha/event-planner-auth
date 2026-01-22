@@ -766,6 +766,47 @@ class AuthController {
   }
 
   /**
+   * Affiche le formulaire de changement de mot de passe
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async getChangePasswordForm(req, res, next) {
+    try {
+      const user = req.user; // Récupéré depuis le middleware authenticate
+      
+      if (!user) {
+        return res.status(401).json(createResponse(
+          false,
+          'Utilisateur non authentifié',
+          { error: 'NOT_AUTHENTICATED' }
+        ));
+      }
+
+      res.status(200).json(createResponse(
+        true,
+        'Formulaire de changement de mot de passe',
+        {
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email
+          },
+          message: 'Utilisateur authentifié, peut changer le mot de passe'
+        }
+      ));
+    } catch (error) {
+      logger.error('Error in getChangePasswordForm:', {
+        error: error.message,
+        userId: req.user?.id,
+        stack: error.stack
+      });
+      
+      next(error);
+    }
+  }
+
+  /**
    * Affiche le formulaire de réinitialisation de mot de passe
    * @param {Object} req - Requête Express
    * @param {Object} res - Réponse Express
