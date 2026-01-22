@@ -280,6 +280,66 @@ class PeopleController {
       next(error);
     }
   }
+
+  // ===== NOUVELLES MÉTHODES POUR LES ROUTES MANQUANTES =====
+
+  /**
+   * Récupère les personnes actives
+   */
+  async getActivePeople(req, res, next) {
+    try {
+      const peopleService = require('./people.service');
+      const activePeople = await peopleService.getActivePeople();
+
+      res.status(200).json(createResponse(
+        true,
+        'Personnes actives récupérées avec succès',
+        { people: activePeople, count: activePeople.length }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Met à jour le statut d'une personne
+   */
+  async updatePersonStatus(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const peopleService = require('./people.service');
+      
+      const updatedPerson = await peopleService.updateStatus(parseInt(id), status);
+
+      res.status(200).json(createResponse(
+        true,
+        'Statut de personne mis à jour avec succès',
+        updatedPerson
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie si une personne existe (alias pour exists)
+   */
+  async checkPersonExists(req, res, next) {
+    try {
+      const { id } = req.params;
+      const peopleService = require('./people.service');
+      const exists = await peopleService.exists(parseInt(id));
+
+      res.status(200).json(createResponse(
+        true,
+        'Vérification d\'existence de personne effectuée',
+        { personId: parseInt(id), exists }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new PeopleController();

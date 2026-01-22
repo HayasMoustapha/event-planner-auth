@@ -25,7 +25,17 @@ router.use(authMiddleware.authenticate);
  */
 router.get('/', rbacMiddleware.requirePermission('people.list'), peopleController.getAll);
 router.get('/stats', rbacMiddleware.requirePermission('people.stats'), peopleController.getStats);
+router.get('/status/active', rbacMiddleware.requirePermission('people.read'), peopleController.getActivePeople);
 router.get('/:id', rbacMiddleware.requirePermission('people.read'), peopleController.getById);
+router.get('/email/:email', rbacMiddleware.requirePermission('people.read'), peopleController.getByEmail);
+router.get('/phone/:phone', rbacMiddleware.requirePermission('people.read'), peopleController.getByPhone);
+router.get('/exists/:id', rbacMiddleware.requirePermission('people.read'), peopleController.checkPersonExists);
+
+// Routes POST
+router.post('/:id/status', 
+  rbacMiddleware.requirePermission('people.update'),
+  peopleController.updatePersonStatus
+);
 
 /**
  * Routes de modification avec validation

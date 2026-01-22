@@ -16,10 +16,82 @@ router.use(authMiddleware.authenticate);
  * Routes de lecture - accessibles aux utilisateurs authentifiés
  */
 
-// Récupérer les statistiques des menus (doit être avant /:id)
+// Routes spéciales (doivent être avant /:id)
 router.get('/stats', 
   rbacMiddleware.requirePermission('menus.view_stats'),
   menuController.getMenuStats
+);
+
+router.get('/hidden', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getHiddenMenus
+);
+
+router.get('/parent/:menuId', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getMenusByParent
+);
+
+router.get('/root', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getRootMenus
+);
+
+router.get('/root-only', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getRootOnlyMenus
+);
+
+router.get('/status/active', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getActiveMenus
+);
+
+router.get('/tree', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getMenusTree
+);
+
+router.get('/user/:userId', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getUserMenus
+);
+
+router.get('/visible', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getVisibleMenus
+);
+
+// Routes POST spéciales
+router.post('/reorder', 
+  rbacMiddleware.requirePermission('menus.manage'),
+  menuController.reorderMenus
+);
+
+// Routes avec paramètres (doivent être après les routes spéciales)
+router.get('/:menuId', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getMenuById
+);
+
+router.get('/:menuId/access', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getMenuAccess
+);
+
+router.post('/:menuId/duplicate', 
+  rbacMiddleware.requirePermission('menus.create'),
+  menuController.duplicateMenu
+);
+
+router.get('/:menuId/permissions', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getMenuPermissions
+);
+
+router.get('/:menuId/permissions/:permissionId', 
+  rbacMiddleware.requirePermission('menus.read'),
+  menuController.getMenuPermissionById
 );
 
 // Récupérer tous les menus avec pagination et filtres

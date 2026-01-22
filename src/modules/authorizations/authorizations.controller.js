@@ -728,6 +728,312 @@ class AuthorizationController {
       next(error);
     }
   }
+
+  // ===== NOUVELLES MÉTHODES POUR LES ROUTES MANQUANTES =====
+
+  /**
+   * Crée un cache d'autorisations
+   */
+  async createCache(req, res, next) {
+    try {
+      const result = await authorizationService.createCache();
+      res.status(200).json(createResponse(
+        true,
+        'Cache d\'autorisations créé',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Invalide le cache d'autorisations
+   */
+  async invalidateCache(req, res, next) {
+    try {
+      const result = await authorizationService.invalidateCache();
+      res.status(200).json(createResponse(
+        true,
+        'Cache d\'autorisations invalidé',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les dépendances des permissions
+   */
+  async getPermissionsDependencies(req, res, next) {
+    try {
+      const result = await authorizationService.getPermissionsDependencies();
+      res.status(200).json(createResponse(
+        true,
+        'Dépendances des permissions récupérées',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère la politique d'autorisations
+   */
+  async getPolicy(req, res, next) {
+    try {
+      const result = await authorizationService.getPolicy();
+      res.status(200).json(createResponse(
+        true,
+        'Politique d\'autorisations récupérée',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère la hiérarchie des rôles
+   */
+  async getRolesHierarchy(req, res, next) {
+    try {
+      const result = await authorizationService.getRolesHierarchy();
+      res.status(200).json(createResponse(
+        true,
+        'Hiérarchie des rôles récupérée',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les autorisations d'un utilisateur
+   */
+  async getUserAuthorizations(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const result = await authorizationService.getUserAuthorizations(parseInt(userId));
+      res.status(200).json(createResponse(
+        true,
+        'Autorisations utilisateur récupérées',
+        { userId: parseInt(userId), authorizations: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les permissions effectives d'un utilisateur
+   */
+  async getUserEffectivePermissions(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const result = await authorizationService.getUserEffectivePermissions(parseInt(userId));
+      res.status(200).json(createResponse(
+        true,
+        'Permissions effectives utilisateur récupérées',
+        { userId: parseInt(userId), permissions: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère le rôle le plus élevé d'un utilisateur
+   */
+  async getUserHighestRole(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const result = await authorizationService.getUserHighestRole(parseInt(userId));
+      res.status(200).json(createResponse(
+        true,
+        'Rôle le plus élevé utilisateur récupéré',
+        { userId: parseInt(userId), highestRole: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie si un utilisateur est admin
+   */
+  async getUserIsAdmin(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const result = await authorizationService.getUserIsAdmin(parseInt(userId));
+      res.status(200).json(createResponse(
+        true,
+        'Statut admin utilisateur récupéré',
+        { userId: parseInt(userId), isAdmin: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie toutes les permissions requises
+   */
+  async verifyAllPermissions(req, res, next) {
+    try {
+      const { permissions } = req.params;
+      const permissionList = permissions.split(',');
+      const userId = req.user.id;
+      
+      const result = await authorizationService.verifyAllPermissions(userId, permissionList);
+      res.status(200).json(createResponse(
+        true,
+        'Vérification de toutes les permissions effectuée',
+        { userId, permissions: permissionList, hasAll: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie au moins une permission requise
+   */
+  async verifyAnyPermissions(req, res, next) {
+    try {
+      const { permissions } = req.params;
+      const permissionList = permissions.split(',');
+      const userId = req.user.id;
+      
+      const result = await authorizationService.verifyAnyPermissions(userId, permissionList);
+      res.status(200).json(createResponse(
+        true,
+        'Vérification d\'au moins une permission effectuée',
+        { userId, permissions: permissionList, hasAny: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie l'accès à un menu
+   */
+  async verifyMenuAccess(req, res, next) {
+    try {
+      const { menuId } = req.params;
+      const userId = req.user.id;
+      
+      const result = await authorizationService.verifyMenuAccess(userId, parseInt(menuId));
+      res.status(200).json(createResponse(
+        true,
+        'Vérification d\'accès menu effectuée',
+        { userId, menuId: parseInt(menuId), hasAccess: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie l'accès à une ressource
+   */
+  async verifyResourceAccess(req, res, next) {
+    try {
+      const { resource } = req.params;
+      const userId = req.user.id;
+      
+      const result = await authorizationService.verifyResourceAccess(userId, resource);
+      res.status(200).json(createResponse(
+        true,
+        'Vérification d\'accès ressource effectuée',
+        { userId, resource, hasAccess: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie l'accès à un rôle
+   */
+  async verifyRoleAccess(req, res, next) {
+    try {
+      const { role } = req.params;
+      const userId = req.user.id;
+      
+      const result = await authorizationService.verifyRoleAccess(userId, role);
+      res.status(200).json(createResponse(
+        true,
+        'Vérification d\'accès rôle effectuée',
+        { userId, role, hasAccess: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie l'accès à tous les rôles
+   */
+  async verifyAllRolesAccess(req, res, next) {
+    try {
+      const { roles } = req.params;
+      const roleList = roles.split(',');
+      const userId = req.user.id;
+      
+      const result = await authorizationService.verifyAllRolesAccess(userId, roleList);
+      res.status(200).json(createResponse(
+        true,
+        'Vérification d\'accès tous les rôles effectuée',
+        { userId, roles: roleList, hasAll: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie l'accès à au moins un rôle
+   */
+  async verifyAnyRolesAccess(req, res, next) {
+    try {
+      const { roles } = req.params;
+      const roleList = roles.split(',');
+      const userId = req.user.id;
+      
+      const result = await authorizationService.verifyAnyRolesAccess(userId, roleList);
+      res.status(200).json(createResponse(
+        true,
+        'Vérification d\'accès au moins un rôle effectuée',
+        { userId, roles: roleList, hasAny: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie une permission spécifique
+   */
+  async verifyPermission(req, res, next) {
+    try {
+      const { permission } = req.params;
+      const userId = req.user.id;
+      
+      const result = await authorizationService.verifyPermission(userId, permission);
+      res.status(200).json(createResponse(
+        true,
+        'Vérification permission effectuée',
+        { userId, permission, hasPermission: result }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AuthorizationController();

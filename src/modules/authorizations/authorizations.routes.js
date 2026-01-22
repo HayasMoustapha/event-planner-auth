@@ -16,6 +16,95 @@ router.use(authMiddleware.authenticate);
  * Routes de vérification des permissions
  */
 
+// Routes de cache
+router.post('/cache/create',
+  rbacMiddleware.requirePermission('authorizations.manage'),
+  authorizationController.createCache
+);
+
+router.post('/cache/invalidate',
+  rbacMiddleware.requirePermission('authorizations.manage'),
+  authorizationController.invalidateCache
+);
+
+// Routes d'informations sur les permissions
+router.get('/permissions/dependencies',
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationController.getPermissionsDependencies
+);
+
+router.get('/policy',
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationController.getPolicy
+);
+
+router.get('/roles/hierarchy',
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationController.getRolesHierarchy
+);
+
+// Routes utilisateur
+router.get('/user/:userId',
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationController.getUserAuthorizations
+);
+
+router.get('/user/:userId/effective',
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationController.getUserEffectivePermissions
+);
+
+router.get('/user/:userId/highest-role',
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationController.getUserHighestRole
+);
+
+router.get('/user/:userId/is-admin',
+  rbacMiddleware.requirePermission('authorizations.read'),
+  authorizationController.getUserIsAdmin
+);
+
+// Routes de vérification
+router.get('/verify/all/:permissions',
+  rbacMiddleware.requirePermission('authorizations.verify'),
+  authorizationController.verifyAllPermissions
+);
+
+router.get('/verify/any/:permissions',
+  rbacMiddleware.requirePermission('authorizations.verify'),
+  authorizationController.verifyAnyPermissions
+);
+
+router.get('/verify/menu/:menuId',
+  rbacMiddleware.requirePermission('authorizations.verify'),
+  authorizationController.verifyMenuAccess
+);
+
+router.get('/verify/resource/:resource',
+  rbacMiddleware.requirePermission('authorizations.verify'),
+  authorizationController.verifyResourceAccess
+);
+
+router.get('/verify/role/:role',
+  rbacMiddleware.requirePermission('authorizations.verify'),
+  authorizationController.verifyRoleAccess
+);
+
+router.get('/verify/role/all/:roles',
+  rbacMiddleware.requirePermission('authorizations.verify'),
+  authorizationController.verifyAllRolesAccess
+);
+
+router.get('/verify/role/any/:roles',
+  rbacMiddleware.requirePermission('authorizations.verify'),
+  authorizationController.verifyAnyRolesAccess
+);
+
+router.get('/verify/:permission',
+  rbacMiddleware.requirePermission('authorizations.verify'),
+  authorizationController.verifyPermission
+);
+
 // Vérifier si un utilisateur a une permission spécifique
 router.post('/check/permission', 
   authorizationValidation.validateCheckPermission,

@@ -469,6 +469,245 @@ class MenuController {
       next(error);
     }
   }
+
+  // ===== NOUVELLES MÉTHODES POUR LES ROUTES MANQUANTES =====
+
+  /**
+   * Récupère un menu par son ID
+   */
+  async getMenuById(req, res, next) {
+    try {
+      const { menuId } = req.params;
+      const menuRepository = require('./menus.repository');
+      const menu = await menuRepository.findById(parseInt(menuId));
+      
+      if (!menu) {
+        return res.status(404).json(createResponse(
+          false,
+          'Menu non trouvé'
+        ));
+      }
+
+      res.status(200).json(createResponse(
+        true,
+        'Menu récupéré avec succès',
+        menu
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère l'accès à un menu
+   */
+  async getMenuAccess(req, res, next) {
+    try {
+      const { menuId } = req.params;
+      const menuRepository = require('./menus.repository');
+      const access = await menuRepository.getMenuAccess(parseInt(menuId));
+      
+      res.status(200).json(createResponse(
+        true,
+        'Accès menu récupéré',
+        { menuId: parseInt(menuId), access }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Duplique un menu
+   */
+  async duplicateMenu(req, res, next) {
+    try {
+      const { menuId } = req.params;
+      const menuRepository = require('./menus.repository');
+      const duplicatedMenu = await menuRepository.duplicateMenu(parseInt(menuId));
+      
+      res.status(201).json(createResponse(
+        true,
+        'Menu dupliqué avec succès',
+        duplicatedMenu
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère une permission de menu par son ID
+   */
+  async getMenuPermissionById(req, res, next) {
+    try {
+      const { menuId, permissionId } = req.params;
+      const menuRepository = require('./menus.repository');
+      const permission = await menuRepository.getMenuPermissionById(parseInt(menuId), parseInt(permissionId));
+      
+      if (!permission) {
+        return res.status(404).json(createResponse(
+          false,
+          'Permission de menu non trouvée'
+        ));
+      }
+
+      res.status(200).json(createResponse(
+        true,
+        'Permission de menu récupérée',
+        permission
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les menus cachés
+   */
+  async getHiddenMenus(req, res, next) {
+    try {
+      const menuRepository = require('./menus.repository');
+      const menus = await menuRepository.getHiddenMenus();
+      
+      res.status(200).json(createResponse(
+        true,
+        'Menus cachés récupérés',
+        { menus, count: menus.length }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les menus par parent
+   */
+  async getMenusByParent(req, res, next) {
+    try {
+      const { menuId } = req.params;
+      const menuRepository = require('./menus.repository');
+      const menus = await menuRepository.getMenusByParent(parseInt(menuId));
+      
+      res.status(200).json(createResponse(
+        true,
+        'Menus par parent récupérés',
+        { parentId: parseInt(menuId), menus, count: menus.length }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Réorganise les menus
+   */
+  async reorderMenus(req, res, next) {
+    try {
+      const { menuOrders } = req.body;
+      const menuRepository = require('./menus.repository');
+      const result = await menuRepository.reorderMenus(menuOrders);
+      
+      res.status(200).json(createResponse(
+        true,
+        'Menus réorganisés avec succès',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les menus racines
+   */
+  async getRootMenus(req, res, next) {
+    try {
+      const menuRepository = require('./menus.repository');
+      const menus = await menuRepository.getRootMenus();
+      
+      res.status(200).json(createResponse(
+        true,
+        'Menus racines récupérés',
+        { menus, count: menus.length }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère uniquement les menus racines
+   */
+  async getRootOnlyMenus(req, res, next) {
+    try {
+      const menuRepository = require('./menus.repository');
+      const menus = await menuRepository.getRootOnlyMenus();
+      
+      res.status(200).json(createResponse(
+        true,
+        'Menus racines uniquement récupérés',
+        { menus, count: menus.length }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les menus actifs
+   */
+  async getActiveMenus(req, res, next) {
+    try {
+      const menuRepository = require('./menus.repository');
+      const menus = await menuRepository.getActiveMenus();
+      
+      res.status(200).json(createResponse(
+        true,
+        'Menus actifs récupérés',
+        { menus, count: menus.length }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les menus d'un utilisateur
+   */
+  async getUserMenus(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const menuRepository = require('./menus.repository');
+      const menus = await menuRepository.getUserMenus(parseInt(userId));
+      
+      res.status(200).json(createResponse(
+        true,
+        'Menus utilisateur récupérés',
+        { userId: parseInt(userId), menus, count: menus.length }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Récupère les menus visibles
+   */
+  async getVisibleMenus(req, res, next) {
+    try {
+      const menuRepository = require('./menus.repository');
+      const menus = await menuRepository.getVisibleMenus();
+      
+      res.status(200).json(createResponse(
+        true,
+        'Menus visibles récupérés',
+        { menus, count: menus.length }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new MenuController();
