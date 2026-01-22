@@ -93,8 +93,8 @@ class PasswordService {
         };
       }
 
-      // Récupérer l'utilisateur
-      const user = await usersRepository.findByEmail(email);
+      // Récupérer l'utilisateur avec son mot de passe
+      const user = await usersRepository.findByEmail(email, true); // includePassword = true
       if (!user) {
         return {
           success: false,
@@ -102,14 +102,13 @@ class PasswordService {
         };
       }
 
-      // Hasher le nouveau mot de passe
-      const hashedPassword = await bcrypt.hash(newPassword, 12);
-
       // Ajouter l'ancien mot de passe à l'historique
+      console.log('🔍 Debug password reset - Ajout historique ancien mot de passe');
       await passwordRepository.addPasswordHistory(user.id, user.password);
 
-      // Mettre à jour le mot de passe de l'utilisateur
-      await usersRepository.updatePassword(user.id, hashedPassword);
+      // Mettre à jour le mot de passe directement via le repository (pas de vérification currentPassword)
+      console.log('🔍 Debug password reset - Appel updatePasswordDirect');
+      await usersRepository.updatePasswordDirect(user.id, newPassword, user.id);
 
       // Supprimer le token utilisé
       await passwordRepository.deleteResetToken(email);
@@ -126,8 +125,11 @@ class PasswordService {
     } catch (error) {
       logger.error('Error resetting password', {
         email,
-        error: error.message
+        error: error.message,
+        stack: error.stack
       });
+      console.log('🔍 Debug password reset error:', error.message);
+      console.log('🔍 Debug password reset stack:', error.stack);
       throw new Error('Erreur lors de la réinitialisation du mot de passe');
     }
   }

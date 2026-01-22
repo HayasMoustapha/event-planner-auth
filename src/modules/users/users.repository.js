@@ -363,6 +363,35 @@ class UsersRepository {
   }
 
   /**
+   * Met à jour le mot de passe d'un utilisateur (sans vérifier le mot de passe actuel)
+   * Utilisé pour la réinitialisation de mot de passe
+   * @param {number} id - ID de l'utilisateur
+   * @param {string} newPassword - Nouveau mot de passe en clair
+   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
+   * @returns {Promise<Object>} Utilisateur mis à jour
+   */
+  async updatePasswordDirect(id, newPassword, updatedBy = null) {
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Ajouter à l'historique avant la mise à jour
+    await this.addPasswordHistory(id, hashedPassword);
+
+    const query = `
+      UPDATE users 
+      SET password = $2, updated_by = $3, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND deleted_at IS NULL
+      RETURNING id, person_id,  username, email, user_code, phone, status, updated_at
+    `;
+
+    try {
+      const result = await connection.query(query, [id, hashedPassword, updatedBy]);
+      return result.rows[0];
+    } catch (error) {
+      throw new Error(`Erreur lors de la mise à jour du mot de passe: ${error.message}`);
+    }
+  }
+
+  /**
    * Met à jour le mot de passe d'un utilisateur
    * @param {number} id - ID de l'utilisateur
    * @param {string} newPassword - Nouveau mot de passe
