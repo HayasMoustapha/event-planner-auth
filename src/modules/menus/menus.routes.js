@@ -49,7 +49,7 @@ router.get('/status/active',
 
 router.get('/tree', 
   rbacMiddleware.requirePermission('menus.read'),
-  menuController.getMenusTree
+  menuController.getMenuTree
 );
 
 router.get('/user/:userId', 
@@ -102,13 +102,12 @@ router.get('/',
 
 // Récupérer l'arborescence complète des menus
 router.get('/tree', 
+  rbacMiddleware.requirePermission('menus.read'),
   menuController.getMenuTree
 );
 
-// Récupérer les menus de premier niveau (racine)
-router.get('/root', 
-  menuController.getRootMenus
-);
+// Récupérer les menus de premier niveau (racine) - cette route est déjà définie plus haut
+// router.get('/root', menuController.getRootMenus);
 
 // Récupérer un menu par son ID
 router.get('/:id', 
@@ -122,11 +121,8 @@ router.get('/:id/permissions',
   menuController.getMenuPermissions
 );
 
-// Récupérer les menus accessibles à un utilisateur
-router.get('/user/:userId?', 
-  menuValidation.validateGetUserMenus,
-  menuController.getUserMenus
-);
+// Récupérer les menus accessibles à un utilisateur - route déjà définie plus haut
+// router.get('/user/:userId?', menuValidation.validateGetUserMenus, menuController.getUserMenus);
 
 // Vérifier si un utilisateur a accès à un menu
 router.get('/check/access', 
@@ -159,19 +155,11 @@ router.delete('/:id',
   menuController.deleteMenu
 );
 
-// Dupliquer un menu
-router.post('/:id/duplicate', 
-  rbacMiddleware.requirePermission('menus.create'),
-  menuValidation.validateDuplicateMenu,
-  menuController.duplicateMenu
-);
+// Dupliquer un menu - route déjà définie plus haut
+// router.post('/:id/duplicate', rbacMiddleware.requirePermission('menus.create'), menuValidation.validateDuplicateMenu, menuController.duplicateMenu);
 
-// Réorganiser l'ordre des menus
-router.post('/reorder', 
-  rbacMiddleware.requirePermission('menus.update'),
-  menuValidation.validateReorderMenus,
-  menuController.reorderMenus
-);
+// Réorganiser l'ordre des menus - route déjà définie plus haut
+// router.post('/reorder', rbacMiddleware.requirePermission('menus.update'), menuValidation.validateReorderMenus, menuController.reorderMenus);
 
 /**
  * Routes de gestion des permissions - nécessitent des permissions spécifiques
@@ -195,11 +183,8 @@ router.delete('/:id/permissions',
  * Routes d'administration - nécessitent des permissions d'administration
  */
 
-// Récupérer les statistiques des menus
-router.get('/stats', 
-  rbacMiddleware.requirePermission('menus.view_stats'),
-  menuController.getMenuStats
-);
+// Récupérer les statistiques des menus - route déjà définie plus haut
+// router.get('/stats', rbacMiddleware.requirePermission('menus.view_stats'), menuController.getMenuStats);
 
 router.get('/admin/stats', 
   rbacMiddleware.requirePermission('menus.view_stats'),

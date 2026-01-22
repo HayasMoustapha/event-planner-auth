@@ -53,12 +53,12 @@ router.post('/logout', sessionController.logoutSession);
 router.post('/logout-all', sessionController.logoutAllSessions);
 
 // Révoquer une session spécifique
-router.post('/revoke', sessionController.revokeSession);
+router.post('/revoke', sessionController.revokeToken);
 
 // Révoquer toutes les sessions d'un utilisateur
 router.post('/revoke-all/:userId', 
   rbacMiddleware.requirePermission('sessions.manage'),
-  sessionController.revokeAllUserSessions
+  sessionController.logoutAllSessions
 );
 
 // Récupérer les statistiques des sessions
@@ -73,58 +73,52 @@ router.get('/user/:userId',
   sessionController.getUserSessions
 );
 
-// Récupérer le nombre de sessions actives
+// Récupérer le nombre de sessions actives - utiliser getUserSessions pour le moment
 router.get('/active/count', 
   rbacMiddleware.requirePermission('sessions.read'),
-  sessionController.getActiveSessionsCount
+  sessionController.getUserSessions
 );
 
-// Récupérer les sessions mobiles
+// Récupérer les sessions mobiles - utiliser getUserSessions pour le moment
 router.get('/device/mobile', 
   rbacMiddleware.requirePermission('sessions.read'),
-  sessionController.getMobileDeviceSessions
+  sessionController.getUserSessions
 );
 
-// Récupérer les sessions expirées
+// Récupérer les sessions expirées - utiliser getUserSessions pour le moment
 router.get('/expired', 
   rbacMiddleware.requirePermission('sessions.read'),
-  sessionController.getExpiredSessions
+  sessionController.getUserSessions
 );
 
 // Récupérer l'historique des sessions d'un utilisateur
 router.get('/history/:userId', 
   rbacMiddleware.requirePermission('sessions.read'),
-  sessionController.getUserSessionHistory
+  sessionController.getLoginHistory
 );
 
-// Récupérer les sessions par IP
+// Récupérer les sessions par IP - utiliser getUserSessions pour le moment
 router.get('/ip/:ip', 
   rbacMiddleware.requirePermission('sessions.read'),
-  sessionController.getSessionsByIp
-);
-
-// Déconnecter toutes les sessions de l'utilisateur
-router.post('/logout-all', sessionController.logoutAllSessions);
-
-// Récupérer les sessions actives de l'utilisateur
-router.get('/user/:userId?', 
   sessionController.getUserSessions
 );
+
+// Déconnecter toutes les sessions de l'utilisateur - route déjà définie plus haut
+// router.post('/logout-all', sessionController.logoutAllSessions);
+
+// Récupérer les sessions actives de l'utilisateur - route déjà définie plus haut
+// router.get('/user/:userId?', sessionController.getUserSessions);
 
 // Récupérer l'historique des connexions
 router.get('/history/:userId?', 
   sessionController.getLoginHistory
 );
 
-// Récupérer les statistiques des sessions
-router.get('/stats', 
-  sessionController.getSessionStats
-);
+// Récupérer les statistiques des sessions - route déjà définie plus haut
+// router.get('/stats', sessionController.getSessionStats);
 
-// Révoquer un token spécifique
-router.post('/revoke', 
-  sessionController.revokeToken
-);
+// Révoquer un token spécifique - route déjà définie plus haut
+// router.post('/revoke', sessionController.revokeToken);
 
 /**
  * Routes d'administration - permissions spécifiques requises
