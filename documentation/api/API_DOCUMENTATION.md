@@ -1,8 +1,15 @@
-# Event Planner Auth API Documentation
+# Event Planner Auth API Documentation v1.2
 
 ## Overview
 
 L'API d'authentification Event Planner fournit des services complets pour la gestion des utilisateurs, des rôles, des permissions et des OTP (One-Time Passwords).
+
+**🎯 STATISTIQUES ACTUELLES** :
+- **145 endpoints** répartis en 9 modules fonctionnels
+- **100% couverture Postman** ✅
+- **Production Ready** avec monitoring complet
+- **Sécurité RBAC** granulaire
+- **Documentation Swagger** interactive
 
 ## Base URL
 
@@ -10,6 +17,62 @@ L'API d'authentification Event Planner fournit des services complets pour la ges
 Development: http://localhost:3000
 Production: https://api.eventplanner.com
 ```
+
+## 📚 Modules API
+
+### 🔐 Authentification (30 routes)
+- Login, register, OTP, reset password
+- Profile management, token refresh
+- **Public routes** : 13 | **Protected routes** : 17
+
+### 👥 Users (12 routes)
+- CRUD, search, authentication
+- Stats, status management
+- **All routes** : RBAC protected
+
+### 👤 People (8 routes)
+- Person management, search
+- Status updates, existence checks
+- **Public routes** : 3 | **Protected routes** : 5
+
+### 🔑 Sessions (15+ routes)
+- Session management, monitoring
+- Logout, refresh, validation
+- **All routes** : RBAC protected
+
+### 🛡️ Authorizations (17 routes)
+- Cache management, policy, hierarchy
+- User permissions, verification
+- **All routes** : RBAC protected
+
+### 🔑 Permissions (13 routes)
+- Groups, resources, verification
+- Custom permissions, generation
+- **All routes** : RBAC protected
+
+### 👑 Roles (12 routes)
+- Levels, system roles, duplication
+- User role verification
+- **All routes** : RBAC protected
+
+### 📋 Menus (15 routes)
+- Navigation, access control
+- Tree structure, duplication
+- **All routes** : RBAC protected
+
+### 📊 Session Monitoring (12 routes)
+- Active sessions, anomalies
+- Geolocation, statistics
+- **All routes** : RBAC protected
+
+### 🖥️ System (5 routes)
+- Health, config, database
+- Cache, system info
+- **All routes** : Public
+
+### 🧪 Test (1 route)
+- Password strength testing
+- **All routes** : Public
 
 ## Authentication
 

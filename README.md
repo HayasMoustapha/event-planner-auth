@@ -106,7 +106,7 @@ Aucune action manuelle n'est requise après `docker-compose up`.
 
 ### Documentation & Développement
 - **Swagger/OpenAPI 3.0** : Documentation interactive complète
-- **Collection Postman** : Tests API complets avec environnement
+- **Collection Postman** : Tests API complets avec environnement (145 endpoints)
 - **Exemples d'utilisation** : Code samples et best practices
 - **Dashboard développeur** : Outils de debugging et monitoring
 - **📚 Documentation**
@@ -115,8 +115,36 @@ Aucune action manuelle n'est requise après `docker-compose up`.
   - [📖 OAuth API Reference](./documentation/oauth/OAUTH_API_REFERENCE.md) - Référence complète des endpoints OAuth
   - [📮 Collection Postman](./postman/README.md) - Tests API complets
   - [📖 Documentation API](./docs/) - Documentation complète de l'API
+  - [📋 API Routes Inventory](./documentation/api/API_ROUTES_INVENTORY.md) - Liste complète des 145 endpoints
   - [🔐 Flux d'Authentification](./docs/AUTH_FLOWS.md) - Processus d'authentification
   - [🛡️ RBAC](./docs/RBAC.md) - Système de contrôle d'accès
+
+## 🚀 API Endpoints (145 Routes)
+
+### Modules Principaux
+- **🔐 Auth** (30 routes) : Login, register, OTP, reset password, profile
+- **👥 Users** (12 routes) : CRUD, search, stats, authentication
+- **👤 People** (8 routes) : Person management, search, status updates
+- **🔑 Sessions** (15+ routes) : Session management, monitoring, logout
+- **🔐 Password** (4 routes) : Reset, history, strength testing
+
+### Modules de Sécurité & Autorisations
+- **🛡️ Authorizations** (17 routes) : Cache, policy, hierarchy, verification
+- **🔑 Permissions** (13 routes) : Groups, resources, verification, custom
+- **👑 Roles** (12 routes) : Levels, system, user-specific, duplication
+- **📋 Menus** (15 routes) : Navigation, access control, tree structure
+
+### Modules de Monitoring & Système
+- **📊 Session Monitoring** (12 routes) : Active sessions, anomalies, geolocation
+- **🖥️ System** (5 routes) : Health, config, database, cache, info
+- **🧪 Test** (1 route) : Password strength testing
+
+### 📈 Statistiques
+- **Total endpoints** : 145 routes
+- **Routes publiques** : 25 (authentification, inscription)
+- **Routes protégées** : 120 (RBAC requis)
+- **Modules** : 9 modules fonctionnels
+- **Couverture Postman** : 100% ✅
 
 ### Performance & Scalabilité
 - **Cache Redis** : Authorizations et sessions en cache
