@@ -4,7 +4,7 @@ FROM node:18-alpine AS base
 # Installer les utilitaires nécessaires pour le bootstrap
 RUN apk add --no-cache \
     postgresql-client \
-    redis \
+    redis-cli \
     bash \
     gosu \
     curl \
