@@ -1,5 +1,6 @@
 const { connection } = require('../../config/database');
 const bcrypt = require('bcrypt');
+const { validatePaginationOptions, validateOptionalId, validateEmail, validatePhone } = require('../../utils/repository-validator');
 
 /**
  * Repository pour la gestion des utilisateurs
@@ -12,7 +13,9 @@ class UsersRepository {
    * @returns {Promise<Object>} Données paginées
    */
   async findAll(options = {}) {
-    const { page = 1, limit = 10, search, status = null, userAccess = null } = options;
+    // Valider les options
+    const validatedOptions = validatePaginationOptions(options);
+    const { page = 1, limit = 10, search, status, userAccess } = validatedOptions;
     const offset = (page - 1) * limit;
 
     // Colonnes selon schéma SQL : id, person_id, user_code, username, phone, email, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at

@@ -2,7 +2,9 @@ const { OAuth2Client } = require('google-auth-library');
 const identitiesService = require('../identities/identities.service');
 const authService = require('../auth/auth.service');
 const sessionService = require('../sessions/sessions.service');
-const { createResponse } = require('../../utils/response');
+const { connection } = require('../../config/database');
+const jwt = require('jsonwebtoken');
+const { handleExternalServiceError, handleValidationError, withErrorHandling } = require('../../utils/error-handler');
 const logger = require('../../utils/logger');
 
 /**

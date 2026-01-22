@@ -2,6 +2,7 @@ const registrationService = require('./registration.service');
 const authService = require('./auth.service');
 const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
+const { mapFields } = require('../../utils/field-mapper');
 
 /**
  * Controller pour gérer les routes d'inscription
@@ -16,11 +17,8 @@ class RegistrationController {
    */
   async register(req, res, next) {
     try {
-      const registrationData = {
-        first_name: req.body.first_name || req.body.firstName,
-        last_name: req.body.last_name || req.body.lastName,
-        ...req.body
-      };
+      // Utiliser le mapper pour standardiser les champs
+      const registrationData = mapFields(req.body);
 
       logger.info(`Tentative d'inscription: ${registrationData.email}`);
 

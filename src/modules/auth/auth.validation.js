@@ -78,7 +78,7 @@ const validateLoginWithOtp = [
     .isLength({ min: 3, max: 254 })
     .withMessage('Le contact doit contenir entre 3 et 254 caractères'),
 
-  body('code')
+  body('otpCode')
     .trim()
     .isLength({ min: 4, max: 10 })
     .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
@@ -184,7 +184,7 @@ const validateVerifyEmailOtp = [
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
-  body('code')
+  body('otpCode')
     .trim()
     .isLength({ min: 4, max: 10 })
     .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
@@ -215,10 +215,10 @@ const validateVerifyPhoneOtp = [
     .isLength({ min: 10, max: 15 })
     .withMessage('Le numéro de téléphone doit contenir entre 10 et 15 caractères'),
 
-  body('code')
+  body('otpCode')
     .trim()
-    .isLength({ min: 4, max: 10 })
-    .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Le code OTP doit contenir exactement 6 chiffres')
     .isNumeric()
     .withMessage('Le code OTP doit contenir uniquement des chiffres'),
 
@@ -257,11 +257,11 @@ const validateResetPasswordWithOtp = [
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
-  body(['code', 'token'])
+  body(['otpCode', 'token'])
     .optional({ checkFalsy: true })
     .trim()
-    .isLength({ min: 4, max: 10 })
-    .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Le code OTP doit contenir exactement 6 chiffres')
     .isNumeric()
     .withMessage('Le code OTP doit contenir uniquement des chiffres'),
 
@@ -422,12 +422,12 @@ const validateVerifyEmail = [
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
-  body('code')
+  body('otpCode')
     .notEmpty()
     .withMessage('Le code OTP est requis')
     .trim()
-    .isLength({ min: 4, max: 10 })
-    .withMessage('Le code OTP doit contenir entre 4 et 10 caractères')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Le code OTP doit contenir exactement 6 chiffres')
     .matches(/^[0-9]+$/)
     .withMessage('Le code OTP doit contenir uniquement des chiffres'),
 

@@ -12,23 +12,21 @@ class SessionRepository {
    */
   async create(sessionData) {
     const {
-      accessToken,
-      refreshToken,
-      userId,
-      deviceInfo,
-      ipAddress,
-      userAgent,
-      expiresIn = 86400 // 24 heures par défaut
+      id,
+      user_id,
+      ip_address,
+      user_agent,
+      payload,
+      last_activity
     } = sessionData;
 
     console.log('🔍 Debug repository.create - Données reçues:', {
-      accessToken: accessToken ? accessToken.substring(0, 20) + '...' : 'null',
-      refreshToken: refreshToken ? refreshToken.substring(0, 20) + '...' : 'null',
-      userId,
-      deviceInfo,
-      ipAddress,
-      userAgent,
-      expiresIn
+      id: id ? id.substring(0, 20) + '...' : 'null',
+      user_id,
+      ip_address,
+      user_agent: user_agent ? user_agent.substring(0, 50) + '...' : 'null',
+      payload: payload ? JSON.stringify(payload).substring(0, 100) + '...' : 'null',
+      last_activity
     });
 
     try {
@@ -36,17 +34,17 @@ class SessionRepository {
       const sessionQuery = `
         INSERT INTO sessions (
           id, user_id, ip_address, user_agent, payload, last_activity
-        ) VALUES ($1, $2, $3, $4, $5, $6)
+        ) VALUES ($1, $2, $3, $4, $5)
         RETURNING id, user_id, ip_address, user_agent, payload, last_activity
       `;
 
       const sessionValues = [
-        accessToken, // id
-        userId,       // user_id
-        ipAddress || null,  // ip_address
-        userAgent || null,  // user_agent
-        JSON.stringify({ userId }), // payload
-        Date.now() // last_activity
+        id,                    // id
+        user_id,               // user_id
+        ip_address || null,     // ip_address
+        user_agent || null,     // user_agent
+        JSON.stringify({ user_id }), // payload
+        last_activity || Date.now() // last_activity
       ];
 
       console.log('🔍 Debug repository.create - Insertion session...');
