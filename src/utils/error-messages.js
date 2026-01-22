@@ -187,7 +187,6 @@ const errorMessages = {
       details: 'Une erreur est survenue lors de la communication avec le fournisseur OAuth.'
     }
   }
-  }
 };
 
 /**
