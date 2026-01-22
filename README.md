@@ -2,6 +2,88 @@
 
 Service d'authentification et d'autorisation enterprise-ready pour Event Planner avec sécurité avancée, monitoring complet et documentation interactive.
 
+## 🐳 Docker - Déploiement Production Ready
+
+Le projet est entièrement dockerisé pour un déploiement simple et reproductible.
+
+### Démarrage Rapide
+
+```bash
+# 1. Cloner le projet
+git clone https://github.com/HayasMoustapha/event-planner-auth.git
+cd event-planner-auth
+
+# 2. Configurer l'environnement
+cp .env.docker.example .env
+# Éditer .env avec vos secrets (voir instructions dans le fichier)
+
+# 3. Démarrer le stack
+docker-compose up -d
+
+# 4. Vérifier le statut
+docker-compose ps
+
+# 5. Tester l'API
+curl http://localhost:3000/api/health
+```
+
+### Services Inclus
+
+- **auth-service** : API Node.js (port 3000)
+- **postgres** : Base de données PostgreSQL (port 5432)
+- **redis** : Cache Redis (port 6379)
+
+### Volumes Persistants
+
+- `postgres_data` : Données PostgreSQL
+- `redis_data` : Données Redis
+- `app_logs` : Logs de l'application
+
+### Configuration Docker
+
+| Fichier | Description |
+|---------|-------------|
+| `Dockerfile` | Image multi-stage optimisée |
+| `docker-compose.yml` | Stack complet avec dépendances |
+| `docker-entrypoint.sh` | Bootstrap intelligent |
+| `.env.docker.example` | Configuration template |
+| `.dockerignore` | Optimisation build |
+
+### Commandes Utiles
+
+```bash
+# Voir les logs
+docker-compose logs -f auth-service
+
+# Redémarrer un service
+docker-compose restart auth-service
+
+# Arrêter tout
+docker-compose down
+
+# Nettoyer tout (y compris volumes)
+docker-compose down -v
+
+# Reconstruire l'image
+docker-compose build --no-cache
+
+# Validation de la configuration
+node test-docker-config.js
+```
+
+### Bootstrap Automatique
+
+Le système initialise automatiquement :
+1. **Attente PostgreSQL** et Redis (retry avec timeout)
+2. **Application du schéma** SQL si base vide
+3. **Exécution des migrations** dans l'ordre
+4. **Insertion des seeds** une seule fois
+5. **Démarrage de l'application**
+
+Aucune action manuelle n'est requise après `docker-compose up`.
+
+---
+
 ## Fonctionnalités
 
 ### Authentification & Sécurité
