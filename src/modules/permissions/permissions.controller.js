@@ -409,6 +409,130 @@ class PermissionController {
       next(error);
     }
   }
+
+  // ===== NOUVELLES MÉTHODES POUR LES ROUTES MANQUANTES =====
+
+  async getPermissionById(req, res, next) {
+    try {
+      const { permissionId } = req.params;
+      const permissionService = require('./permissions.service');
+      const permission = await permissionService.findById(parseInt(permissionId));
+      
+      if (!permission) {
+        return res.status(404).json(createResponse(false, 'Permission non trouvée'));
+      }
+
+      res.status(200).json(createResponse(true, 'Permission récupérée', permission));
+    } catch (error) { next(error); }
+  }
+
+  async createCustomPermission(req, res, next) {
+    try {
+      const permissionService = require('./permissions.service');
+      const permission = await permissionService.createCustom(req.body);
+      
+      res.status(201).json(createResponse(true, 'Permission personnalisée créée', permission));
+    } catch (error) { next(error); }
+  }
+
+  async generatePermission(req, res, next) {
+    try {
+      const permissionService = require('./permissions.service');
+      const permission = await permissionService.generate(req.body);
+      
+      res.status(201).json(createResponse(true, 'Permission générée', permission));
+    } catch (error) { next(error); }
+  }
+
+  async getPermissionsByGroup(req, res, next) {
+    try {
+      const { groupName } = req.params;
+      const permissionService = require('./permissions.service');
+      const permissions = await permissionService.getByGroup(groupName);
+      
+      res.status(200).json(createResponse(true, 'Permissions du groupe récupérées', { groupName, permissions, count: permissions.length }));
+    } catch (error) { next(error); }
+  }
+
+  async getResources(req, res, next) {
+    try {
+      const permissionService = require('./permissions.service');
+      const resources = await permissionService.getResources();
+      
+      res.status(200).json(createResponse(true, 'Ressources récupérées', { resources, count: resources.length }));
+    } catch (error) { next(error); }
+  }
+
+  async getResourceActions(req, res, next) {
+    try {
+      const { resource } = req.params;
+      const permissionService = require('./permissions.service');
+      const actions = await permissionService.getResourceActions(resource);
+      
+      res.status(200).json(createResponse(true, 'Actions de ressource récupérées', { resource, actions, count: actions.length }));
+    } catch (error) { next(error); }
+  }
+
+  async getRolePermissions(req, res, next) {
+    try {
+      const { roleId } = req.params;
+      const permissionService = require('./permissions.service');
+      const permissions = await permissionService.getRolePermissions(parseInt(roleId));
+      
+      res.status(200).json(createResponse(true, 'Permissions du rôle récupérées', { roleId: parseInt(roleId), permissions, count: permissions.length }));
+    } catch (error) { next(error); }
+  }
+
+  async getSystemPermissions(req, res, next) {
+    try {
+      const permissionService = require('./permissions.service');
+      const permissions = await permissionService.getSystemPermissions();
+      
+      res.status(200).json(createResponse(true, 'Permissions système récupérées', { permissions, count: permissions.length }));
+    } catch (error) { next(error); }
+  }
+
+  async getUserPermissions(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const permissionService = require('./permissions.service');
+      const permissions = await permissionService.getUserPermissions(parseInt(userId));
+      
+      res.status(200).json(createResponse(true, 'Permissions utilisateur récupérées', { userId: parseInt(userId), permissions, count: permissions.length }));
+    } catch (error) { next(error); }
+  }
+
+  async verifyUserAllPermissions(req, res, next) {
+    try {
+      const { userId, permissions } = req.params;
+      const permissionList = permissions.split(',');
+      const permissionService = require('./permissions.service');
+      const hasAll = await permissionService.verifyUserAllPermissions(parseInt(userId), permissionList);
+      
+      res.status(200).json(createResponse(true, 'Vérification permissions utilisateur (toutes)', { userId: parseInt(userId), permissions: permissionList, hasAll }));
+    } catch (error) { next(error); }
+  }
+
+  async verifyUserAnyPermissions(req, res, next) {
+    try {
+      const { userId, permissions } = req.params;
+      const permissionList = permissions.split(',');
+      const permissionService = require('./permissions.service');
+      const hasAny = await permissionService.verifyUserAnyPermissions(parseInt(userId), permissionList);
+      
+      res.status(200).json(createResponse(true, 'Vérification permissions utilisateur (au moins une)', { userId: parseInt(userId), permissions: permissionList, hasAny }));
+    } catch (error) { next(error); }
+  }
+
+  async checkUserPermission(req, res, next) {
+    try {
+      const { userId, permission } = req.params;
+      const permissionService = require('./permissions.service');
+      const hasPermission = await permissionService.checkUserPermission(parseInt(userId), permission);
+      
+      res.status(200).json(createResponse(true, 'Vérification permission utilisateur', { userId: parseInt(userId), permission, hasPermission }));
+    } catch (error) { next(error); }
+  }
 }
 
 module.exports = new PermissionController();

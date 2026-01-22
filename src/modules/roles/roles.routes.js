@@ -16,10 +16,66 @@ router.use(authMiddleware.authenticate);
  * Routes de lecture - accessibles aux utilisateurs authentifiés
  */
 
-// Récupérer les statistiques des rôles (doit être avant /:id)
+// Routes spéciales (doivent être avant /:id)
 router.get('/stats', 
   rbacMiddleware.requirePermission('roles.view_stats'),
   roleController.getRoleStats
+);
+
+router.get('/level/:level', 
+  rbacMiddleware.requirePermission('roles.read'),
+  roleController.getRolesByLevel
+);
+
+router.get('/non-system', 
+  rbacMiddleware.requirePermission('roles.read'),
+  roleController.getNonSystemRoles
+);
+
+router.get('/system', 
+  rbacMiddleware.requirePermission('roles.read'),
+  roleController.getSystemRoles
+);
+
+router.get('/user/:userId', 
+  rbacMiddleware.requirePermission('roles.read'),
+  roleController.getUserRoles
+);
+
+router.get('/user/:userId/check/:role', 
+  rbacMiddleware.requirePermission('roles.verify'),
+  roleController.checkUserRole
+);
+
+router.get('/user/:userId/highest', 
+  rbacMiddleware.requirePermission('roles.read'),
+  roleController.getUserHighestRole
+);
+
+// Routes avec paramètres
+router.get('/:roleId', 
+  rbacMiddleware.requirePermission('roles.read'),
+  roleController.getRoleById
+);
+
+router.post('/:roleId/duplicate', 
+  rbacMiddleware.requirePermission('roles.create'),
+  roleController.duplicateRole
+);
+
+router.get('/:roleId/permissions', 
+  rbacMiddleware.requirePermission('roles.read'),
+  roleController.getRolePermissions
+);
+
+router.get('/:roleId/permissions/:permissionId', 
+  rbacMiddleware.requirePermission('roles.read'),
+  roleController.getRolePermissionById
+);
+
+router.get('/:roleId/users', 
+  rbacMiddleware.requirePermission('roles.read'),
+  roleController.getRoleUsers
 );
 
 // Récupérer tous les rôles avec pagination et filtres

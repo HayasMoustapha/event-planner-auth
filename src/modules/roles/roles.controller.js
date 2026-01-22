@@ -422,6 +422,104 @@ class RoleController {
       next(error);
     }
   }
+
+  // ===== NOUVELLES MÉTHODES POUR LES ROUTES MANQUANTES =====
+
+  async getRoleById(req, res, next) {
+    try {
+      const { roleId } = req.params;
+      const roleService = require('./roles.service');
+      const role = await roleService.findById(parseInt(roleId));
+      
+      if (!role) {
+        return res.status(404).json(createResponse(false, 'Rôle non trouvé'));
+      }
+
+      res.status(200).json(createResponse(true, 'Rôle récupéré', role));
+    } catch (error) { next(error); }
+  }
+
+  async duplicateRole(req, res, next) {
+    try {
+      const { roleId } = req.params;
+      const roleService = require('./roles.service');
+      const duplicatedRole = await roleService.duplicate(parseInt(roleId));
+      
+      res.status(201).json(createResponse(true, 'Rôle dupliqué', duplicatedRole));
+    } catch (error) { next(error); }
+  }
+
+  async getRolePermissionById(req, res, next) {
+    try {
+      const { roleId, permissionId } = req.params;
+      const roleService = require('./roles.service');
+      const permission = await roleService.getPermissionById(parseInt(roleId), parseInt(permissionId));
+      
+      if (!permission) {
+        return res.status(404).json(createResponse(false, 'Permission de rôle non trouvée'));
+      }
+
+      res.status(200).json(createResponse(true, 'Permission de rôle récupérée', permission));
+    } catch (error) { next(error); }
+  }
+
+  async getRolesByLevel(req, res, next) {
+    try {
+      const { level } = req.params;
+      const roleService = require('./roles.service');
+      const roles = await roleService.getByLevel(parseInt(level));
+      
+      res.status(200).json(createResponse(true, 'Rôles par niveau récupérés', { level: parseInt(level), roles, count: roles.length }));
+    } catch (error) { next(error); }
+  }
+
+  async getNonSystemRoles(req, res, next) {
+    try {
+      const roleService = require('./roles.service');
+      const roles = await roleService.getNonSystemRoles();
+      
+      res.status(200).json(createResponse(true, 'Rôles non-système récupérés', { roles, count: roles.length }));
+    } catch (error) { next(error); }
+  }
+
+  async getSystemRoles(req, res, next) {
+    try {
+      const roleService = require('./roles.service');
+      const roles = await roleService.getSystemRoles();
+      
+      res.status(200).json(createResponse(true, 'Rôles système récupérés', { roles, count: roles.length }));
+    } catch (error) { next(error); }
+  }
+
+  async getUserRoles(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const roleService = require('./roles.service');
+      const roles = await roleService.getUserRoles(parseInt(userId));
+      
+      res.status(200).json(createResponse(true, 'Rôles utilisateur récupérés', { userId: parseInt(userId), roles, count: roles.length }));
+    } catch (error) { next(error); }
+  }
+
+  async checkUserRole(req, res, next) {
+    try {
+      const { userId, role } = req.params;
+      const roleService = require('./roles.service');
+      const hasRole = await roleService.checkUserRole(parseInt(userId), role);
+      
+      res.status(200).json(createResponse(true, 'Vérification rôle utilisateur', { userId: parseInt(userId), role, hasRole }));
+    } catch (error) { next(error); }
+  }
+
+  async getUserHighestRole(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const roleService = require('./roles.service');
+      const highestRole = await roleService.getUserHighestRole(parseInt(userId));
+      
+      res.status(200).json(createResponse(true, 'Rôle le plus élevé utilisateur récupéré', { userId: parseInt(userId), highestRole }));
+    } catch (error) { next(error); }
+  }
 }
 
 module.exports = new RoleController();

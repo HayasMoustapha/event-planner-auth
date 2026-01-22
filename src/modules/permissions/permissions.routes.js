@@ -16,10 +16,72 @@ router.use(authMiddleware.authenticate);
  * Routes de lecture - accessibles aux utilisateurs authentifiés
  */
 
-// Récupérer les statistiques des permissions (doit être avant /:id)
+// Routes spéciales (doivent être avant /:id)
 router.get('/stats', 
   rbacMiddleware.requirePermission('permissions.view_stats'),
   permissionController.getPermissionStats
+);
+
+router.get('/group/:groupName', 
+  rbacMiddleware.requirePermission('permissions.read'),
+  permissionController.getPermissionsByGroup
+);
+
+router.get('/resources', 
+  rbacMiddleware.requirePermission('permissions.read'),
+  permissionController.getResources
+);
+
+router.get('/resources/:resource/actions', 
+  rbacMiddleware.requirePermission('permissions.read'),
+  permissionController.getResourceActions
+);
+
+router.get('/role/:roleId', 
+  rbacMiddleware.requirePermission('permissions.read'),
+  permissionController.getRolePermissions
+);
+
+router.get('/system', 
+  rbacMiddleware.requirePermission('permissions.read'),
+  permissionController.getSystemPermissions
+);
+
+router.get('/user/:userId', 
+  rbacMiddleware.requirePermission('permissions.read'),
+  permissionController.getUserPermissions
+);
+
+router.get('/user/:userId/all/:permissions', 
+  rbacMiddleware.requirePermission('permissions.verify'),
+  permissionController.verifyUserAllPermissions
+);
+
+router.get('/user/:userId/any/:permissions', 
+  rbacMiddleware.requirePermission('permissions.verify'),
+  permissionController.verifyUserAnyPermissions
+);
+
+router.get('/user/:userId/check/:permission', 
+  rbacMiddleware.requirePermission('permissions.verify'),
+  permissionController.checkUserPermission
+);
+
+// Routes POST
+router.post('/custom', 
+  rbacMiddleware.requirePermission('permissions.create'),
+  permissionController.createCustomPermission
+);
+
+router.post('/generate', 
+  rbacMiddleware.requirePermission('permissions.create'),
+  permissionController.generatePermission
+);
+
+// Routes avec paramètres
+router.get('/:permissionId', 
+  rbacMiddleware.requirePermission('permissions.read'),
+  permissionController.getPermissionById
 );
 
 // Récupérer toutes les permissions avec pagination et filtres
