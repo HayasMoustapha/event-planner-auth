@@ -48,7 +48,8 @@
     "twilio": "^5.11.2",
     "uuid": "^9.0.1",
     "winston": "^3.19.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

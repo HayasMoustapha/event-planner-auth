@@ -101,6 +101,59 @@ router.post('/reset-password',
   authController.resetPasswordWithOtp
 );
 
+// Afficher le formulaire de réinitialisation (GET)
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   get:
+ *     summary: Afficher le formulaire de réinitialisation de mot de passe
+ *     tags: [Authentication]
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Token de réinitialisation
+ *       - in: query
+ *         name: email
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: email
+ *         description: Email de l'utilisateur (optionnel mais recommandé)
+ *     responses:
+ *       200:
+ *         description: Token valide, informations pour le formulaire
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     token:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     expiresIn:
+ *                       type: number
+ *                     message:
+ *                       type: string
+ *       400:
+ *         description: Token manquant, invalide ou expiré
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/reset-password',
+  authController.showResetPasswordForm
+);
+
 /**
  * Routes d'inscription (publiques)
  */

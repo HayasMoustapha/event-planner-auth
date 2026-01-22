@@ -157,6 +157,15 @@ class PasswordService {
   }
 
   /**
+   * Récupère un token de réinitialisation par email
+   * @param {string} email - Email de l'utilisateur
+   * @returns {Promise<Object|null>} Token trouvé ou null
+   */
+  async getResetToken(email) {
+    return await passwordRepository.getResetToken(email);
+  }
+
+  /**
    * Récupère l'historique des mots de passe d'un utilisateur
    * @param {number} userId - ID de l'utilisateur
    * @param {Object} options - Options de pagination

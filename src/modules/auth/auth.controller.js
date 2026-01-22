@@ -5,6 +5,7 @@ const authService = require('./auth.service');
 const otpService = require('./otp.service');
 const usersService = require('../users/users.service');
 const usersRepository = require('../users/users.repository');
+const passwordService = require('../password/password.service');
 const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
 const emailService = require('../../services/email.service');
@@ -760,6 +761,93 @@ class AuthController {
         userResponse
       ));
     } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Affiche le formulaire de réinitialisation de mot de passe
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async showResetPasswordForm(req, res, next) {
+    try {
+      const { token, email } = req.query;
+
+      if (!token || token === 'undefined' || token === '') {
+        return res.status(400).json(createResponse(
+          false,
+          'Token de réinitialisation manquant ou invalide',
+          { 
+            error: 'MISSING_TOKEN',
+            message: 'Le paramètre token est requis et ne peut pas être vide.'
+          }
+        ));
+      }
+
+      // Vérifier si le token est valide
+      let tokenData = null;
+
+      if (email) {
+        // Si email fourni, vérifier le token spécifique
+        tokenData = await passwordService.getResetToken(email);
+      } else {
+        // Retourner une erreur si pas d'email car on ne peut pas valider le token
+        return res.status(400).json(createResponse(
+          false,
+          'Email requis pour valider le token',
+          { 
+            error: 'MISSING_EMAIL',
+            message: 'L\'email est requis pour valider le token de réinitialisation.'
+          }
+        ));
+      }
+
+      if (!tokenData || tokenData.token !== token) {
+        return res.status(400).json(createResponse(
+          false,
+          'Token de réinitialisation invalide',
+          { 
+            error: 'INVALID_TOKEN',
+            message: 'Le lien de réinitialisation est invalide ou a expiré.'
+          }
+        ));
+      }
+
+      // Vérifier l'âge du token (24h max)
+      const tokenAge = Date.now() - new Date(tokenData.created_at).getTime();
+      const maxAge = 24 * 60 * 60 * 1000; // 24 heures
+      
+      if (tokenAge > maxAge) {
+        return res.status(400).json(createResponse(
+          false,
+          'Token de réinitialisation expiré',
+          { 
+            error: 'EXPIRED_TOKEN',
+            message: 'Le lien de réinitialisation a expiré. Veuillez demander une nouvelle réinitialisation.'
+          }
+        ));
+      }
+
+      // Token valide - retourner les informations pour le formulaire
+      res.status(200).json(createResponse(
+        true,
+        'Token de réinitialisation valide',
+        {
+          token,
+          email: email,
+          expiresIn: maxAge - tokenAge,
+          message: 'Vous pouvez maintenant réinitialiser votre mot de passe.'
+        }
+      ));
+    } catch (error) {
+      logger.error('Error in showResetPasswordForm:', {
+        error: error.message,
+        query: req.query,
+        stack: error.stack
+      });
+      
       next(error);
     }
   }
