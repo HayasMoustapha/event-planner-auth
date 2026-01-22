@@ -5,8 +5,9 @@ Service d'authentification et d'autorisation enterprise-ready pour Event Planner
 ## Fonctionnalités
 
 ### Authentification & Sécurité
-- **Multi-méthodes** : Email/password, OTP, tokens JWT
+- **Multi-méthodes** : Email/password, OTP, tokens JWT, **Google Sign-In**, **Apple Sign-In**
 - **Inscription complète** : Création compte people + users avec validation OTP
+- **OAuth Integration** : Google Sign-In et Apple Sign-In avec mapping persistant
 - **Sécurité avancée** : Détection automatique d'attaques (SQL injection, XSS, path traversal, command injection)
 - **Hardening de validation** : Protection contre les champs non autorisés (Rule 3)
 - **Protection brute force** : Rate limiting et blocage automatique
@@ -28,6 +29,8 @@ Service d'authentification et d'autorisation enterprise-ready pour Event Planner
 - **Dashboard développeur** : Outils de debugging et monitoring
 - **📚 Documentation**
   - [🚀 Guide du Bootstrap Automatique](./BOOTSTRAP_GUIDE.md) - Initialisation de la base de données
+  - [🔐 OAuth Implementation Guide](./documentation/oauth/OAUTH_IMPLEMENTATION_GUIDE.md) - Google Sign-In & Apple Sign-In
+  - [📖 OAuth API Reference](./documentation/oauth/OAUTH_API_REFERENCE.md) - Référence complète des endpoints OAuth
   - [📮 Collection Postman](./postman/README.md) - Tests API complets
   - [📖 Documentation API](./docs/) - Documentation complète de l'API
   - [🔐 Flux d'Authentification](./docs/AUTH_FLOWS.md) - Processus d'authentification
@@ -134,6 +137,18 @@ DB_AUTO_BOOTSTRAP=false
 JWT_SECRET=your_super_secure_256_bit_secret_key
 JWT_EXPIRES_IN=24h
 JWT_REFRESH_EXPIRES_IN=7d
+
+# OAuth - Google Sign-In
+GOOGLE_CLIENT_ID=votre_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=votre_google_client_secret
+
+# OAuth - Apple Sign-In
+APPLE_CLIENT_ID=com.votreapp.service
+APPLE_TEAM_ID=votre_apple_team_id
+APPLE_KEY_ID=votre_apple_key_id
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+votre_clé_privée_apple
+-----END PRIVATE KEY-----"
 
 # Email (SMTP)
 SMTP_HOST=smtp.gmail.com

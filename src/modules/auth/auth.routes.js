@@ -5,6 +5,7 @@ const authMiddleware = require('../../middlewares/auth.middleware');
 const rbacMiddleware = require('../../middlewares/rbac.middleware');
 const authValidation = require('./auth.validation');
 const validate = require('../../config/validation');
+const oauthRoutes = require('../oauth/oauth.routes');
 
 const router = express.Router();
 
@@ -202,5 +203,11 @@ router.get('/otp/stats',
   rbacMiddleware.requirePermission('otp.stats'),
   authController.getOtpStats
 );
+
+/**
+ * Routes OAuth pour Google Sign-In et Apple Sign-In
+ * Intégrées dans le module auth pour l'URL /api/auth/oauth
+ */
+router.use('/oauth', oauthRoutes);
 
 module.exports = router;
