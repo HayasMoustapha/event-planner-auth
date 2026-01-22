@@ -1,6 +1,16 @@
 # Multi-stage build pour optimiser la taille de l'image
 FROM node:18-alpine AS base
 
+# Installer les utilitaires nécessaires pour le bootstrap
+RUN apk add --no-cache \
+    postgresql-client \
+    redis \
+    bash \
+    gosu \
+    curl \
+    wget \
+    coreutils
+
 # Définir le répertoire de travail
 WORKDIR /app
 
@@ -25,11 +35,15 @@ CMD ["npm", "run", "dev"]
 # Stage de production
 FROM base AS production
 
+# Copier le script d'entrée
+COPY --chown=nodejs:nodejs docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Copier le code source
 COPY --chown=nodejs:nodejs . .
 
 # Créer les répertoires nécessaires avec les bons permissions
-RUN mkdir -p logs && \
+RUN mkdir -p logs tmp && \
     chown -R nodejs:nodejs /app
 
 # Basculer vers l'utilisateur non-root
@@ -40,12 +54,10 @@ EXPOSE 3000
 
 # Healthcheck pour vérifier que l'application fonctionne
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" || \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || \
     CMD curl -f http://localhost:3000/api/health || exit 1
 
-# Commande de démarrage
-CMD ["node", "src/server.js"]
+# Point d'entrée personnalisé
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Labels pour l'organisation
 LABEL maintainer="Event Planner Auth Team" \
