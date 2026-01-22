@@ -4,12 +4,12 @@ FROM node:18-alpine AS base
 # Installer les utilitaires nécessaires pour le bootstrap
 RUN apk add --no-cache \
     postgresql-client \
-    redis-cli \
+    redis \
     bash \
-    gosu \
     curl \
     wget \
-    coreutils
+    coreutils \
+    && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community gosu
 
 # Définir le répertoire de travail
 WORKDIR /app
