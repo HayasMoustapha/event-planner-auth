@@ -32,11 +32,12 @@ CREATE INDEX people_deleted_by_foreign ON people(deleted_by);
 DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
-    person_id BIGINT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+    person_id BIGINT REFERENCES people(id) ON DELETE CASCADE,
     user_code VARCHAR(255) NOT NULL,
     username VARCHAR(255),
     phone VARCHAR(255),
     email VARCHAR(255) UNIQUE NOT NULL,
+    user_access INTEGER,
     status VARCHAR(20) CHECK (status IN ('active', 'inactive', 'lock')) NOT NULL,
     email_verified_at TIMESTAMP,
     password VARCHAR(255) NOT NULL,
@@ -155,6 +156,46 @@ CREATE TABLE sessions (
 CREATE INDEX sessions_user_id_index ON sessions(user_id);
 CREATE INDEX sessions_last_activity_index ON sessions(last_activity);
 
+-- Table des tokens d'accès personnels
+DROP TABLE IF EXISTS personal_access_tokens CASCADE;
+CREATE TABLE personal_access_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    tokenable_type VARCHAR(255) NOT NULL,
+    tokenable_id BIGINT NOT NULL,
+    name TEXT NOT NULL,
+    token VARCHAR(64) NOT NULL,
+    abilities TEXT,
+    last_used_at TIMESTAMP,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- Créer les index
+CREATE UNIQUE INDEX personal_access_tokens_token_unique ON personal_access_tokens(token);
+CREATE INDEX personal_access_tokens_tokenable_type_tokenable_id_index ON personal_access_tokens(tokenable_type, tokenable_id);
+CREATE INDEX personal_access_tokens_expires_at_index ON personal_access_tokens(expires_at);
+
+-- Table des tokens de reset mot de passe
+DROP TABLE IF EXISTS password_reset_tokens CASCADE;
+CREATE TABLE password_reset_tokens (
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP,
+    PRIMARY KEY (email)
+);
+
+-- Table des historiques de mots de passe
+DROP TABLE IF EXISTS password_histories CASCADE;
+CREATE TABLE password_histories (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Créer les index
+CREATE INDEX password_histories_user_id_created_at_index ON password_histories(user_id, created_at);
 -- Table des autorisations (rôles-permissions)
 DROP TABLE IF EXISTS authorizations CASCADE;
 CREATE TABLE authorizations (
@@ -198,7 +239,6 @@ CREATE TABLE accesses (
 -- Créer les index
 CREATE UNIQUE INDEX accesses_uid_unique ON accesses(uid);
 CREATE INDEX accesses_user_id_foreign ON accesses(user_id);
-CREATE INDEX accesses_role_id_foreign ON accesses(role_id);
 CREATE INDEX accesses_created_by_foreign ON accesses(created_by);
 CREATE INDEX accesses_updated_by_foreign ON accesses(updated_by);
 CREATE INDEX accesses_deleted_by_foreign ON accesses(deleted_by);
@@ -207,10 +247,10 @@ CREATE INDEX accesses_deleted_by_foreign ON accesses(deleted_by);
 DROP TABLE IF EXISTS personal_access_tokens CASCADE;
 CREATE TABLE personal_access_tokens (
     id BIGSERIAL PRIMARY KEY,
-    tokenable_type VARCHAR(255),
+    tokenable_type VARCHAR(255) NOT NULL,
     tokenable_id BIGINT NOT NULL,
     name TEXT NOT NULL,
-    token VARCHAR(64),
+    token VARCHAR(64) NOT NULL,
     abilities TEXT,
     last_used_at TIMESTAMP,
     expires_at TIMESTAMP,

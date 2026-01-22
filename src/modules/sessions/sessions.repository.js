@@ -18,7 +18,7 @@ class SessionRepository {
       deviceInfo,
       ipAddress,
       userAgent,
-      expiresIn = 3600 // 1 heure par défaut
+      expiresIn = 86400 // 24 heures par défaut
     } = sessionData;
 
     console.log('🔍 Debug repository.create - Données reçues:', {
@@ -130,7 +130,8 @@ class SessionRepository {
    */
   async findByRefreshToken(refreshToken) {
     const query = `
-      SELECT id, user_id, ip_address, user_agent, payload, last_activity
+      SELECT id, user_id, 
+             ip_address, user_agent, payload, last_activity
       FROM sessions 
       WHERE id = $1
     `;

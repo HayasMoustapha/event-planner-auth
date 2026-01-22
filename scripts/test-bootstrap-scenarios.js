@@ -180,7 +180,7 @@ class BootstrapTester {
       // Supprimer toutes les tables en ordre inverse
       const tables = [
         'otp_statistics', 'authorizations', 'accesses', 'personal_access_tokens', 
-        'user_sessions', 'otps', 'people', 'users', 'roles', 'permissions', 
+        'sessions', 'otps', 'people', 'users', 'roles', 'permissions', 
         'menus', 'schema_migrations'
       ];
       

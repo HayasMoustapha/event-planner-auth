@@ -2,7 +2,7 @@
 -- Table des sessions utilisateur
 -- ========================================
 
-CREATE TABLE IF NOT EXISTS user_sessions (
+CREATE TABLE IF NOT EXISTS sessions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     access_token VARCHAR(500) NOT NULL,
@@ -11,9 +11,6 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     ip_address INET,
     user_agent TEXT,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ========================================
@@ -34,24 +31,12 @@ CREATE TABLE IF NOT EXISTS token_blacklist (
 -- ========================================
 
 -- Index pour les sessions utilisateur
-CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id 
-    ON user_sessions(user_id, is_active, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id 
+    ON sessions(user_id);
 
--- Index pour la recherche par access token
-CREATE INDEX IF NOT EXISTS idx_user_sessions_access_token 
-    ON user_sessions(access_token, is_active, expires_at);
-
--- Index pour la recherche par refresh token
-CREATE INDEX IF NOT EXISTS idx_user_sessions_refresh_token 
-    ON user_sessions(refresh_token, is_active, expires_at);
-
--- Index pour l'expiration des sessions
-CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at 
-    ON user_sessions(expires_at, is_active);
-
--- Index pour le statut des sessions
-CREATE INDEX IF NOT EXISTS idx_user_sessions_is_active 
-    ON user_sessions(is_active, updated_at);
+-- Index pour la recherche par last_activity
+CREATE INDEX IF NOT EXISTS idx_sessions_last_activity 
+    ON sessions(last_activity);
 
 -- Index pour le blacklist des tokens
 CREATE INDEX IF NOT EXISTS idx_token_blacklist_token 
@@ -71,22 +56,22 @@ CREATE INDEX IF NOT EXISTS idx_token_blacklist_expires_at
 
 -- Contraintes pour éviter les doublons (IDEMPOTENT - Simplifiées)
 -- Note: EXCLUDE constraints with CURRENT_TIMESTAMP are problematic, using basic indexes instead
-ALTER TABLE user_sessions DROP CONSTRAINT IF EXISTS unique_active_access_token;
-ALTER TABLE user_sessions DROP CONSTRAINT IF EXISTS unique_active_refresh_token;
+ALTER TABLE sessions DROP CONSTRAINT IF EXISTS unique_active_access_token;
+ALTER TABLE sessions DROP CONSTRAINT IF EXISTS unique_active_refresh_token;
 ALTER TABLE token_blacklist DROP CONSTRAINT IF EXISTS unique_blacklisted_token;
 
 -- Index uniques pour remplacer les contraintes EXCLUDE
-CREATE UNIQUE INDEX IF NOT EXISTS idx_user_sessions_active_access_token 
-    ON user_sessions(access_token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_active_access_token 
+    ON sessions(access_token);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_user_sessions_active_refresh_token 
-    ON user_sessions(refresh_token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_active_refresh_token 
+    ON sessions(refresh_token);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_token_blacklist_active_token 
     ON token_blacklist(token);
 
 -- Trigger pour mettre à jour le champ updated_at des sessions
-CREATE OR REPLACE FUNCTION update_user_sessions_updated_at()
+CREATE OR REPLACE FUNCTION update_sessions_updated_at()
     RETURNS TRIGGER AS $$
     BEGIN
         NEW.updated_at = CURRENT_TIMESTAMP;
@@ -94,27 +79,27 @@ CREATE OR REPLACE FUNCTION update_user_sessions_updated_at()
     END;
     $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_update_user_sessions_updated_at
-    BEFORE UPDATE ON user_sessions
+CREATE TRIGGER trigger_update_sessions_updated_at
+    BEFORE UPDATE ON sessions
     FOR EACH ROW
-    EXECUTE FUNCTION update_user_sessions_updated_at();
+    EXECUTE FUNCTION update_sessions_updated_at();
 
 -- ========================================
 -- Commentaires sur les tables
 -- ========================================
 
-COMMENT ON TABLE user_sessions IS 'Table des sessions utilisateur avec gestion des tokens JWT';
-COMMENT ON COLUMN user_sessions.id IS 'Identifiant unique de la session';
-COMMENT ON COLUMN user_sessions.user_id IS 'ID de l''utilisateur propriétaire de la session';
-COMMENT ON COLUMN user_sessions.access_token IS 'Token d''accès JWT';
-COMMENT ON COLUMN user_sessions.refresh_token IS 'Token de rafraîchissement JWT';
-COMMENT ON COLUMN user_sessions.device_info IS 'Informations sur l''appareil utilisé';
-COMMENT ON COLUMN user_sessions.ip_address IS 'Adresse IP de la connexion';
-COMMENT ON COLUMN user_sessions.user_agent IS 'User agent du navigateur/client';
-COMMENT ON COLUMN user_sessions.expires_at IS 'Date et heure d''expiration de la session';
-COMMENT ON COLUMN user_sessions.is_active IS 'Indique si la session est active';
-COMMENT ON COLUMN user_sessions.created_at IS 'Date et heure de création de la session';
-COMMENT ON COLUMN user_sessions.updated_at IS 'Date et heure de dernière mise à jour';
+COMMENT ON TABLE sessions IS 'Table des sessions utilisateur avec gestion des tokens JWT';
+COMMENT ON COLUMN sessions.id IS 'Identifiant unique de la session';
+COMMENT ON COLUMN sessions.user_id IS 'ID de l''utilisateur propriétaire de la session';
+COMMENT ON COLUMN sessions.access_token IS 'Token d''accès JWT';
+COMMENT ON COLUMN sessions.refresh_token IS 'Token de rafraîchissement JWT';
+COMMENT ON COLUMN sessions.device_info IS 'Informations sur l''appareil utilisé';
+COMMENT ON COLUMN sessions.ip_address IS 'Adresse IP de la connexion';
+COMMENT ON COLUMN sessions.user_agent IS 'User agent du navigateur/client';
+COMMENT ON COLUMN sessions.expires_at IS 'Date et heure d''expiration de la session';
+COMMENT ON COLUMN sessions.is_active IS 'Indique si la session est active';
+COMMENT ON COLUMN sessions.created_at IS 'Date et heure de création de la session';
+COMMENT ON COLUMN sessions.updated_at IS 'Date et heure de dernière mise à jour';
 
 COMMENT ON TABLE token_blacklist IS 'Table des tokens révoqués/blacklistés';
 COMMENT ON COLUMN token_blacklist.id IS 'Identifiant unique du token blacklisté';
@@ -134,7 +119,7 @@ CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
     DECLARE
         deleted_count INTEGER;
     BEGIN
-        DELETE FROM user_sessions 
+        DELETE FROM sessions 
         WHERE expires_at < CURRENT_TIMESTAMP 
            OR (is_active = FALSE AND updated_at < CURRENT_TIMESTAMP - INTERVAL '7 days');
         
@@ -160,12 +145,12 @@ CREATE OR REPLACE FUNCTION cleanup_expired_blacklist()
     $$ LANGUAGE plpgsql;
 
 -- Procédure pour désactiver toutes les sessions d'un utilisateur
-CREATE OR REPLACE FUNCTION deactivate_user_sessions(p_user_id INTEGER, p_except_session_id INTEGER DEFAULT NULL)
+CREATE OR REPLACE FUNCTION deactivate_sessions(p_user_id INTEGER, p_except_session_id INTEGER DEFAULT NULL)
     RETURNS INTEGER AS $$
     DECLARE
         deactivated_count INTEGER;
     BEGIN
-        UPDATE user_sessions 
+        UPDATE sessions 
         SET is_active = FALSE, 
             updated_at = CURRENT_TIMESTAMP
         WHERE user_id = p_user_id 
@@ -185,7 +170,7 @@ CREATE OR REPLACE FUNCTION count_active_sessions(p_user_id INTEGER)
         session_count INTEGER;
     BEGIN
         SELECT COUNT(*) INTO session_count
-        FROM user_sessions 
+        FROM sessions 
         WHERE user_id = p_user_id 
             AND is_active = TRUE 
             AND expires_at > CURRENT_TIMESTAMP;
@@ -205,30 +190,30 @@ SELECT
     COUNT(CASE WHEN expires_at < CURRENT_TIMESTAMP THEN 1 END) as expired_sessions,
     COUNT(CASE WHEN created_at > CURRENT_TIMESTAMP - INTERVAL '24 hours' THEN 1 END) as last_24h_sessions,
     COUNT(CASE WHEN created_at > CURRENT_TIMESTAMP - INTERVAL '7 days' THEN 1 END) as last_7d_sessions
-FROM user_sessions;
+FROM sessions;
 
 -- ========================================
 -- Vue pour les sessions actives avec informations utilisateur (IDEMPOTENT)
 DROP VIEW IF EXISTS active_sessions_with_users;
 CREATE OR REPLACE VIEW active_sessions_with_users AS
 SELECT 
-    us.id as session_id,
-    us.user_id,
-    us.access_token,
-    us.device_info,
-    us.ip_address,
-    us.user_agent,
-    us.expires_at,
-    us.created_at,
+    s.id as session_id,
+    s.user_id,
+    s.access_token,
+    s.device_info,
+    s.ip_address,
+    s.user_agent,
+    s.expires_at,
+    s.created_at,
     p.first_name,
     p.last_name,
     p.email as user_email,
     u.username
-FROM user_sessions us
-JOIN users u ON us.user_id = u.id
+FROM sessions s
+JOIN users u ON s.user_id = u.id
 JOIN people p ON u.person_id = p.id
-WHERE us.is_active = TRUE 
-    AND us.expires_at > CURRENT_TIMESTAMP;
+WHERE s.is_active = TRUE 
+    AND s.expires_at > CURRENT_TIMESTAMP;
 
 -- ========================================
 -- Exemples de requêtes
@@ -236,7 +221,7 @@ WHERE us.is_active = TRUE
 
 -- Pour trouver une session par access token
 /*
-SELECT * FROM user_sessions 
+SELECT * FROM sessions 
 WHERE access_token = 'eyJ...' 
     AND is_active = TRUE 
     AND expires_at > CURRENT_TIMESTAMP;
@@ -244,7 +229,7 @@ WHERE access_token = 'eyJ...'
 
 -- Pour les sessions actives d'un utilisateur
 /*
-SELECT * FROM user_sessions 
+SELECT * FROM sessions 
 WHERE user_id = 1 
     AND is_active = TRUE 
     AND expires_at > CURRENT_TIMESTAMP
@@ -264,7 +249,7 @@ SELECT
     DATE_TRUNC('day', created_at) as date,
     COUNT(*) as total_sessions,
     COUNT(CASE WHEN is_active = TRUE THEN 1 END) as active
-FROM user_sessions 
+FROM sessions 
 GROUP BY DATE_TRUNC('day', created_at)
 ORDER BY date DESC;
 */
@@ -275,7 +260,7 @@ SELECT
     device_info,
     COUNT(*) as session_count,
     MAX(created_at) as last_seen
-FROM user_sessions 
+FROM sessions 
 WHERE is_active = TRUE 
     AND expires_at > CURRENT_TIMESTAMP
 GROUP BY device_info
