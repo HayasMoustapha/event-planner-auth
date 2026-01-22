@@ -12,39 +12,41 @@ class SessionRepository {
    */
   async create(sessionData) {
     const {
-      id,
-      user_id,
-      ip_address,
-      user_agent,
-      payload,
-      last_activity
+      accessToken,
+      refreshToken,
+      userId,
+      deviceInfo,
+      ipAddress,
+      userAgent,
+      expiresIn = 3600
     } = sessionData;
 
     console.log('🔍 Debug repository.create - Données reçues:', {
-      id: id ? id.substring(0, 20) + '...' : 'null',
-      user_id,
-      ip_address,
-      user_agent: user_agent ? user_agent.substring(0, 50) + '...' : 'null',
-      payload: payload ? JSON.stringify(payload).substring(0, 100) + '...' : 'null',
-      last_activity
+      accessToken: accessToken ? accessToken.substring(0, 20) + '...' : 'null',
+      refreshToken: refreshToken ? refreshToken.substring(0, 20) + '...' : 'null',
+      userId,
+      deviceInfo,
+      ipAddress,
+      userAgent: userAgent ? userAgent.substring(0, 50) + '...' : 'null',
+      expiresIn
     });
 
     try {
-      // Insérer dans la table sessions
+      // Insérer dans la table sessions en utilisant l'accessToken comme ID
       const sessionQuery = `
         INSERT INTO sessions (
           id, user_id, ip_address, user_agent, payload, last_activity
-        ) VALUES ($1, $2, $3, $4, $5)
+        ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, user_id, ip_address, user_agent, payload, last_activity
       `;
 
       const sessionValues = [
-        id,                    // id
-        user_id,               // user_id
-        ip_address || null,     // ip_address
-        user_agent || null,     // user_agent
-        JSON.stringify({ user_id }), // payload
-        last_activity || Date.now() // last_activity
+        accessToken,                    // id = accessToken
+        userId,                          // user_id
+        ipAddress || null,               // ip_address
+        userAgent || null,              // user_agent
+        JSON.stringify({ user_id: userId, deviceInfo }), // payload
+        Date.now()                       // last_activity
       ];
 
       console.log('🔍 Debug repository.create - Insertion session...');
@@ -53,43 +55,56 @@ class SessionRepository {
 
       // Insérer dans la table personal_access_tokens (pour le blacklistage)
       if (accessToken) {
-        const tokenQuery = `
-          INSERT INTO personal_access_tokens (
-            token, user_id, token_type, expires_at, is_active, metadata
-          ) VALUES ($1, $2, $3, $4, $5, $6)
-          ON CONFLICT (token) DO UPDATE SET
-            is_active = EXCLUDED.is_active,
-            updated_at = CURRENT_TIMESTAMP
-        `;
+        // Vérifier si la table personal_access_tokens existe
+        const tableExists = await connection.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'personal_access_tokens'
+          );
+        `);
+        
+        if (tableExists.rows[0].exists) {
+          const tokenQuery = `
+            INSERT INTO personal_access_tokens (
+              token, user_id, token_type, expires_at, is_active, metadata
+            ) VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (token) DO UPDATE SET
+              is_active = EXCLUDED.is_active,
+              updated_at = CURRENT_TIMESTAMP
+          `;
 
-        const expiresAt = new Date(Date.now() + (expiresIn * 1000));
-        const tokenValues = [
-          accessToken,
-          userId,
-          'access',
-          expiresAt,
-          true, // is_active = true initialement
-          JSON.stringify({ deviceInfo, ipAddress, userAgent })
-        ];
-
-        console.log('🔍 Debug repository.create - Insertion token...');
-        await connection.query(tokenQuery, tokenValues);
-        console.log('🔍 Debug repository.create - Token inséré');
-
-        // Insérer le refresh token aussi s'il existe
-        if (refreshToken) {
-          const refreshExpiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 jours
-          const refreshValues = [
-            refreshToken,
+          const expiresAt = new Date(Date.now() + (expiresIn * 1000));
+          const tokenValues = [
+            accessToken,
             userId,
-            'refresh',
-            refreshExpiresAt,
-            true,
+            'access',
+            expiresAt,
+            true, // is_active = true initialement
             JSON.stringify({ deviceInfo, ipAddress, userAgent })
           ];
 
-          await connection.query(tokenQuery, refreshValues);
-          console.log('🔍 Debug repository.create - Refresh token inséré');
+          console.log('🔍 Debug repository.create - Insertion token...');
+          await connection.query(tokenQuery, tokenValues);
+          console.log('🔍 Debug repository.create - Token inséré');
+
+          // Insérer le refresh token aussi s'il existe
+          if (refreshToken) {
+            const refreshExpiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 jours
+            const refreshValues = [
+              refreshToken,
+              userId,
+              'refresh',
+              refreshExpiresAt,
+              true,
+              JSON.stringify({ deviceInfo, ipAddress, userAgent })
+            ];
+
+            await connection.query(tokenQuery, refreshValues);
+            console.log('🔍 Debug repository.create - Refresh token inséré');
+          }
+        } else {
+          console.log('⚠️ Table personal_access_tokens non trouvée - skip token storage');
         }
       }
 
