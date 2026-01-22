@@ -124,7 +124,7 @@ class ConfigValidationService {
         .when('NODE_ENV', {
           is: 'production',
           then: Joi.required(),
-          otherwise: Joi.optional()
+          otherwise: Joi.allow('').optional()
         })
         .description('Account SID Twilio'),
       
@@ -132,7 +132,7 @@ class ConfigValidationService {
         .when('NODE_ENV', {
           is: 'production',
           then: Joi.required(),
-          otherwise: Joi.optional()
+          otherwise: Joi.allow('').optional()
         })
         .description('Auth token Twilio'),
       
@@ -141,7 +141,7 @@ class ConfigValidationService {
         .when('NODE_ENV', {
           is: 'production',
           then: Joi.required(),
-          otherwise: Joi.optional()
+          otherwise: Joi.allow('').optional()
         })
         .description('Numéro de téléphone Twilio'),
 
