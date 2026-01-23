@@ -20,6 +20,8 @@
   "license": "MIT",
   "dependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
+    "@sendgrid/mail": "^8.1.6",
+    "@vonage/server-sdk": "^3.25.1",
     "apple-signin-auth": "^2.0.0",
     "axios": "^1.13.2",
     "bcrypt": "^5.1.1",
@@ -31,6 +33,7 @@
     "express-rate-limit": "^7.1.5",
     "express-validator": "^7.3.1",
     "google-auth-library": "^10.5.0",
+    "handlebars": "^4.7.8",
     "helmet": "^7.1.0",
     "helmet-csp": "^4.0.0",
     "joi": "^18.0.2",

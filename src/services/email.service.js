@@ -1,69 +1,176 @@
 const nodemailer = require('nodemailer');
 const { createTransport } = require('nodemailer');
+const sendgridMail = require('@sendgrid/mail');
+const handlebars = require('handlebars');
+const fs = require('fs').promises;
+const path = require('path');
 const logger = require('../utils/logger');
 const configValidation = require('../config/validation');
 
 /**
  * Service d'envoi d'emails pour l'authentification
- * Utilise Nodemailer avec configuration SMTP
+ * Utilise Nodemailer (SMTP) + SendGrid fallback avec templates Handlebars
  */
 class EmailService {
   constructor() {
     this.transporter = null;
+    this.sendgridClient = null;
     this.isConfigured = false;
+    this.sendgridConfigured = false;
+    this.templates = new Map();
     // Appeler initialize() automatiquement à l'instanciation
     this.initialize();
   }
 
   /**
-   * Initialise le transporteur email si la configuration est disponible
+   * Initialise les services email (SMTP + SendGrid)
    */
-  initialize() {
+  async initialize() {
     try {
       const config = configValidation.getConfig();
 
-      // Vérifier si le service email est configuré
-      if (!configValidation.isServiceConfigured('email')) {
-        logger.warn('Email service not configured - using fallback');
-        this.isConfigured = false;
-        return;
-      }
-
-      // Créer le transporteur
-      this.transporter = createTransport({
-        host: config.SMTP_HOST,
-        port: config.SMTP_PORT,
-        secure: config.SMTP_SECURE,
-        auth: {
-          user: config.SMTP_USER,
-          pass: config.SMTP_PASS
-        },
-        tls: {
-          rejectUnauthorized: false // Pour les environnements de développement
-        }
-      });
-
-      // Vérifier la connexion
-      this.transporter.verify((error, success) => {
-        if (error) {
-          // Ne pas logger d'erreur bruyante en environnement de test
-          if (config.NODE_ENV !== 'test') {
-            logger.error('Email service verification failed', { environment: config.NODE_ENV, error: error.message });
+      // Initialiser Nodemailer (SMTP)
+      if (configValidation.isServiceConfigured('email')) {
+        this.transporter = createTransport({
+          host: config.SMTP_HOST,
+          port: config.SMTP_PORT,
+          secure: config.SMTP_SECURE,
+          auth: {
+            user: config.SMTP_USER,
+            pass: config.SMTP_PASS
+          },
+          pool: true, // Connection pooling
+          maxConnections: 5,
+          maxMessages: 100,
+          tls: {
+            rejectUnauthorized: config.NODE_ENV === 'production'
           }
-          this.isConfigured = false;
-        } else {
-          logger.info('Email service ready');
-          this.isConfigured = true;
-        }
-      });
-    } catch (error) {
-      if (configValidation.getConfig().NODE_ENV !== 'test') {
-        logger.error('Failed to initialize email service', { error: error.message });
+        });
+
+        // Vérifier la connexion SMTP
+        this.transporter.verify((error, success) => {
+          if (error) {
+            logger.warn('SMTP verification failed', { error: error.message });
+            this.isConfigured = false;
+          } else {
+            logger.info('SMTP service ready');
+            this.isConfigured = true;
+          }
+        });
       }
+
+      // Initialiser SendGrid comme fallback
+      if (config.SENDGRID_API_KEY) {
+        sendgridMail.setApiKey(config.SENDGRID_API_KEY);
+        this.sendgridConfigured = true;
+        logger.info('SendGrid service ready');
+      }
+
+      // Charger les templates Handlebars
+      await this.loadTemplates();
+
+      logger.info('Email service initialized', {
+        smtp: this.isConfigured,
+        sendgrid: this.sendgridConfigured,
+        templates: this.templates.size
+      });
+
+    } catch (error) {
+      logger.error('Failed to initialize email service', { error: error.message });
       this.isConfigured = false;
+      this.sendgridConfigured = false;
     }
   }
 
+  /**
+   * Charge les templates Handlebars depuis le système de fichiers
+   */
+  async loadTemplates() {
+    try {
+      const templatesDir = path.join(__dirname, '../templates/email');
+      
+      // Vérifier si le répertoire existe
+      try {
+        await fs.access(templatesDir);
+      } catch {
+        logger.warn('Email templates directory not found, using inline templates');
+        return;
+      }
+
+      const files = await fs.readdir(templatesDir);
+      
+      for (const file of files) {
+        if (file.endsWith('.hbs')) {
+          const templateName = path.basename(file, '.hbs');
+          const templateContent = await fs.readFile(path.join(templatesDir, file), 'utf8');
+          this.templates.set(templateName, handlebars.compile(templateContent));
+        }
+      }
+
+      logger.info(`Loaded ${this.templates.size} email templates`);
+    } catch (error) {
+      logger.error('Failed to load email templates', { error: error.message });
+    }
+  }
+
+  /**
+   * Envoie un email avec fallback automatique
+   * @param {Object} mailOptions - Options de l'email
+   * @param {Object} options - Options additionnelles
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendEmailWithFallback(mailOptions, options = {}) {
+    const config = configValidation.getConfig();
+    
+    // Essayer SMTP d'abord
+    if (this.isConfigured) {
+      try {
+        const result = await this.transporter.sendMail(mailOptions);
+        logger.auth('Email sent via SMTP', {
+          to: mailOptions.to,
+          messageId: result.messageId,
+          provider: 'smtp'
+        });
+        return { success: true, provider: 'smtp', messageId: result.messageId };
+      } catch (error) {
+        logger.warn('SMTP failed, trying SendGrid', { error: error.message });
+      }
+    }
+
+    // Fallback SendGrid
+    if (this.sendgridConfigured) {
+      try {
+        const msg = {
+          to: mailOptions.to,
+          from: mailOptions.from,
+          subject: mailOptions.subject,
+          text: mailOptions.text,
+          html: mailOptions.html
+        };
+
+        const result = await sendgridMail.send(msg);
+        logger.auth('Email sent via SendGrid', {
+          to: mailOptions.to,
+          messageId: result[0]?.headers?.['x-message-id'],
+          provider: 'sendgrid'
+        });
+        return { success: true, provider: 'sendgrid', messageId: result[0]?.headers?.['x-message-id'] };
+      } catch (error) {
+        logger.error('SendGrid failed', { error: error.message });
+      }
+    }
+
+    // Aucun service disponible
+    if (config.NODE_ENV === 'development' || config.NODE_ENV === 'test') {
+      logger.warn('Email fallback - no service configured', {
+        to: mailOptions.to,
+        subject: mailOptions.subject
+      });
+      return { success: false, fallback: true, reason: 'No email service configured' };
+    }
+
+    throw new Error('Tous les services email ont échoué');
+  }
   /**
    * Envoie un code OTP par email
    * @param {string} email - Adresse email du destinataire
@@ -74,42 +181,47 @@ class EmailService {
    */
   async sendOTP(email, otpCode, purpose = 'login', options = {}) {
     try {
-      if (!this.isConfigured) {
-        // En développement, logger le code mais ne PAS retourner de succès
-        if (configValidation.getConfig().NODE_ENV === 'development' || configValidation.getConfig().NODE_ENV === 'test') {
+      const config = configValidation.getConfig();
+      
+      // En développement/test sans configuration, logger le code
+      if (!this.isConfigured && !this.sendgridConfigured) {
+        if (config.NODE_ENV === 'development' || config.NODE_ENV === 'test') {
           logger.warn('OTP email fallback - service not configured', {
             email,
             purpose,
-            otpCode: otpCode.substring(0, 3) + '***' // Masquer partiellement le code
+            otpCode: otpCode.substring(0, 3) + '***'
           });
           console.log(`🔐 [DEV] OTP pour ${email}: ${otpCode} (purpose: ${purpose})`);
-          return true; // En développement uniquement
+          return true;
         }
-
-        // En production, lever une erreur si le service n'est pas configuré
         throw new Error('Service email non configuré - impossible d\'envoyer l\'OTP');
       }
 
       const { subject, html, text } = this.generateOTPTemplate(email, otpCode, purpose, options);
 
       const mailOptions = {
-        from: `"${options.fromName || 'Event Planner'}" <${configValidation.getConfig().SMTP_USER}>`,
+        from: `"${options.fromName || 'Event Planner'}" <${config.SMTP_USER || config.FROM_EMAIL}>`,
         to: email,
         subject,
         html,
         text
       };
 
-      const result = await this.transporter.sendMail(mailOptions);
+      const result = await this.sendEmailWithFallback(mailOptions, options);
 
-      logger.auth('OTP email sent successfully', {
-        email,
-        purpose,
-        messageId: result.messageId,
-        ip: options.ip
-      });
+      if (result.success) {
+        logger.auth('OTP email sent successfully', {
+          email,
+          purpose,
+          provider: result.provider,
+          messageId: result.messageId,
+          ip: options.ip
+        });
+        return true;
+      }
 
-      return true;
+      throw new Error('Échec d\'envoi de l\'OTP par email');
+
     } catch (error) {
       logger.error('Failed to send OTP email', {
         email,
@@ -118,7 +230,6 @@ class EmailService {
         ip: options.ip
       });
 
-      // NE PAS utiliser de fallback - lever l'erreur pour que l'API échoue
       throw new Error(`Échec d'envoi de l'OTP par email: ${error.message}`);
     }
   }

@@ -28,14 +28,23 @@ class CacheService {
 
       const config = configValidation.getConfig();
       
-      // Créer le client Redis
+      // Créer le client Redis avec configuration optimisée
       this.client = redis.createClient({
-        host: config.REDIS_HOST,
-        port: config.REDIS_PORT,
+        socket: {
+          host: config.REDIS_HOST,
+          port: config.REDIS_PORT,
+          reconnectStrategy: (retries) => {
+            if (retries > 10) {
+              logger.error('Redis reconnection failed after 10 attempts');
+              return new Error('Redis reconnection failed');
+            }
+            return Math.min(retries * 50, 1000);
+          }
+        },
         password: config.REDIS_PASSWORD || undefined,
-        db: config.REDIS_DB,
-        retry_delay_on_failover: 100,
-        retry_attempts_on_failover: 3,
+        database: config.REDIS_DB,
+        // Configuration de performance
+        connectTimeout: 10000,
         lazyConnect: true
       });
 
@@ -513,6 +522,202 @@ class CacheService {
       }
     } catch (error) {
       logger.error('Error closing Redis connection', { error: error.message });
+    }
+  }
+
+  // ===== MÉTHODES OPTIMISÉES POUR SESSIONS & TOKENS =====
+
+  /**
+   * Stocke une session utilisateur avec TTL automatique
+   * @param {string} sessionId - ID de la session
+   * @param {Object} sessionData - Données de session
+   * @param {number} ttl - Temps de vie en secondes (défaut: 24h)
+   * @returns {Promise<boolean>} True si réussi
+   */
+  async setSession(sessionId, sessionData, ttl = 86400) {
+    const key = `session:${sessionId}`;
+    const value = JSON.stringify(sessionData);
+    return await this.setEx(key, ttl, value);
+  }
+
+  /**
+   * Récupère une session utilisateur
+   * @param {string} sessionId - ID de la session
+   * @returns {Promise<Object|null>} Données de session ou null
+   */
+  async getSession(sessionId) {
+    const key = `session:${sessionId}`;
+    const value = await this.get(key);
+    return value ? JSON.parse(value) : null;
+  }
+
+  /**
+   * Supprime une session utilisateur
+   * @param {string} sessionId - ID de la session
+   * @returns {Promise<boolean>} True si réussi
+   */
+  async deleteSession(sessionId) {
+    const key = `session:${sessionId}`;
+    return await this.del(key);
+  }
+
+  /**
+   * Stocke un token blacklisté (pour logout/révocation)
+   * @param {string} tokenId - ID du token (jti)
+   * @param {number} ttl - Temps de vie en secondes (défaut: durée du token)
+   * @returns {Promise<boolean>} True si réussi
+   */
+  async blacklistToken(tokenId, ttl = 86400) {
+    const key = `blacklist:${tokenId}`;
+    return await this.setEx(key, ttl, '1');
+  }
+
+  /**
+   * Vérifie si un token est blacklisté
+   * @param {string} tokenId - ID du token
+   * @returns {Promise<boolean>} True si blacklisté
+   */
+  async isTokenBlacklisted(tokenId) {
+    const key = `blacklist:${tokenId}`;
+    const value = await this.get(key);
+    return value === '1';
+  }
+
+  /**
+   * Stocke les tentatives de connexion pour rate limiting
+   * @param {string} identifier - Email/IP ou identifiant
+   * @param {number} ttl - Temps de vie en secondes
+   * @returns {Promise<number>} Nombre de tentatives
+   */
+  async incrementLoginAttempts(identifier, ttl = 900) {
+    const key = `attempts:${identifier}`;
+    const attempts = await this.client.incr(key);
+    
+    if (attempts === 1) {
+      await this.client.expire(key, ttl);
+    }
+    
+    return attempts;
+  }
+
+  /**
+   * Réinitialise les tentatives de connexion
+   * @param {string} identifier - Email/IP ou identifiant
+   * @returns {Promise<boolean>} True si réussi
+   */
+  async resetLoginAttempts(identifier) {
+    const key = `attempts:${identifier}`;
+    return await this.del(key);
+  }
+
+  /**
+   * Stocke un OTP avec TTL court
+   * @param {string} identifier - Email ou téléphone
+   * @param {string} otpCode - Code OTP
+   * @param {string} purpose - But du code (login, reset, etc.)
+   * @param {number} ttl - Temps de vie en secondes (défaut: 5min)
+   * @returns {Promise<boolean>} True si réussi
+   */
+  async setOTP(identifier, otpCode, purpose = 'login', ttl = 300) {
+    const key = `otp:${purpose}:${identifier}`;
+    const value = JSON.stringify({
+      code: otpCode,
+      attempts: 0,
+      createdAt: new Date().toISOString()
+    });
+    return await this.setEx(key, ttl, value);
+  }
+
+  /**
+   * Récupère et valide un OTP
+   * @param {string} identifier - Email ou téléphone
+   * @param {string} purpose - But du code
+   * @returns {Promise<Object|null>} Données OTP ou null
+   */
+  async getOTP(identifier, purpose = 'login') {
+    const key = `otp:${purpose}:${identifier}`;
+    const value = await this.get(key);
+    return value ? JSON.parse(value) : null;
+  }
+
+  /**
+   * Incrémente les tentatives OTP et bloque si trop de tentatives
+   * @param {string} identifier - Email ou téléphone
+   * @param {string} purpose - But du code
+   * @param {number} maxAttempts - Nombre max de tentatives
+   * @returns {Promise<Object>} {valid: boolean, remaining: number}
+   */
+  async incrementOTPAttempts(identifier, purpose = 'login', maxAttempts = 3) {
+    const key = `otp:${purpose}:${identifier}`;
+    const value = await this.get(key);
+    
+    if (!value) {
+      return { valid: false, remaining: 0 };
+    }
+
+    const otpData = JSON.parse(value);
+    otpData.attempts += 1;
+    
+    if (otpData.attempts >= maxAttempts) {
+      // Supprimer l'OTP après trop de tentatives
+      await this.del(key);
+      return { valid: false, remaining: 0, blocked: true };
+    }
+
+    // Mettre à jour le compteur
+    await this.set(key, JSON.stringify(otpData));
+    return { 
+      valid: true, 
+      remaining: maxAttempts - otpData.attempts,
+      attempts: otpData.attempts
+    };
+  }
+
+  /**
+   * Supprime un OTP après utilisation
+   * @param {string} identifier - Email ou téléphone
+   * @param {string} purpose - But du code
+   * @returns {Promise<boolean>} True si réussi
+   */
+  async deleteOTP(identifier, purpose = 'login') {
+    const key = `otp:${purpose}:${identifier}`;
+    return await this.del(key);
+  }
+
+  /**
+   * Nettoie les données expirées (maintenance)
+   * @returns {Promise<number>} Nombre de clés nettoyées
+   */
+  async cleanupExpired() {
+    try {
+      if (!this.isReady()) {
+        return 0;
+      }
+
+      const patterns = [
+        'otp:*',
+        'attempts:*',
+        'blacklist:*'
+      ];
+
+      let totalDeleted = 0;
+      
+      for (const pattern of patterns) {
+        const keys = await this.client.keys(pattern);
+        if (keys.length > 0) {
+          const deleted = await this.client.del(keys);
+          totalDeleted += deleted;
+        }
+      }
+
+      if (totalDeleted > 0) {
+        logger.info(`Cache cleanup: deleted ${totalDeleted} expired keys`);
+      }
+
+      return totalDeleted;
+    } catch (error) {
+      logger.error('Cache cleanup error', { error: error.message });
+      return 0;
     }
   }
 }

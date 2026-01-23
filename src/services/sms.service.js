@@ -1,52 +1,131 @@
 const twilio = require('twilio');
+const { Vonage } = require('@vonage/server-sdk');
 const logger = require('../utils/logger');
 const configValidation = require('../config/validation');
 
 /**
  * Service d'envoi de SMS pour l'authentification
- * Utilise Twilio avec configuration sécurisée
+ * Utilise Twilio + Vonage fallback avec haute disponibilité
  */
 class SMSService {
   constructor() {
-    this.client = null;
-    this.isConfigured = false;
+    this.twilioClient = null;
+    this.vonageClient = null;
+    this.twilioConfigured = false;
+    this.vonageConfigured = false;
     // Appeler initialize() automatiquement à l'instanciation
     this.initialize();
   }
 
   /**
-   * Initialise le client Twilio si la configuration est disponible
+   * Initialise les clients SMS (Twilio + Vonage)
    */
-  initialize() {
+  async initialize() {
     try {
-      // Valider la configuration d'abord
-      configValidation.validateConfig();
       const config = configValidation.getConfig();
       
-      // Vérifier si le service SMS est configuré
-      if (!configValidation.isServiceConfigured('sms')) {
-        logger.warn('SMS service not configured - using fallback');
-        this.isConfigured = false;
-        return;
+      // Initialiser Twilio
+      if (configValidation.isServiceConfigured('sms')) {
+        if (config.TWILIO_ACCOUNT_SID && config.TWILIO_AUTH_TOKEN && config.TWILIO_PHONE_NUMBER) {
+          this.twilioClient = twilio(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN);
+          this.twilioConfigured = true;
+          logger.info('Twilio SMS service initialized');
+        }
       }
 
-      // Créer le client Twilio
-      this.client = twilio(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN);
-      
-      // Valider le numéro de téléphone Twilio
-      if (!config.TWILIO_PHONE_NUMBER) {
-        logger.error('Twilio phone number not configured');
-        this.isConfigured = false;
-        return;
+      // Initialiser Vonage comme fallback
+      if (config.VONAGE_API_KEY && config.VONAGE_API_SECRET) {
+        this.vonageClient = new Vonage({
+          apiKey: config.VONAGE_API_KEY,
+          apiSecret: config.VONAGE_API_SECRET
+        });
+        this.vonageConfigured = true;
+        logger.info('Vonage SMS service initialized');
       }
 
-      this.isConfigured = true;
-      logger.info('SMS service initialized successfully');
-      
+      if (!this.twilioConfigured && !this.vonageConfigured) {
+        logger.warn('No SMS service configured - SMS disabled');
+      }
+
     } catch (error) {
       logger.error('Failed to initialize SMS service', { error: error.message });
-      this.isConfigured = false;
+      this.twilioConfigured = false;
+      this.vonageConfigured = false;
     }
+  }
+
+  /**
+   * Envoie un SMS avec fallback automatique
+   * @param {string} phoneNumber - Numéro de téléphone du destinataire
+   * @param {string} message - Message à envoyer
+   * @param {Object} options - Options additionnelles
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendSMSWithFallback(phoneNumber, message, options = {}) {
+    const config = configValidation.getConfig();
+    
+    // Essayer Twilio d'abord
+    if (this.twilioConfigured) {
+      try {
+        const result = await this.twilioClient.messages.create({
+          body: message,
+          from: config.TWILIO_PHONE_NUMBER,
+          to: phoneNumber
+        });
+        
+        logger.auth('SMS sent via Twilio', {
+          phoneNumber: this.maskPhoneNumber(phoneNumber),
+          messageSid: result.sid,
+          status: result.status,
+          provider: 'twilio'
+        });
+        
+        return { success: true, provider: 'twilio', messageId: result.sid };
+      } catch (error) {
+        logger.warn('Twilio failed, trying Vonage', { 
+          error: error.message,
+          phoneNumber: this.maskPhoneNumber(phoneNumber)
+        });
+      }
+    }
+
+    // Fallback Vonage
+    if (this.vonageConfigured) {
+      try {
+        const result = await this.vonageClient.sms.send({
+          to: phoneNumber,
+          from: config.VONAGE_FROM_NUMBER || 'EventPlanner',
+          text: message
+        });
+
+        if (result.messages[0].status === '0') {
+          logger.auth('SMS sent via Vonage', {
+            phoneNumber: this.maskPhoneNumber(phoneNumber),
+            messageId: result.messages[0].messageId,
+            provider: 'vonage'
+          });
+          
+          return { success: true, provider: 'vonage', messageId: result.messages[0].messageId };
+        } else {
+          throw new Error(`Vonage error: ${result.messages[0]['error-text']}`);
+        }
+      } catch (error) {
+        logger.error('Vonage failed', { 
+          error: error.message,
+          phoneNumber: this.maskPhoneNumber(phoneNumber)
+        });
+      }
+    }
+
+    // Aucun service disponible
+    if (config.NODE_ENV === 'development' || config.NODE_ENV === 'test') {
+      logger.warn('SMS fallback - no service configured', {
+        phoneNumber: this.maskPhoneNumber(phoneNumber)
+      });
+      return { success: false, fallback: true, reason: 'No SMS service configured' };
+    }
+
+    throw new Error('Tous les services SMS ont échoué');
   }
 
   /**
@@ -59,49 +138,47 @@ class SMSService {
    */
   async sendOTP(phoneNumber, otpCode, purpose = 'login', options = {}) {
     try {
-      if (!this.isConfigured) {
-        // En développement, logger le code mais ne PAS retourner de succès
-        if (configValidation.getConfig().NODE_ENV === 'development') {
+      const config = configValidation.getConfig();
+      
+      // En développement/test sans configuration, logger le code
+      if (!this.twilioConfigured && !this.vonageConfigured) {
+        if (config.NODE_ENV === 'development' || config.NODE_ENV === 'test') {
           logger.warn('OTP SMS fallback - service not configured', {
             phoneNumber: this.maskPhoneNumber(phoneNumber),
             purpose,
-            otpCode: otpCode.substring(0, 3) + '***' // Masquer partiellement le code
+            otpCode: otpCode.substring(0, 3) + '***'
           });
           console.log(`🔐 [DEV] OTP SMS pour ${this.maskPhoneNumber(phoneNumber)}: ${otpCode} (purpose: ${purpose})`);
-          return true; // En développement uniquement
+          return true;
         }
         
-        // En production, lever une erreur si le service n'est pas configuré
         throw new Error('Service SMS non configuré - impossible d\'envoyer l\'OTP');
       }
 
       const { message } = this.generateOTPMessage(otpCode, purpose, options);
+      const result = await this.sendSMSWithFallback(phoneNumber, message, options);
 
-      const result = await this.client.messages.create({
-        body: message,
-        from: configValidation.getConfig().TWILIO_PHONE_NUMBER,
-        to: phoneNumber
-      });
-      
-      logger.auth('OTP SMS sent successfully', {
-        phoneNumber: this.maskPhoneNumber(phoneNumber),
-        purpose,
-        messageSid: result.sid,
-        status: result.status,
-        ip: options.ip
-      });
+      if (result.success) {
+        logger.auth('OTP SMS sent successfully', {
+          phoneNumber: this.maskPhoneNumber(phoneNumber),
+          purpose,
+          provider: result.provider,
+          messageId: result.messageId,
+          ip: options.ip
+        });
+        return true;
+      }
 
-      return true;
+      throw new Error('Échec d\'envoi de l\'OTP par SMS');
+
     } catch (error) {
       logger.error('Failed to send OTP SMS', {
         phoneNumber: this.maskPhoneNumber(phoneNumber),
         purpose,
         error: error.message,
-        errorCode: error.code,
         ip: options.ip
       });
       
-      // NE PAS utiliser de fallback - lever l'erreur pour que l'API échoue
       throw new Error(`Échec d'envoi de l'OTP par SMS: ${error.message}`);
     }
   }
@@ -303,36 +380,56 @@ class SMSService {
   }
 
   /**
-   * Vérifie si le service SMS est configuré
+   * Vérifie si au moins un service SMS est configuré
    * @returns {boolean} True si configuré
    */
   isReady() {
-    return this.isConfigured;
+    return this.twilioConfigured || this.vonageConfigured;
   }
 
   /**
-   * Teste la connexion au service SMS
-   * @returns {Promise<Object>} Résultat du test
+   * Teste la connexion aux services SMS
+   * @returns {Promise<Object>} Résultat des tests
    */
   async testConnection() {
-    try {
-      if (!this.isConfigured) {
-        return { success: false, error: 'Service not configured' };
-      }
+    const results = {
+      twilio: { success: false, error: null },
+      vonage: { success: false, error: null },
+      overall: false
+    };
 
-      // Tester en récupérant les informations du compte
-      const account = await this.client.api.accounts(configValidation.getConfig().TWILIO_ACCOUNT_SID).fetch();
-      
-      return {
-        success: true,
-        accountSid: account.sid,
-        friendlyName: account.friendlyName,
-        status: account.status
-      };
-    } catch (error) {
-      logger.error('SMS connection test failed', { error: error.message });
-      return { success: false, error: error.message };
+    // Tester Twilio
+    if (this.twilioConfigured) {
+      try {
+        const config = configValidation.getConfig();
+        const account = await this.twilioClient.api.accounts(config.TWILIO_ACCOUNT_SID).fetch();
+        results.twilio = {
+          success: true,
+          accountSid: account.sid,
+          friendlyName: account.friendlyName,
+          status: account.status
+        };
+      } catch (error) {
+        results.twilio.error = error.message;
+      }
     }
+
+    // Tester Vonage
+    if (this.vonageConfigured) {
+      try {
+        const result = await this.vonageClient.number.getBalance();
+        results.vonage = {
+          success: true,
+          balance: result.value,
+          currency: result.currency
+        };
+      } catch (error) {
+        results.vonage.error = error.message;
+      }
+    }
+
+    results.overall = results.twilio.success || results.vonage.success;
+    return results;
   }
 }
 
