@@ -9,6 +9,7 @@ const passwordService = require('../password/password.service');
 const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
 const emailService = require('../../services/email.service');
+const smsService = require('../../services/sms.service');
 const sessionService = require('../sessions/sessions.service');
 
 /**
@@ -261,17 +262,41 @@ class AuthController {
 
       const otp = await otpService.generatePhoneOtp(targetPersonId, phone, expiresInMinutes, req.user?.id);
 
-      // TODO: Envoyer l'OTP par SMS (service SMS)
-      logger.auth('OTP phone generated', {
-        phone,
-        personId: targetPersonId,
-        expiresInMinutes,
-        ip: req.ip
-      });
+      // Envoyer l'OTP par SMS
+      try {
+        const smsSent = await smsService.sendOTP(phone, otp.code, 'login', {
+          expiresIn: expiresInMinutes,
+          ip: req.ip
+        });
+
+        if (!smsSent) {
+          throw new Error('Échec d\'envoi du SMS OTP');
+        }
+
+        logger.auth('OTP SMS sent successfully', {
+          phone,
+          personId: targetPersonId,
+          otpId: otp.id,
+          expiresInMinutes,
+          ip: req.ip
+        });
+      } catch (smsError) {
+        logger.error('Failed to send OTP SMS', {
+          phone,
+          personId: targetPersonId,
+          error: smsError.message,
+          ip: req.ip
+        });
+
+        // Supprimer l'OTP généré si l'envoi échoue
+        await otpService.invalidateOtp(otp.id);
+
+        throw new Error(`Échec d'envoi de l'OTP par SMS: ${smsError.message}`);
+      }
 
       res.status(201).json(createResponse(
         true,
-        'OTP généré avec succès',
+        'OTP envoyé par SMS avec succès',
         {
           contactInfo: phone,
           expiresAt: otp.expires_at,

@@ -4,6 +4,7 @@ const passwordRepository = require('./password.repository');
 const usersRepository = require('../users/users.repository');
 const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
+const emailService = require('../../services/email.service');
 
 /**
  * Service métier pour la gestion des mots de passe
@@ -46,14 +47,38 @@ class PasswordService {
         email: email
       });
 
-      // TODO: Envoyer un email avec le token (nécessite le service email)
-      // await emailService.sendPasswordResetEmail(email, resetToken);
+      // Envoyer l'email de réinitialisation
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
+      try {
+        await emailService.sendPasswordResetEmail(email, resetToken, {
+          resetUrl: resetUrl,
+          ip: null // Peut être passé depuis le controller si disponible
+        });
+
+        logger.info('Password reset email sent', {
+          userId: user.id,
+          email: email
+        });
+      } catch (emailError) {
+        // Logger l'erreur mais ne pas bloquer le flow en développement
+        logger.error('Failed to send password reset email', {
+          email,
+          error: emailError.message
+        });
+
+        // En production, lever l'erreur
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('Impossible d\'envoyer l\'email de réinitialisation');
+        }
+      }
 
       return {
         success: true,
-        message: 'Email de réinitialisation envoyé',
+        message: 'Si cet email existe dans notre système, un email de réinitialisation a été envoyé',
         // En développement, retourner le token pour les tests
-        ...(process.env.NODE_ENV === 'development' && { resetToken })
+        ...(process.env.NODE_ENV === 'development' && { resetToken, resetUrl })
       };
     } catch (error) {
       logger.error('Error requesting password reset', {

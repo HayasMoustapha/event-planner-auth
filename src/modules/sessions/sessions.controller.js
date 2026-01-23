@@ -1,5 +1,7 @@
 const sessionService = require('./sessions.service');
 const { createResponse } = require('../../utils/response');
+const emailService = require('../../services/email.service');
+const logger = require('../../utils/logger');
 
 /**
  * Controller HTTP pour la gestion des sessions et tokens
@@ -305,18 +307,46 @@ class SessionController {
       }
 
       const resetToken = sessionService.generatePasswordResetToken(user);
-      
-      // TODO: Envoyer le token par email
-      console.log(`🔐 Token de réinitialisation généré pour ${user.email}: ${resetToken}`);
-      
+
+      // Construire l'URL de réinitialisation
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+
+      // Envoyer l'email de réinitialisation
+      try {
+        await emailService.sendPasswordResetEmail(user.email, resetToken, {
+          resetUrl: resetUrl,
+          ip: req.ip
+        });
+
+        logger.info('Password reset email sent via session controller', {
+          userId: user.id,
+          email: user.email
+        });
+      } catch (emailError) {
+        logger.error('Failed to send password reset email', {
+          userId: user.id,
+          email: user.email,
+          error: emailError.message
+        });
+
+        // En production, lever l'erreur
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(500).json(createResponse(
+            false,
+            'Impossible d\'envoyer l\'email de réinitialisation'
+          ));
+        }
+      }
+
       res.status(200).json(createResponse(
         true,
-        'Token de réinitialisation généré avec succès',
+        'Email de réinitialisation envoyé avec succès',
         {
           userId: user.id,
           email: user.email,
-          // En production, ne pas retourner le token
-          resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
+          // En développement uniquement, retourner le token pour les tests
+          ...(process.env.NODE_ENV === 'development' && { resetToken, resetUrl })
         }
       ));
     } catch (error) {
