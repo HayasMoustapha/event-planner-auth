@@ -3,6 +3,10 @@
 -- Utilise CREATE TABLE IF NOT EXISTS pour éviter les conflits
 -- SQL natif PostgreSQL uniquement
 
+-- Create database if not exists
+CREATE DATABASE IF NOT EXISTS event_planner_auth;
+\c event_planner_auth;
+
 -- Extension UUID pour gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
