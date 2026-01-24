@@ -165,8 +165,12 @@ class DatabaseBootstrap {
     const { Pool } = require('pg');
     
     // Connexion à PostgreSQL sans spécifier de base de données
+    // Utilise les variables d'environnement directement pour éviter la connexion à la base inexistante
     const tempConfig = {
-      ...connection.config,
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT) || 5432,
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
       database: 'postgres' // Base de données par défaut PostgreSQL
     };
     
@@ -174,20 +178,22 @@ class DatabaseBootstrap {
     const tempClient = await tempPool.connect();
     
     try {
+      const databaseName = process.env.DB_NAME || 'event_planner_auth';
+      
       // Vérifier si la base de données existe
       const checkQuery = `
         SELECT 1 FROM pg_database 
-        WHERE datname = '${connection.config.database}'
+        WHERE datname = '${databaseName}'
       `;
       const result = await tempClient.query(checkQuery);
       
       if (result.rows.length === 0) {
         // Créer la base de données
-        const createQuery = `CREATE DATABASE "${connection.config.database}"`;
+        const createQuery = `CREATE DATABASE "${databaseName}"`;
         await tempClient.query(createQuery);
-        console.log(`✅ Base de données ${connection.config.database} créée avec succès`);
+        console.log(`✅ Base de données ${databaseName} créée avec succès`);
       } else {
-        console.log(`ℹ️  La base de données ${connection.config.database} existe déjà`);
+        console.log(`ℹ️  La base de données ${databaseName} existe déjà`);
       }
     } catch (error) {
       console.error('❌ Erreur lors de la création de la base de données:', error.message);

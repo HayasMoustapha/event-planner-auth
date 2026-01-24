@@ -14,6 +14,11 @@ class ApplicationBootstrap {
     console.log('🚀 Starting Event Planner Auth bootstrap...');
     
     try {
+      // 0. Créer la base de données si elle n'existe pas (AVANT toute connexion)
+      console.log('🔍 Checking database existence...');
+      await DatabaseBootstrap.ensureDatabaseExists();
+      console.log('✅ Database existence verified');
+      
       // 1. Bootstrap de la base de données
       console.log('📊 Initializing database...');
       await DatabaseBootstrap.initialize(); // ✅ METHODE CORRECTE
