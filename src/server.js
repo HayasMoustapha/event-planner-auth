@@ -3,6 +3,18 @@ const app = require('./app');
 const env = require('./config/env');
 const { connection } = require('./config/database');
 const bootstrap = require('./bootstrap');
+const { validateConfig } = require('../../shared/config-validator');
+
+// Valider la configuration au démarrage
+validateConfig('Auth Service', [
+  'NODE_ENV',
+  'PORT', 
+  'DB_HOST',
+  'DB_NAME',
+  'DB_USER',
+  'DB_PASSWORD',
+  'JWT_SECRET'
+]);
 
 // Bootstrap automatique de l'application
 const runApplicationBootstrap = async () => {
