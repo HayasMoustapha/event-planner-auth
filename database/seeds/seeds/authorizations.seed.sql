@@ -40,10 +40,12 @@ BEGIN
     
     RAISE NOTICE '🔗 Création des autorisations pour le rôle admin...';
     
-    -- Admin: Permissions utilisateurs, rôles, permissions, menus sur les menus correspondants
-    FOR permission_id IN SELECT id FROM permissions WHERE "group" IN ('users', 'roles', 'permissions', 'menus') LOOP
-        FOR menu_id IN SELECT id FROM menus WHERE route IN ('/users', '/rbac') OR parent_id IN (
-            SELECT id FROM menus WHERE route IN ('/users', '/rbac')
+    -- Admin: Permissions utilisateurs, rôles, permissions, menus + permissions de gestion sur les services
+    FOR permission_id IN SELECT id FROM permissions WHERE "group" IN ('users', 'roles', 'permissions', 'menus', 'admin', 'system') OR 
+                         ("group" IN ('events', 'tickets', 'guests', 'marketplace', 'notifications', 'payments', 'scans') AND 
+                          code LIKE '%read%' OR code LIKE '%stats%') LOOP
+        FOR menu_id IN SELECT id FROM menus WHERE route IN ('/users', '/rbac', '/admin', '/dashboard') OR parent_id IN (
+            SELECT id FROM menus WHERE route IN ('/users', '/rbac', '/admin', '/dashboard')
         ) LOOP
             INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
             VALUES (admin_role_id, permission_id, menu_id, NOW(), NOW());
@@ -53,11 +55,12 @@ BEGIN
     
     RAISE NOTICE '🔗 Création des autorisations pour le rôle manager...';
     
-    -- Manager: Permissions limitées sur événements et utilisateurs
-    FOR permission_id IN SELECT id FROM permissions WHERE "group" IN ('users', 'events') AND 
-                         code NOT LIKE '%delete%' LOOP
-        FOR menu_id IN SELECT id FROM menus WHERE route IN ('/users', '/events') OR parent_id IN (
-            SELECT id FROM menus WHERE route IN ('/users', '/events')
+    -- Manager: Permissions limitées sur événements, tickets, invités et notifications (sauf suppression)
+    FOR permission_id IN SELECT id FROM permissions WHERE "group" IN ('users', 'events', 'tickets', 'guests', 'marketplace', 'notifications') AND 
+                         code NOT LIKE '%delete%' AND 
+                         (code LIKE '%read%' OR code LIKE '%create%' OR code LIKE '%update%' OR code LIKE '%send%' OR code LIKE '%queue%') LOOP
+        FOR menu_id IN SELECT id FROM menus WHERE route IN ('/users', '/events', '/tickets', '/guests', '/marketplace', '/notifications') OR parent_id IN (
+            SELECT id FROM menus WHERE route IN ('/users', '/events', '/tickets', '/guests', '/marketplace', '/notifications')
         ) LOOP
             INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
             VALUES (manager_role_id, permission_id, menu_id, NOW(), NOW());
@@ -67,11 +70,11 @@ BEGIN
     
     RAISE NOTICE '🔗 Création des autorisations pour le rôle user...';
     
-    -- User: Permissions de lecture sur son profil et les événements
-    FOR permission_id IN SELECT id FROM permissions WHERE "group" IN ('users', 'events') AND 
-                         code LIKE '%read%' OR code LIKE '%list%' LOOP
-        FOR menu_id IN SELECT id FROM menus WHERE route IN ('/profile', '/events') OR parent_id IN (
-            SELECT id FROM menus WHERE route IN ('/profile', '/events')
+    -- User: Permissions de lecture sur son profil, les événements et tickets
+    FOR permission_id IN SELECT id FROM permissions WHERE "group" IN ('users', 'events', 'tickets') AND 
+                         (code LIKE '%read%' OR code LIKE '%list%') LOOP
+        FOR menu_id IN SELECT id FROM menus WHERE route IN ('/profile', '/events', '/tickets') OR parent_id IN (
+            SELECT id FROM menus WHERE route IN ('/profile', '/events', '/tickets')
         ) LOOP
             INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
             VALUES (user_role_id, permission_id, menu_id, NOW(), NOW());

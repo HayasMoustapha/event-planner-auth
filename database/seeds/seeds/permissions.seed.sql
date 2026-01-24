@@ -113,7 +113,89 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 
 -- Permissions Système avancées (complément)
 ('system.monitoring', '{"fr": "Monitoring système", "en": "System monitoring"}', 'system', '{"fr": "Permet d''accéder aux outils de monitoring", "en": "Allows accessing monitoring tools"}', NOW(), NOW()),
-('system.audit', '{"fr": "Audit système", "en": "System audit"}', 'system', '{"fr": "Permet d''accéder aux logs et rapports d''audit", "en": "Allows accessing audit logs and reports"}', NOW(), NOW())
+('system.audit', '{"fr": "Audit système", "en": "System audit"}', 'system', '{"fr": "Permet d''accéder aux logs et rapports d''audit", "en": "Allows accessing audit logs and reports"}', NOW(), NOW()),
+
+-- Permissions Events (Core Service)
+('events.publish', '{"fr": "Publier événement", "en": "Publish event"}', 'events', '{"fr": "Publier un événement", "en": "Publish an event"}', NOW(), NOW()),
+('events.unpublish', '{"fr": "Dépublier événement", "en": "Unpublish event"}', 'events', '{"fr": "Dépublier un événement", "en": "Unpublish an event"}', NOW(), NOW()),
+('events.archive', '{"fr": "Archiver événement", "en": "Archive event"}', 'events', '{"fr": "Archiver un événement", "en": "Archive an event"}', NOW(), NOW()),
+('events.restore', '{"fr": "Restaurer événement", "en": "Restore event"}', 'events', '{"fr": "Restaurer un événement", "en": "Restore an event"}', NOW(), NOW()),
+('events.stats.read', '{"fr": "Statistiques événements", "en": "Event statistics"}', 'events', '{"fr": "Voir les statistiques des événements", "en": "View event statistics"}', NOW(), NOW()),
+
+-- Permissions Tickets (Core Service)
+('tickets.validate', '{"fr": "Valider ticket", "en": "Validate ticket"}', 'tickets', '{"fr": "Valider un ticket", "en": "Validate a ticket"}', NOW(), NOW()),
+('tickets.process', '{"fr": "Traiter ticket", "en": "Process ticket"}', 'tickets', '{"fr": "Traiter un ticket", "en": "Process a ticket"}', NOW(), NOW()),
+('tickets.generate', '{"fr": "Générer ticket", "en": "Generate ticket"}', 'tickets', '{"fr": "Générer un ticket", "en": "Generate a ticket"}', NOW(), NOW()),
+('tickets.stats.read', '{"fr": "Statistiques tickets", "en": "Ticket statistics"}', 'tickets', '{"fr": "Voir les statistiques des tickets", "en": "View ticket statistics"}', NOW(), NOW()),
+
+-- Permissions Guests (Core Service)
+('guests.create', '{"fr": "Créer invité", "en": "Create guest"}', 'guests', '{"fr": "Créer un nouvel invité", "en": "Create a new guest"}', NOW(), NOW()),
+('guests.read', '{"fr": "Voir invité", "en": "Read guest"}', 'guests', '{"fr": "Voir les détails des invités", "en": "Read guest details"}', NOW(), NOW()),
+('guests.update', '{"fr": "Modifier invité", "en": "Update guest"}', 'guests', '{"fr": "Modifier les informations d''un invité", "en": "Update guest information"}', NOW(), NOW()),
+('guests.delete', '{"fr": "Supprimer invité", "en": "Delete guest"}', 'guests', '{"fr": "Supprimer un invité", "en": "Delete a guest"}', NOW(), NOW()),
+('guests.import', '{"fr": "Importer invités", "en": "Import guests"}', 'guests', '{"fr": "Importer des invités", "en": "Import guests"}', NOW(), NOW()),
+('guests.export', '{"fr": "Exporter invités", "en": "Export guests"}', 'guests', '{"fr": "Exporter des invités", "en": "Export guests"}', NOW(), NOW()),
+
+-- Permissions Marketplace (Core Service)
+('marketplace.read', '{"fr": "Lire marketplace", "en": "Read marketplace"}', 'marketplace', '{"fr": "Lire le contenu du marketplace", "en": "Read marketplace content"}', NOW(), NOW()),
+('marketplace.purchase', '{"fr": "Acheter marketplace", "en": "Purchase marketplace"}', 'marketplace', '{"fr": "Acheter sur le marketplace", "en": "Purchase on marketplace"}', NOW(), NOW()),
+
+-- Permissions Notifications (Notification Service)
+('notifications.email.send', '{"fr": "Envoyer email", "en": "Send email"}', 'notifications', '{"fr": "Envoyer des emails", "en": "Send emails"}', NOW(), NOW()),
+('notifications.sms.send', '{"fr": "Envoyer SMS", "en": "Send SMS"}', 'notifications', '{"fr": "Envoyer des SMS", "en": "Send SMS"}', NOW(), NOW()),
+('notifications.email.queue', '{"fr": "Mettre email en file", "en": "Queue email"}', 'notifications', '{"fr": "Mettre des emails en file d''attente", "en": "Queue emails"}', NOW(), NOW()),
+('notifications.sms.queue', '{"fr": "Mettre SMS en file", "en": "Queue SMS"}', 'notifications', '{"fr": "Mettre des SMS en file d''attente", "en": "Queue SMS"}', NOW(), NOW()),
+('notifications.email.bulk', '{"fr": "Emails en lot", "en": "Bulk emails"}', 'notifications', '{"fr": "Envoyer des emails en lot", "en": "Send bulk emails"}', NOW(), NOW()),
+('notifications.sms.bulk', '{"fr": "SMS en lot", "en": "Bulk SMS"}', 'notifications', '{"fr": "Envoyer des SMS en lot", "en": "Send bulk SMS"}', NOW(), NOW()),
+('notifications.bulk.mixed', '{"fr": "Notifications mixtes", "en": "Mixed notifications"}', 'notifications', '{"fr": "Envoyer des notifications mixtes en lot", "en": "Send mixed bulk notifications"}', NOW(), NOW()),
+('notifications.jobs.read', '{"fr": "Lire jobs notifications", "en": "Read notification jobs"}', 'notifications', '{"fr": "Voir les jobs de notifications", "en": "View notification jobs"}', NOW(), NOW()),
+('notifications.jobs.cancel', '{"fr": "Annuler job notification", "en": "Cancel notification job"}', 'notifications', '{"fr": "Annuler un job de notification", "en": "Cancel a notification job"}', NOW(), NOW()),
+('notifications.stats.read', '{"fr": "Statistiques notifications", "en": "Notification statistics"}', 'notifications', '{"fr": "Voir les statistiques des notifications", "en": "View notification statistics"}', NOW(), NOW()),
+('notifications.admin', '{"fr": "Admin notifications", "en": "Notifications admin"}', 'notifications', '{"fr": "Administration du service de notifications", "en": "Notifications service administration"}', NOW(), NOW()),
+('notifications.welcome.send', '{"fr": "Envoyer bienvenue", "en": "Send welcome"}', 'notifications', '{"fr": "Envoyer des messages de bienvenue", "en": "Send welcome messages"}', NOW(), NOW()),
+('notifications.password-reset.send', '{"fr": "Envoyer réinitialisation mot de passe", "en": "Send password reset"}', 'notifications', '{"fr": "Envoyer des emails/SMS de réinitialisation de mot de passe", "en": "Send password reset emails/SMS"}', NOW(), NOW()),
+('notifications.event-confirmation.send', '{"fr": "Envoyer confirmation événement", "en": "Send event confirmation"}', 'notifications', '{"fr": "Envoyer des confirmations d''événement", "en": "Send event confirmations"}', NOW(), NOW()),
+('notifications.otp.send', '{"fr": "Envoyer OTP", "en": "Send OTP"}', 'notifications', '{"fr": "Envoyer des codes OTP", "en": "Send OTP codes"}', NOW(), NOW()),
+
+-- Permissions Payments (Payment Service)
+('payments.stripe.create', '{"fr": "Créer paiement Stripe", "en": "Create Stripe payment"}', 'payments', '{"fr": "Créer des paiements Stripe", "en": "Create Stripe payments"}', NOW(), NOW()),
+('payments.customers.read', '{"fr": "Lire clients", "en": "Read customers"}', 'payments', '{"fr": "Voir les informations des clients", "en": "Read customer information"}', NOW(), NOW()),
+('payments.customers.create', '{"fr": "Créer client", "en": "Create customer"}', 'payments', '{"fr": "Créer de nouveaux clients", "en": "Create new customers"}', NOW(), NOW()),
+('payments.payment-methods.create', '{"fr": "Créer méthode paiement", "en": "Create payment method"}', 'payments', '{"fr": "Créer des méthodes de paiement", "en": "Create payment methods"}', NOW(), NOW()),
+('payments.payment-methods.read', '{"fr": "Lire méthodes paiement", "en": "Read payment methods"}', 'payments', '{"fr": "Voir les méthodes de paiement", "en": "Read payment methods"}', NOW(), NOW()),
+('payments.paypal.create', '{"fr": "Créer paiement PayPal", "en": "Create PayPal payment"}', 'payments', '{"fr": "Créer des paiements PayPal", "en": "Create PayPal payments"}', NOW(), NOW()),
+('payments.paypal.capture', '{"fr": "Capturer paiement PayPal", "en": "Capture PayPal payment"}', 'payments', '{"fr": "Capturer des paiements PayPal", "en": "Capture PayPal payments"}', NOW(), NOW()),
+('payments.read', '{"fr": "Lire paiements", "en": "Read payments"}', 'payments', '{"fr": "Voir les détails des paiements", "en": "Read payment details"}', NOW(), NOW()),
+('payments.cancel', '{"fr": "Annuler paiement", "en": "Cancel payment"}', 'payments', '{"fr": "Annuler des paiements", "en": "Cancel payments"}', NOW(), NOW()),
+('payments.refunds.create', '{"fr": "Créer remboursement", "en": "Create refund"}', 'payments', '{"fr": "Créer des remboursements", "en": "Create refunds"}', NOW(), NOW()),
+('payments.refunds.read', '{"fr": "Lire remboursements", "en": "Read refunds"}', 'payments', '{"fr": "Voir les détails des remboursements", "en": "Read refund details"}', NOW(), NOW()),
+('payments.invoices.create', '{"fr": "Créer facture", "en": "Create invoice"}', 'payments', '{"fr": "Générer des factures", "en": "Generate invoices"}', NOW(), NOW()),
+('payments.invoices.read', '{"fr": "Lire factures", "en": "Read invoices"}', 'payments', '{"fr": "Voir les factures", "en": "Read invoices"}', NOW(), NOW()),
+('payments.stats.read', '{"fr": "Statistiques paiements", "en": "Payment statistics"}', 'payments', '{"fr": "Voir les statistiques des paiements", "en": "View payment statistics"}', NOW(), NOW()),
+
+-- Permissions Scans (Scan Validation Service)
+('scans.validate', '{"fr": "Valider scan", "en": "Validate scan"}', 'scans', '{"fr": "Valider des scans de tickets", "en": "Validate ticket scans"}', NOW(), NOW()),
+('scans.validate.offline', '{"fr": "Valider scan offline", "en": "Validate offline scan"}', 'scans', '{"fr": "Valider des scans en mode offline", "en": "Validate scans in offline mode"}', NOW(), NOW()),
+('scans.qr.generate', '{"fr": "Générer QR code", "en": "Generate QR code"}', 'scans', '{"fr": "Générer des QR codes", "en": "Generate QR codes"}', NOW(), NOW()),
+('scans.qr.batch', '{"fr": "QR codes en lot", "en": "Batch QR codes"}', 'scans', '{"fr": "Générer des QR codes en lot", "en": "Generate batch QR codes"}', NOW(), NOW()),
+('scans.qr.test', '{"fr": "Tester QR code", "en": "Test QR code"}', 'scans', '{"fr": "Générer des QR codes de test", "en": "Generate test QR codes"}', NOW(), NOW()),
+('scans.qr.decode', '{"fr": "Décoder QR code", "en": "Decode QR code"}', 'scans', '{"fr": "Décoder et valider des QR codes", "en": "Decode and validate QR codes"}', NOW(), NOW()),
+('scans.history.read', '{"fr": "Lire historique scans", "en": "Read scan history"}', 'scans', '{"fr": "Voir l''historique des scans", "en": "View scan history"}', NOW(), NOW()),
+('scans.stats.read', '{"fr": "Statistiques scans", "en": "Scan statistics"}', 'scans', '{"fr": "Voir les statistiques des scans", "en": "View scan statistics"}', NOW(), NOW()),
+('scans.reports.generate', '{"fr": "Générer rapport scans", "en": "Generate scan reports"}', 'scans', '{"fr": "Générer des rapports de validation", "en": "Generate validation reports"}', NOW(), NOW()),
+('scans.offline.sync', '{"fr": "Synchroniser offline", "en": "Sync offline"}', 'scans', '{"fr": "Synchroniser les données offline", "en": "Sync offline data"}', NOW(), NOW()),
+('scans.offline.read', '{"fr": "Lire données offline", "en": "Read offline data"}', 'scans', '{"fr": "Voir les données offline", "en": "Read offline data"}', NOW(), NOW()),
+('scans.offline.cleanup', '{"fr": "Nettoyer offline", "en": "Cleanup offline"}', 'scans', '{"fr": "Nettoyer les données offline expirées", "en": "Cleanup expired offline data"}', NOW(), NOW()),
+
+-- Permissions Ticket Generator (Generator Service)
+('tickets.batch.create', '{"fr": "Créer tickets en lot", "en": "Create batch tickets"}', 'tickets', '{"fr": "Générer des tickets en lot", "en": "Generate batch tickets"}', NOW(), NOW()),
+('tickets.pdf.create', '{"fr": "Créer PDF ticket", "en": "Create ticket PDF"}', 'tickets', '{"fr": "Générer des PDF pour les tickets", "en": "Generate PDFs for tickets"}', NOW(), NOW()),
+('tickets.pdf.batch', '{"fr": "PDF tickets en lot", "en": "Batch ticket PDFs"}', 'tickets', '{"fr": "Générer des PDFs en lot", "en": "Generate batch PDFs"}', NOW(), NOW()),
+('tickets.full.batch', '{"fr": "Batch complet tickets", "en": "Full batch tickets"}', 'tickets', '{"fr": "Générer un traitement batch complet", "en": "Generate full batch processing"}', NOW(), NOW()),
+('tickets.jobs.read', '{"fr": "Lire jobs tickets", "en": "Read ticket jobs"}', 'tickets', '{"fr": "Voir les jobs de génération de tickets", "en": "Read ticket generation jobs"}', NOW(), NOW()),
+('tickets.jobs.cancel', '{"fr": "Annuler job ticket", "en": "Cancel ticket job"}', 'tickets', '{"fr": "Annuler un job de génération de tickets", "en": "Cancel a ticket generation job"}', NOW(), NOW()),
+('tickets.stats.read', '{"fr": "Statistiques génération tickets", "en": "Ticket generation statistics"}', 'tickets', '{"fr": "Voir les statistiques de génération de tickets", "en": "View ticket generation statistics"}', NOW(), NOW()),
+('tickets.admin', '{"fr": "Admin tickets", "en": "Tickets admin"}', 'tickets', '{"fr": "Administration du service de génération de tickets", "en": "Ticket generation service administration"}', NOW(), NOW())
 ON CONFLICT (code) DO NOTHING;
 
 -- Afficher confirmation
