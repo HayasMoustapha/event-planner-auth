@@ -1,5 +1,5 @@
--- Migration RBAC Phase 3: Création des permissions complètes pour tous les services et assignation à super_admin
--- Généré le 2026-01-24 - VERSION COMPLÈTE TOUS SERVICES
+-- Migration d'urgence: Ajouter toutes les permissions manquantes et assigner au super admin
+-- Généré le 2026-01-24 - URGENT FIX
 
 -- ========================================
 -- PERMISSIONS EVENT-PLANNER-CORE
@@ -25,44 +25,7 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 ('tickets.read', '{"en": "Read Tickets", "fr": "Lire les tickets"}', 'tickets', '{"en": "Read ticket details", "fr": "Lire les détails des tickets"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('tickets.update', '{"en": "Update Ticket", "fr": "Mettre à jour un ticket"}', 'tickets', '{"en": "Update ticket information", "fr": "Mettre à jour les informations d''un ticket"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('tickets.delete', '{"en": "Delete Ticket", "fr": "Supprimer un ticket"}', 'tickets', '{"en": "Delete a ticket", "fr": "Supprimer un ticket"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('tickets.validate', '{"en": "Validate Ticket", "fr": "Valider un ticket"}', 'tickets', '{"en": "Validate ticket", "fr": "Valider un ticket"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('tickets.stats', '{"en": "Tickets Statistics", "fr": "Statistiques des tickets"}', 'tickets', '{"en": "View tickets statistics", "fr": "Voir les statistiques des tickets"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-
--- ========================================
--- PERMISSIONS MARKETPLACE
--- ========================================
-('marketplace.create', '{"en": "Create Marketplace Content", "fr": "Créer contenu marketplace"}', 'marketplace', '{"en": "Create marketplace content", "fr": "Créer du contenu dans la marketplace"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('marketplace.read', '{"en": "Read Marketplace", "fr": "Lire marketplace"}', 'marketplace', '{"en": "Read marketplace content", "fr": "Lire le contenu de la marketplace"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('marketplace.update', '{"en": "Update Marketplace", "fr": "Mettre à jour marketplace"}', 'marketplace', '{"en": "Update marketplace content", "fr": "Mettre à jour le contenu de la marketplace"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('marketplace.delete', '{"en": "Delete Marketplace", "fr": "Supprimer marketplace"}', 'marketplace', '{"en": "Delete marketplace content", "fr": "Supprimer le contenu de la marketplace"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('marketplace.purchase', '{"en": "Purchase Template", "fr": "Acheter template"}', 'marketplace', '{"en": "Purchase templates from marketplace", "fr": "Acheter des templates dans la marketplace"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('marketplace.moderate', '{"en": "Moderate Marketplace", "fr": "Modérer marketplace"}', 'marketplace', '{"en": "Moderate marketplace content", "fr": "Modérer le contenu de la marketplace"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('marketplace.stats', '{"en": "Marketplace Statistics", "fr": "Statistiques marketplace"}', 'marketplace', '{"en": "View marketplace statistics", "fr": "Voir les statistiques de la marketplace"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-
--- ========================================
--- PERMISSIONS TEMPLATES
--- ========================================
-('templates.create', '{"en": "Create Template", "fr": "Créer template"}', 'templates', '{"en": "Create ticket templates", "fr": "Créer des templates de tickets"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('templates.read', '{"en": "Read Templates", "fr": "Lire templates"}', 'templates', '{"en": "Read ticket templates", "fr": "Lire les templates de tickets"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('templates.update', '{"en": "Update Template", "fr": "Mettre à jour template"}', 'templates', '{"en": "Update ticket templates", "fr": "Mettre à jour les templates de tickets"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('templates.delete', '{"en": "Delete Template", "fr": "Supprimer template"}', 'templates', '{"en": "Delete ticket templates", "fr": "Supprimer les templates de tickets"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('templates.publish', '{"en": "Publish Template", "fr": "Publier template"}', 'templates', '{"en": "Publish ticket templates", "fr": "Publier les templates de tickets"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('templates.approve', '{"en": "Approve Template", "fr": "Approuver template"}', 'templates', '{"en": "Approve ticket templates", "fr": "Approuver les templates de tickets"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('templates.stats', '{"en": "Templates Statistics", "fr": "Statistiques templates"}', 'templates', '{"en": "View templates statistics", "fr": "Voir les statistiques des templates"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-
--- ========================================
--- PERMISSIONS ADMIN DASHBOARD
--- ========================================
-('admin.read', '{"en": "Read Admin", "fr": "Lire admin"}', 'admin', '{"en": "Read admin dashboard", "fr": "Lire le dashboard admin"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin.create', '{"en": "Create Admin", "fr": "Créer admin"}', 'admin', '{"en": "Create admin content", "fr": "Créer du contenu admin"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin.update', '{"en": "Update Admin", "fr": "Mettre à jour admin"}', 'admin', '{"en": "Update admin content", "fr": "Mettre à jour le contenu admin"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin.delete', '{"en": "Delete Admin", "fr": "Supprimer admin"}', 'admin', '{"en": "Delete admin content", "fr": "Supprimer le contenu admin"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin.moderate', '{"en": "Moderate Content", "fr": "Modérer contenu"}', 'admin', '{"en": "Moderate platform content", "fr": "Modérer le contenu de la plateforme"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin.export', '{"en": "Export Data", "fr": "Exporter données"}', 'admin', '{"en": "Export platform data", "fr": "Exporter les données de la plateforme"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin.logs', '{"en": "View Logs", "fr": "Voir logs"}', 'admin', '{"en": "View system logs", "fr": "Voir les logs système"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin.analytics', '{"en": "View Analytics", "fr": "Voir analytiques"}', 'admin', '{"en": "View platform analytics", "fr": "Voir les analytiques de la plateforme"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin.health', '{"en": "System Health", "fr": "Santé système"}', 'admin', '{"en": "View system health", "fr": "Voir la santé du système"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin.dashboard', '{"en": "Access Dashboard", "fr": "Accéder dashboard"}', 'admin', '{"en": "Access admin dashboard", "fr": "Accéder au dashboard admin"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+('tickets.stats', '{"en": "Tickets Statistics", "fr": "Statistiques des tickets"}', 'tickets', '{"en": "View tickets statistics", "fr": "Voir les statistiques des tickets"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- ========================================
@@ -137,49 +100,6 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 ('scans.offline.sync', '{"en": "Sync Offline Data", "fr": "Synchroniser données offline"}', 'scans', '{"en": "Synchronize offline data", "fr": "Synchroniser les données offline"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('scans.offline.read', '{"en": "Read Offline Data", "fr": "Lire données offline"}', 'scans', '{"en": "Read offline data", "fr": "Lire les données offline"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('scans.offline.cleanup', '{"en": "Cleanup Offline Data", "fr": "Nettoyer données offline"}', 'scans', '{"en": "Cleanup expired offline data", "fr": "Nettoyer les données offline expirées"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (code) DO NOTHING;
-
--- ========================================
--- PERMISSIONS EXISTANTES (MAINTIEN)
--- ========================================
--- Créer les permissions manquantes pour PEOPLE
-INSERT INTO permissions (code, label, "group", description, created_at, updated_at) VALUES
-('people.list', '{"en": "List People", "fr": "Lister les personnes"}', 'people', '{"en": "List all people in system", "fr": "Lister toutes les personnes du système"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('people.read', '{"en": "Read Person", "fr": "Lire une personne"}', 'people', '{"en": "Read person details", "fr": "Lire les détails d''une personne"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('people.create', '{"en": "Create Person", "fr": "Créer une personne"}', 'people', '{"en": "Create a new person", "fr": "Créer une nouvelle personne"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('people.update', '{"en": "Update Person", "fr": "Mettre à jour une personne"}', 'people', '{"en": "Update person information", "fr": "Mettre à jour les informations d''une personne"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('people.delete', '{"en": "Delete Person", "fr": "Supprimer une personne"}', 'people', '{"en": "Delete a person", "fr": "Supprimer une personne"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('people.stats', '{"en": "People Statistics", "fr": "Statistiques des personnes"}', 'people', '{"en": "View people statistics", "fr": "Voir les statistiques des personnes"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (code) DO NOTHING;
-
--- Créer les permissions manquantes pour USERS
-INSERT INTO permissions (code, label, "group", description, created_at, updated_at) VALUES
-('users.stats', '{"en": "Users Statistics", "fr": "Statistiques des utilisateurs"}', 'users', '{"en": "View users statistics", "fr": "Voir les statistiques des utilisateurs"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (code) DO NOTHING;
-
--- Créer les permissions manquantes pour ROLES
-INSERT INTO permissions (code, label, "group", description, created_at, updated_at) VALUES
-('roles.view_stats', '{"en": "Roles Statistics", "fr": "Statistiques des rôles"}', 'roles', '{"en": "View roles statistics", "fr": "Voir les statistiques des rôles"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (code) DO NOTHING;
-
--- Créer les permissions manquantes pour PERMISSIONS
-INSERT INTO permissions (code, label, "group", description, created_at, updated_at) VALUES
-('permissions.view_stats', '{"en": "Permissions Statistics", "fr": "Statistiques des permissions"}', 'permissions', '{"en": "View permissions statistics", "fr": "Voir les statistiques des permissions"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (code) DO NOTHING;
-
--- Créer les permissions manquantes pour AUTH
-INSERT INTO permissions (code, label, "group", description, created_at, updated_at) VALUES
-('auth.reset_password', '{"en": "Reset Password", "fr": "Réinitialiser mot de passe"}', 'auth', '{"en": "Password reset", "fr": "Réinitialisation mot de passe"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('auth.manage_tokens', '{"en": "Manage Tokens", "fr": "Gérer les tokens"}', 'auth', '{"en": "Manage authentication tokens", "fr": "Gérer les tokens d''authentification"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (code) DO NOTHING;
-
--- Créer les permissions manquantes pour SYSTEM
-INSERT INTO permissions (code, label, "group", description, created_at, updated_at) VALUES
-('system.health', '{"en": "System Health", "fr": "Santé du système"}', 'system', '{"en": "Check system health", "fr": "Vérifier la santé du système"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('system.metrics', '{"en": "System Metrics", "fr": "Métriques système"}', 'system', '{"en": "View system metrics", "fr": "Voir les métriques système"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('system.logs', '{"en": "System Logs", "fr": "Logs système"}', 'system', '{"en": "View system logs", "fr": "Voir les logs système"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('system.backup', '{"en": "System Backup", "fr": "Sauvegarde système"}', 'system', '{"en": "Create system backup", "fr": "Créer une sauvegarde système"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('system.restore', '{"en": "System Restore", "fr": "Restauration système"}', 'system', '{"en": "Restore system", "fr": "Restaurer le système"}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- ========================================
