@@ -1,4 +1,21 @@
 -- ========================================
+-- CRÉATION DE LA BASE DE DONNÉES
+-- ========================================
+-- Création de la base de données si elle n'existe pas
+-- Note: Cette commande doit être exécutée avec les privilèges appropriés
+
+DO $$
+BEGIN
+    -- Vérifier si la base de données existe, sinon la créer
+    IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'event_planner_auth') THEN
+        EXECUTE 'CREATE DATABASE event_planner_auth';
+        RAISE NOTICE 'Base de données event_planner_auth créée avec succès';
+    ELSE
+        RAISE NOTICE 'La base de données event_planner_auth existe déjà';
+    END IF;
+END $$;
+
+-- ========================================
 -- TABLE DE CONTRÔLE DES MIGRATIONS
 -- ========================================
 -- Cette table suit l'état des migrations appliquées
