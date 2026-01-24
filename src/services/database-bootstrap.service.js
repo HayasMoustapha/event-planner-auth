@@ -138,9 +138,13 @@ class DatabaseBootstrap {
   }
 
   /**
-   * Crée la table de contrôle schema_migrations si elle n'existe pas
+   * Crée la base de données et la table de contrôle schema_migrations si elles n'existent pas
    */
   async createSchemaMigrationsTable() {
+    // D'abord, créer la base de données si elle n'existe pas
+    await this.ensureDatabaseExists();
+    
+    // Ensuite, créer la table schema_migrations
     const client = await connection.connect();
     try {
       const bootstrapSql = await fs.readFile(
@@ -151,6 +155,46 @@ class DatabaseBootstrap {
       console.log('✅ Table schema_migrations vérifiée/créée');
     } finally {
       client.release();
+    }
+  }
+
+  /**
+   * Crée la base de données event_planner_auth si elle n'existe pas
+   */
+  async ensureDatabaseExists() {
+    const { Pool } = require('pg');
+    
+    // Connexion à PostgreSQL sans spécifier de base de données
+    const tempConfig = {
+      ...connection.config,
+      database: 'postgres' // Base de données par défaut PostgreSQL
+    };
+    
+    const tempPool = new Pool(tempConfig);
+    const tempClient = await tempPool.connect();
+    
+    try {
+      // Vérifier si la base de données existe
+      const checkQuery = `
+        SELECT 1 FROM pg_database 
+        WHERE datname = '${connection.config.database}'
+      `;
+      const result = await tempClient.query(checkQuery);
+      
+      if (result.rows.length === 0) {
+        // Créer la base de données
+        const createQuery = `CREATE DATABASE "${connection.config.database}"`;
+        await tempClient.query(createQuery);
+        console.log(`✅ Base de données ${connection.config.database} créée avec succès`);
+      } else {
+        console.log(`ℹ️  La base de données ${connection.config.database} existe déjà`);
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la création de la base de données:', error.message);
+      throw error;
+    } finally {
+      tempClient.release();
+      await tempPool.end();
     }
   }
 
