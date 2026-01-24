@@ -139,6 +139,7 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 -- Permissions Marketplace (Core Service)
 ('marketplace.read', '{"fr": "Lire marketplace", "en": "Read marketplace"}', 'marketplace', '{"fr": "Lire le contenu du marketplace", "en": "Read marketplace content"}', NOW(), NOW()),
 ('marketplace.purchase', '{"fr": "Acheter marketplace", "en": "Purchase marketplace"}', 'marketplace', '{"fr": "Acheter sur le marketplace", "en": "Purchase on marketplace"}', NOW(), NOW()),
+('marketplace.moderate', '{"fr": "Modérer marketplace", "en": "Moderate marketplace"}', 'marketplace', '{"fr": "Modérer les templates et designers", "en": "Moderate templates and designers"}', NOW(), NOW()),
 
 -- Permissions Notifications (Notification Service)
 ('notifications.email.send', '{"fr": "Envoyer email", "en": "Send email"}', 'notifications', '{"fr": "Envoyer des emails", "en": "Send emails"}', NOW(), NOW()),

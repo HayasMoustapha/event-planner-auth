@@ -43,7 +43,7 @@ BEGIN
     -- Admin: Permissions utilisateurs, rôles, permissions, menus + permissions de gestion sur les services
     FOR permission_id IN SELECT id FROM permissions WHERE "group" IN ('users', 'roles', 'permissions', 'menus', 'admin', 'system') OR 
                          ("group" IN ('events', 'tickets', 'guests', 'marketplace', 'notifications', 'payments', 'scans') AND 
-                          code LIKE '%read%' OR code LIKE '%stats%') LOOP
+                          (code LIKE '%read%' OR code LIKE '%stats%' OR code LIKE '%moderate%')) LOOP
         FOR menu_id IN SELECT id FROM menus WHERE route IN ('/users', '/rbac', '/admin', '/dashboard') OR parent_id IN (
             SELECT id FROM menus WHERE route IN ('/users', '/rbac', '/admin', '/dashboard')
         ) LOOP
@@ -58,7 +58,7 @@ BEGIN
     -- Manager: Permissions limitées sur événements, tickets, invités et notifications (sauf suppression)
     FOR permission_id IN SELECT id FROM permissions WHERE "group" IN ('users', 'events', 'tickets', 'guests', 'marketplace', 'notifications') AND 
                          code NOT LIKE '%delete%' AND 
-                         (code LIKE '%read%' OR code LIKE '%create%' OR code LIKE '%update%' OR code LIKE '%send%' OR code LIKE '%queue%') LOOP
+                         (code LIKE '%read%' OR code LIKE '%create%' OR code LIKE '%update%' OR code LIKE '%send%' OR code LIKE '%queue%' OR code LIKE '%moderate%') LOOP
         FOR menu_id IN SELECT id FROM menus WHERE route IN ('/users', '/events', '/tickets', '/guests', '/marketplace', '/notifications') OR parent_id IN (
             SELECT id FROM menus WHERE route IN ('/users', '/events', '/tickets', '/guests', '/marketplace', '/notifications')
         ) LOOP
