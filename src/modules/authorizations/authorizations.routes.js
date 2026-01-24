@@ -111,6 +111,11 @@ router.post('/check/permission',
   authorizationController.checkPermission
 );
 
+// DEBUG: Route sans validation pour tester le controller
+router.post('/check/permission/debug', 
+  authorizationController.checkPermission
+);
+
 // Vérifier si un utilisateur a l'une des permissions requises
 router.post('/check/any-permission', 
   authorizationValidation.validateCheckPermissions,

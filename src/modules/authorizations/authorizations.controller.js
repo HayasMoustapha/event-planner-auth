@@ -14,24 +14,24 @@ class AuthorizationController {
    */
   async checkPermission(req, res, next) {
     try {
-      const { userId, permissionName } = req.body;
-      const targetUserId = userId ? parseInt(userId) : req.user?.id;
+      const { user_id, permission } = req.body;
+      const targetUserId = user_id ? parseInt(user_id) : req.user?.id;
 
-      if (!targetUserId || !permissionName) {
+      if (!targetUserId || !permission) {
         return res.status(400).json(createResponse(
           false,
           'ID utilisateur et nom de la permission requis'
         ));
       }
 
-      const hasPermission = await authorizationService.hasPermission(targetUserId, permissionName);
+      const hasPermission = await authorizationService.hasPermission(targetUserId, permission);
 
       res.status(200).json(createResponse(
         true,
         'Vérification de permission effectuée',
         {
           userId: targetUserId,
-          permissionName,
+          permission,
           hasPermission
         }
       ));

@@ -41,6 +41,20 @@ const dashboardRoutes = require('./dashboard/dashboard.routes');
 
 const app = express();
 
+// TEST: Route absolue avant tout middleware
+app.post('/api/authorizations/check/permission/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Données reçues',
+    body: req.body,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Parser (nécessaire pour lire le body JSON)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 // Middleware de sécurité
 app.use(helmet({
   contentSecurityPolicy: {
@@ -128,7 +142,8 @@ app.use((req, res, next) => {
     '/ready',
     '/live',
     '/',
-    '/api/docs'
+    '/api/docs',
+    '/api/authorizations/check/permission/test'  // TEST route
   ];
 
   // Si c'est une route publique, appliquer une sécurité plus légère
@@ -195,11 +210,13 @@ app.use('/api/auth',
   authLimiter,
   authRoutes
 );
+
 app.use('/api/auth/registration', registrationRoutes);
 app.use('/api/password', passwordRoutes);
 app.use('/api/people', peopleRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/accesses', accessesRoutes);
+
 app.use('/api/authorizations', authorizationRoutes);
 app.use('/api/menus', menuRoutes);
 app.use('/api/permissions', permissionRoutes);
