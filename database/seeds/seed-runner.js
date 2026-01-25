@@ -108,6 +108,13 @@ class SeedRunner {
                 return true;
             } catch (error) {
                 await client.query('ROLLBACK');
+                
+                // Ignorer les erreurs de duplication (clé unique déjà existante)
+                if (error.code === '23505' || error.message.includes('duplicate key')) {
+                    this.log(`Seed ${seedFile.name}: données déjà existantes, ignoré`, 'warning');
+                    return true;
+                }
+                
                 throw error;
             } finally {
                 client.release();
