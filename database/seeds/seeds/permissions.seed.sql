@@ -196,7 +196,59 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 ('tickets.jobs.read', '{"fr": "Lire jobs tickets", "en": "Read ticket jobs"}', 'tickets', '{"fr": "Voir les jobs de génération de tickets", "en": "Read ticket generation jobs"}', NOW(), NOW()),
 ('tickets.jobs.cancel', '{"fr": "Annuler job ticket", "en": "Cancel ticket job"}', 'tickets', '{"fr": "Annuler un job de génération de tickets", "en": "Cancel a ticket generation job"}', NOW(), NOW()),
 ('tickets.stats.read', '{"fr": "Statistiques génération tickets", "en": "Ticket generation statistics"}', 'tickets', '{"fr": "Voir les statistiques de génération de tickets", "en": "View ticket generation statistics"}', NOW(), NOW()),
-('tickets.admin', '{"fr": "Admin tickets", "en": "Tickets admin"}', 'tickets', '{"fr": "Administration du service de génération de tickets", "en": "Ticket generation service administration"}', NOW(), NOW())
+('tickets.admin', '{"fr": "Admin tickets", "en": "Tickets admin"}', 'tickets', '{"fr": "Administration du service de génération de tickets", "en": "Ticket generation service administration"}', NOW(), NOW()),
+
+-- Permissions Payments manquantes
+('payments.create', '{"fr": "Créer paiement", "en": "Create payment"}', 'payments', '{"fr": "Créer des paiements", "en": "Create payments"}', NOW(), NOW()),
+('payments.read', '{"fr": "Lire paiement", "en": "Read payment"}', 'payments', '{"fr": "Voir les détails des paiements", "en": "Read payment details"}', NOW(), NOW()),
+('payments.update', '{"fr": "Modifier paiement", "en": "Update payment"}', 'payments', '{"fr": "Modifier les informations des paiements", "en": "Update payment information"}', NOW(), NOW()),
+
+-- Permissions Payment Methods (format standardisé)
+('payment-methods.create', '{"fr": "Créer méthode paiement", "en": "Create payment method"}', 'payments', '{"fr": "Créer des méthodes de paiement", "en": "Create payment methods"}', NOW(), NOW()),
+('payment-methods.read', '{"fr": "Lire méthodes paiement", "en": "Read payment methods"}', 'payments', '{"fr": "Voir les méthodes de paiement", "en": "Read payment methods"}', NOW(), NOW()),
+('payment-methods.update', '{"fr": "Modifier méthode paiement", "en": "Update payment method"}', 'payments', '{"fr": "Modifier les méthodes de paiement", "en": "Update payment methods"}', NOW(), NOW()),
+('payment-methods.delete', '{"fr": "Supprimer méthode paiement", "en": "Delete payment method"}', 'payments', '{"fr": "Supprimer des méthodes de paiement", "en": "Delete payment methods"}', NOW(), NOW()),
+
+-- Permissions Refunds
+('refunds.create', '{"fr": "Créer remboursement", "en": "Create refund"}', 'payments', '{"fr": "Créer des remboursements", "en": "Create refunds"}', NOW(), NOW()),
+('refunds.read', '{"fr": "Lire remboursement", "en": "Read refund"}', 'payments', '{"fr": "Voir les détails des remboursements", "en": "Read refund details"}', NOW(), NOW()),
+
+-- Permissions Invoices
+('invoices.create', '{"fr": "Créer facture", "en": "Create invoice"}', 'payments', '{"fr": "Générer des factures", "en": "Generate invoices"}', NOW(), NOW()),
+('invoices.read', '{"fr": "Lire facture", "en": "Read invoice"}', 'payments', '{"fr": "Voir les factures", "en": "Read invoices"}', NOW(), NOW()),
+
+-- Permissions Wallets
+('wallets.read', '{"fr": "Lire portefeuille", "en": "Read wallet"}', 'payments', '{"fr": "Voir les informations des portefeuilles", "en": "Read wallet information"}', NOW(), NOW()),
+('wallets.withdraw', '{"fr": "Retirer portefeuille", "en": "Withdraw wallet"}', 'payments', '{"fr": "Effectuer des retraits des portefeuilles", "en": "Withdraw from wallets"}', NOW(), NOW()),
+
+-- Permissions Commissions
+('commissions.read', '{"fr": "Lire commissions", "en": "Read commissions"}', 'payments', '{"fr": "Voir les détails des commissions", "en": "Read commission details"}', NOW(), NOW()),
+
+-- Permissions Admin avancées
+('admin.wallet.transfer', '{"fr": "Transférer portefeuille admin", "en": "Admin wallet transfer"}', 'admin', '{"fr": "Effectuer des transferts administratifs de portefeuille", "en": "Perform administrative wallet transfers"}', NOW(), NOW()),
+
+-- Permissions Scan Validation Service manquantes
+-- Permissions Sessions
+('scans.sessions.create', '{"fr": "Créer session scan", "en": "Create scan session"}', 'scans', '{"fr": "Créer des sessions de scan", "en": "Create scan sessions"}', NOW(), NOW()),
+('scans.sessions.update', '{"fr": "Modifier session scan", "en": "Update scan session"}', 'scans', '{"fr": "Modifier des sessions de scan", "en": "Update scan sessions"}', NOW(), NOW()),
+('scans.sessions.read', '{"fr": "Lire session scan", "en": "Read scan session"}', 'scans', '{"fr": "Voir les détails des sessions de scan", "en": "Read scan session details"}', NOW(), NOW()),
+
+-- Permissions Operators
+('scans.operators.create', '{"fr": "Créer opérateur scan", "en": "Create scan operator"}', 'scans', '{"fr": "Créer des opérateurs de scan", "en": "Create scan operators"}', NOW(), NOW()),
+('scans.operators.read', '{"fr": "Lire opérateur scan", "en": "Read scan operator"}', 'scans', '{"fr": "Voir les détails des opérateurs de scan", "en": "Read scan operator details"}', NOW(), NOW()),
+
+-- Permissions Devices
+('scans.devices.create', '{"fr": "Créer appareil scan", "en": "Create scan device"}', 'scans', '{"fr": "Créer des appareils de scan", "en": "Create scan devices"}', NOW(), NOW()),
+('scans.devices.read', '{"fr": "Lire appareil scan", "en": "Read scan device"}', 'scans', '{"fr": "Voir les détails des appareils de scan", "en": "Read scan device details"}', NOW(), NOW()),
+
+-- Permissions Fraud
+('scans.fraud.analyze', '{"fr": "Analyser fraude scan", "en": "Analyze scan fraud"}', 'scans', '{"fr": "Analyser les activités frauduleuses de scan", "en": "Analyze fraudulent scan activities"}', NOW(), NOW()),
+('scans.fraud.read', '{"fr": "Lire fraude scan", "en": "Read scan fraud"}', 'scans', '{"fr": "Voir les rapports de fraude de scan", "en": "Read scan fraud reports"}', NOW(), NOW()),
+
+-- Permissions Ticket Generator Service manquantes
+-- Permissions Jobs (complémentaires)
+('tickets.jobs.create', '{"fr": "Créer job ticket", "en": "Create ticket job"}', 'tickets', '{"fr": "Créer des jobs de génération de tickets", "en": "Create ticket generation jobs"}', NOW(), NOW()),
+('tickets.jobs.process', '{"fr": "Traiter job ticket", "en": "Process ticket job"}', 'tickets', '{"fr": "Traiter des jobs de génération de tickets", "en": "Process ticket generation jobs"}', NOW(), NOW())
 ON CONFLICT (code) DO NOTHING;
 
 -- Afficher confirmation

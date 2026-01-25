@@ -30,7 +30,8 @@ class SeedRunner {
             { name: 'Rôles', file: 'roles.seed.sql', step: 1 },
             { name: 'Permissions', file: 'permissions.seed.sql', step: 2 },
             { name: 'Menus', file: 'menus.seed.sql', step: 3 },
-            { name: 'Administrateur', file: 'admin.seed.sql', step: 4 }
+            { name: 'Autorisations', file: 'authorizations.seed.sql', step: 4 },
+            { name: 'Administrateur', file: 'admin.seed.sql', step: 5 }
         ];
 
         this.seedPath = path.join(__dirname, 'seeds');
