@@ -23,7 +23,7 @@ if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ]; then
     export DB_PORT=${DB_PORT:-5432}
     export DB_NAME=${DB_NAME:-event_planner_auth}
     export DB_USER=${DB_USER:-postgres}
-    export DB_PASSWORD=${DB_PASSWORD:-password}
+    export DB_PASSWORD=${DB_PASSWORD:-postgres}
 fi
 
 echo "📊 Configuration de la base de données:"
