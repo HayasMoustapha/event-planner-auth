@@ -22,8 +22,14 @@ VALUES (
     updated_at = CURRENT_TIMESTAMP;
 
 -- 3. Assigner TOUTES les permissions existantes au super_admin
+-- Utiliser une approche robuste avec vérification des IDs
 INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
-SELECT r.id as role_id, p.id as permission_id, 1 as menu_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+SELECT 
+    r.id as role_id, 
+    p.id as permission_id, 
+    COALESCE((SELECT id FROM menus ORDER BY id LIMIT 1), 1) as menu_id, 
+    CURRENT_TIMESTAMP, 
+    CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'super_admin' AND r.deleted_at IS NULL
@@ -33,7 +39,7 @@ ON CONFLICT (role_id, permission_id, menu_id) DO UPDATE SET
 -- 4. Vérification et log des permissions assignées
 DO $$
 DECLARE
-    role_id_val UUID;
+    role_id_val BIGINT;
     permission_count INTEGER;
 BEGIN
     -- Récupérer l'ID du rôle super_admin
