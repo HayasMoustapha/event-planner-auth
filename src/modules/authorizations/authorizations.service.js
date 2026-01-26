@@ -26,6 +26,18 @@ class AuthorizationService {
     }
 
     try {
+      // 🚨 RÈGLE ABSOLUE - SUPER ADMIN COURT-CIRCUIT
+      // Le super admin a TOUS les droits, SANS vérification supplémentaire
+      const isSuperAdmin = await this.isSuperAdmin(userId);
+      if (isSuperAdmin) {
+        logger.info('SUPER ADMIN ACCESS GRANTED', {
+          userId,
+          permission: permissionName,
+          reason: 'SUPER_ADMIN_CIRCUIT_BREAKER'
+        });
+        return true;
+      }
+
       // Essayer le cache d'abord
       const cachedAuthorizations = await cacheService.getUserAuthorizations(userId);
       if (cachedAuthorizations) {
@@ -78,6 +90,17 @@ class AuthorizationService {
     }
 
     try {
+      // 🚨 RÈGLE ABSOLUE - SUPER ADMIN COURT-CIRCUIT
+      const isSuperAdmin = await this.isSuperAdmin(userId);
+      if (isSuperAdmin) {
+        logger.info('SUPER ADMIN ACCESS GRANTED (ANY)', {
+          userId,
+          permissions,
+          reason: 'SUPER_ADMIN_CIRCUIT_BREAKER'
+        });
+        return true;
+      }
+
       for (const permission of permissions) {
         if (await this.hasPermission(userId, permission)) {
           return true;
@@ -106,6 +129,17 @@ class AuthorizationService {
     }
 
     try {
+      // 🚨 RÈGLE ABSOLUE - SUPER ADMIN COURT-CIRCUIT
+      const isSuperAdmin = await this.isSuperAdmin(userId);
+      if (isSuperAdmin) {
+        logger.info('SUPER ADMIN ACCESS GRANTED (ALL)', {
+          userId,
+          permissions,
+          reason: 'SUPER_ADMIN_CIRCUIT_BREAKER'
+        });
+        return true;
+      }
+
       for (const permission of permissions) {
         if (!await this.hasPermission(userId, permission)) {
           return false;
@@ -292,6 +326,18 @@ class AuthorizationService {
 
     if (!action || !action.trim()) {
       return false;
+    }
+
+    // 🚨 RÈGLE ABSOLUE - SUPER ADMIN COURT-CIRCUIT
+    const isSuperAdmin = await this.isSuperAdmin(userId);
+    if (isSuperAdmin) {
+      logger.info('SUPER ADMIN ACCESS GRANTED (RESOURCE)', {
+        userId,
+        resource,
+        action,
+        reason: 'SUPER_ADMIN_CIRCUIT_BREAKER'
+      });
+      return true;
     }
 
     const permissionName = `${resource.trim()}.${action.trim()}`;
