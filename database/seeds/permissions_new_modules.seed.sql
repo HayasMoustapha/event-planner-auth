@@ -1,7 +1,7 @@
 -- Permissions pour le module ACCESSES (User-Role Management)
 -- Ces permissions permettent de gérer les associations entre utilisateurs et rôles
 
-INSERT INTO permissions (code, label, group, description, created_at, updated_at) VALUES
+INSERT INTO permissions (code, label, "group", description, created_at, updated_at) VALUES
 -- Permissions de lecture
 ('accesses.read', 
  '{"fr": "Lire les accès", "en": "Read accesses"}', 
@@ -94,6 +94,13 @@ INSERT INTO permissions (code, label, group, description, created_at, updated_at
  '{"fr": "Vérifier les autorisations", "en": "Check authorizations"}', 
  'authorizations', 
  '{"fr": "Permet de vérifier les permissions d''un utilisateur", "en": "Allows checking user permissions"}',
+ NOW(), NOW()),
+
+-- Permission de vérification CRITIQUE pour les routes /verify/*
+('authorizations.verify', 
+ '{"fr": "Vérifier les autorisations (routes)", "en": "Verify authorizations (routes)"}', 
+ 'authorizations', 
+ '{"fr": "Permet d''utiliser les routes de vérification des permissions", "en": "Allows using permission verification routes"}',
  NOW(), NOW()),
 
 -- Permissions de gestion du cache
