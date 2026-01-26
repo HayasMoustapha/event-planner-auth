@@ -304,6 +304,8 @@ class DatabaseBootstrap {
       'roles.seed.sql',
       'permissions.seed.sql', 
       'menus.seed.sql',
+      'permissions_new_modules.seed.sql', // NOUVEAU: Permissions pour modules authorizations/accesses
+      'authorizations.seed.sql',
       'admin.seed.sql'
     ];
 

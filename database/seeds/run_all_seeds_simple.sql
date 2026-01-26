@@ -2,13 +2,13 @@
 -- SCRIPT PRINCIPAL DE SEEDS RBAC (SANS TRANSACTION)
 -- ========================================
 -- Exécution complète des seeds pour initialiser le système RBAC
--- Ordre d'exécution: 1. Rôles → 2. Permissions → 3. Menus → 4. Autorizations → 5. Admin
+-- Ordre d'exécution: 1. Rôles → 2. Permissions → 3. Permissions Modules → 4. Menus → 5. Autorizations → 6. Admin
 
 -- Message de début
 DO $$
 BEGIN
     RAISE NOTICE '🚀 Démarrage du processus de seed du système RBAC...';
-    RAISE NOTICE '📋 Étapes prévues: Rôles → Permissions → Menus → Autorizations → Admin';
+    RAISE NOTICE '📋 Étapes prévues: Rôles → Permissions → Permissions Modules → Menus → Autorizations → Admin';
     RAISE NOTICE '⏰ Heure de début: %', NOW();
 END $$;
 
@@ -18,7 +18,7 @@ END $$;
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '📋 ÉTAPE 1/5: Création des rôles système...';
+    RAISE NOTICE '📋 ÉTAPE 1/6: Création des rôles système...';
 END $$;
 
 -- Exécuter le seed des rôles
@@ -30,11 +30,23 @@ END $$;
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '🔑 ÉTAPE 2/5: Création des permissions système...';
+    RAISE NOTICE '🔑 ÉTAPE 2/6: Création des permissions système...';
 END $$;
 
 -- Exécuter le seed des permissions
 \i database/seeds/seeds/permissions.seed.sql
+
+-- ========================================
+-- ÉTAPE 2.5: CRÉATION DES PERMISSIONS MODULES
+-- ========================================
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '🔑 ÉTAPE 2.5/6: Création des permissions modules (authorizations/accesses)...';
+END $$;
+
+-- Exécuter le seed des permissions modules
+\i database/seeds/permissions_new_modules.seed.sql
 
 -- ========================================
 -- ÉTAPE 3: CRÉATION DES MENUS
@@ -42,7 +54,7 @@ END $$;
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '📋 ÉTAPE 3/5: Création des menus système...';
+    RAISE NOTICE '📋 ÉTAPE 3/6: Création des menus système...';
 END $$;
 
 -- Exécuter le seed des menus
@@ -54,7 +66,7 @@ END $$;
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '🔗 ÉTAPE 4/5: Création des autorisations système...';
+    RAISE NOTICE '🔗 ÉTAPE 4/6: Création des autorisations système...';
 END $$;
 
 -- Exécuter le seed des autorisations
@@ -66,19 +78,19 @@ END $$;
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '👤 ÉTAPE 5/5: Création de l''administrateur par défaut...';
+    RAISE NOTICE '👤 ÉTAPE 5/6: Création de l''administrateur par défaut...';
 END $$;
 
 -- Exécuter le seed de l'admin
 \i database/seeds/seeds/admin.seed.sql
 
 -- ========================================
--- VÉRIFICATIONS FINALES
+-- ÉTAPE 6: VALIDATION FINALE
 -- ========================================
 DO $$
 BEGIN
     RAISE NOTICE '';
-    RAISE NOTICE '🔍 Vérifications finales du système RBAC...';
+    RAISE NOTICE '🔍 ÉTAPE 6/6: Validation finale du système RBAC...';
 END $$;
 
 -- Vérification de l'intégrité du système
