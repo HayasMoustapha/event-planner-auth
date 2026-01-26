@@ -17,7 +17,7 @@ SELECT
     1,
     1,
     0,
-    '{"en": "System administration menu", "fr": "Menu d'administration système"}'::jsonb,
+    '{"en": "System administration menu", "fr": "Menu d''administration système"}'::jsonb,
     TRUE,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
@@ -142,4 +142,8 @@ LEFT JOIN authorizations a ON a.role_id = r.id
 WHERE r.code = 'super_admin' AND r.deleted_at IS NULL
 GROUP BY r.id, r.code, r.label;
 
-RAISE NOTICE '📋 Vue super_admin_permissions_summary créée pour monitoring continu';
+-- 6. Notification finale
+DO $$
+BEGIN
+    RAISE NOTICE '📋 Vue super_admin_permissions_summary créée pour monitoring continu';
+END $$;
