@@ -895,6 +895,186 @@ class AuthorizationService {
 
     return await authorizationRepository.findByMenuId(menuId);
   }
+
+  // ===== MÉTHODES VERIFY* POUR LES ROUTES /verify/* =====
+
+  /**
+   * Vérifie une permission spécifique (pour les routes /verify/*)
+   * @param {number} userId - ID de l'utilisateur
+   * @param {string} permission - Permission à vérifier
+   * @returns {Promise<boolean>} True si autorisé
+   */
+  async verifyPermission(userId, permission) {
+    return await this.hasPermission(userId, permission);
+  }
+
+  /**
+   * Vérifie toutes les permissions requises (pour les routes /verify/*)
+   * @param {number} userId - ID de l'utilisateur
+   * @param {Array<string>} permissions - Liste des permissions
+   * @returns {Promise<boolean>} True si toutes les permissions sont accordées
+   */
+  async verifyAllPermissions(userId, permissions) {
+    return await this.hasAllPermissions(userId, permissions);
+  }
+
+  /**
+   * Vérifie au moins une permission requise (pour les routes /verify/*)
+   * @param {number} userId - ID de l'utilisateur
+   * @param {Array<string>} permissions - Liste des permissions
+   * @returns {Promise<boolean>} True si au moins une permission est accordée
+   */
+  async verifyAnyPermissions(userId, permissions) {
+    return await this.hasAnyPermission(userId, permissions);
+  }
+
+  /**
+   * Vérifie l'accès à un menu (pour les routes /verify/*)
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number} menuId - ID du menu
+   * @returns {Promise<boolean>} True si l'accès au menu est autorisé
+   */
+  async verifyMenuAccess(userId, menuId) {
+    return await this.hasMenuAccess(userId, menuId);
+  }
+
+  /**
+   * Vérifie l'accès à une ressource (pour les routes /verify/*)
+   * @param {number} userId - ID de l'utilisateur
+   * @param {string} resource - Nom de la ressource
+   * @returns {Promise<boolean>} True si l'accès à la ressource est autorisé
+   */
+  async verifyResourceAccess(userId, resource) {
+    // Pour les routes /verify/*, on vérifie l'accès en lecture par défaut
+    return await this.canAccessResource(userId, resource, 'read');
+  }
+
+  /**
+   * Vérifie l'accès à un rôle (pour les routes /verify/*)
+   * @param {number} userId - ID de l'utilisateur
+   * @param {string} role - Nom du rôle
+   * @returns {Promise<boolean>} True si l'utilisateur a le rôle
+   */
+  async verifyRoleAccess(userId, role) {
+    return await this.hasRole(userId, role);
+  }
+
+  /**
+   * Vérifie l'accès à tous les rôles (pour les routes /verify/*)
+   * @param {number} userId - ID de l'utilisateur
+   * @param {Array<string>} roles - Liste des rôles
+   * @returns {Promise<boolean>} True si l'utilisateur a tous les rôles
+   */
+  async verifyAllRolesAccess(userId, roles) {
+    return await this.hasAllRoles(userId, roles);
+  }
+
+  /**
+   * Vérifie l'accès à au moins un rôle (pour les routes /verify/*)
+   * @param {number} userId - ID de l'utilisateur
+   * @param {Array<string>} roles - Liste des rôles
+   * @returns {Promise<boolean>} True si l'utilisateur a au moins un des rôles
+   */
+  async verifyAnyRolesAccess(userId, roles) {
+    return await this.hasAnyRole(userId, roles);
+  }
+
+  // ===== MÉTHODES ADDITIONNELLES POUR LES ROUTES MANQUANTES =====
+
+  /**
+   * Récupère les autorisations d'un utilisateur (alias pour compatibilité)
+   * @param {number} userId - ID de l'utilisateur
+   * @returns {Promise<Array>} Liste des autorisations
+   */
+  async getUserAuthorizations(userId) {
+    return await this.getUserPermissions(userId);
+  }
+
+  /**
+   * Récupère les permissions effectives d'un utilisateur
+   * @param {number} userId - ID de l'utilisateur
+   * @returns {Promise<Array>} Liste des permissions effectives
+   */
+  async getUserEffectivePermissions(userId) {
+    return await this.getUserPermissions(userId);
+  }
+
+  /**
+   * Vérifie si un utilisateur est admin (pour les routes /verify/*)
+   * @param {number} userId - ID de l'utilisateur
+   * @returns {Promise<boolean>} True si l'utilisateur est admin
+   */
+  async getUserIsAdmin(userId) {
+    return await this.isAdmin(userId);
+  }
+
+  /**
+   * Crée un cache d'autorisations (pour les routes /cache/*)
+   * @returns {Promise<Object>} Résultat de la création du cache
+   */
+  async createCache() {
+    return {
+      success: true,
+      message: 'Cache d\'autorisations créé (implémentation minimale)',
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Invalide le cache d'autorisations (pour les routes /cache/*)
+   * @returns {Promise<Object>} Résultat de l'invalidation du cache
+   */
+  async invalidateCache() {
+    return {
+      success: true,
+      message: 'Cache d\'autorisations invalidé (implémentation minimale)',
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Récupère les dépendances des permissions
+   * @returns {Promise<Object>} Dépendances des permissions
+   */
+  async getPermissionsDependencies() {
+    return {
+      dependencies: [],
+      message: 'Dépendances des permissions (implémentation minimale)'
+    };
+  }
+
+  /**
+   * Récupère la politique d'autorisations
+   * @returns {Promise<Object>} Politique d'autorisations
+   */
+  async getPolicy() {
+    return {
+      policy: {
+        version: '1.0',
+        description: 'Politique d\'autorisations Event Planner',
+        rules: []
+      },
+      message: 'Politique d\'autorisations (implémentation minimale)'
+    };
+  }
+
+  /**
+   * Récupère la hiérarchie des rôles
+   * @returns {Promise<Object>} Hiérarchie des rôles
+   */
+  async getRolesHierarchy() {
+    return {
+      hierarchy: {
+        'super_admin': 100,
+        'admin': 80,
+        'manager': 60,
+        'organizer': 40,
+        'designer': 30,
+        'user': 10
+      },
+      message: 'Hiérarchie des rôles (implémentation minimale)'
+    };
+  }
 }
 
 module.exports = new AuthorizationService();
