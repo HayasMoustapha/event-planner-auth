@@ -16,7 +16,7 @@ SELECT
     1,
     1,
     0,
-    '{"en": "System administration menu", "fr": "Menu d'administration système"}'::jsonb,
+    '{"en": "System administration menu", "fr": "Menu d administration système"}'::jsonb,
     TRUE,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP

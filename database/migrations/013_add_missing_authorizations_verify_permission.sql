@@ -1,19 +1,38 @@
 -- MIGRATION CRITIQUE : Ajout de la permission authorizations.verify manquante
 -- Cette migration corrige le bug PERMISSION_DENIED sur les routes /verify/*
+-- Version IDEMPOTENTE - Généré le 2026-01-26
 
--- Vérifier si la permission existe déjà
+-- 1. Créer le menu par défaut si aucun n'existe (IDEMPOTENT)
+INSERT INTO menus (parent_id, label, icon, route, component, parent_path, menu_group, sort_order, depth, description, is_visible, created_at, updated_at)
+SELECT 
+    NULL, 
+    '{"en": "System", "fr": "Système"}'::jsonb,
+    'settings',
+    '/admin',
+    'AdminLayout',
+    '/admin',
+    1,
+    1,
+    0,
+    '{"en": "System administration menu", "fr": "Menu d'administration système"}'::jsonb,
+    TRUE,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM menus WHERE deleted_at IS NULL LIMIT 1);
+
+-- 2. Vérifier si la permission existe déjà
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM permissions WHERE code = 'authorizations.verify'
+        SELECT 1 FROM permissions WHERE code = 'authorizations.verify' AND deleted_at IS NULL
     ) THEN
         -- Insérer la permission manquante critique
         INSERT INTO permissions (code, label, "group", description, created_at, updated_at) VALUES
         ('authorizations.verify', 
-         '{"fr": "Vérifier les autorisations (routes)", "en": "Verify authorizations (routes)"}', 
+         '{"fr": "Vérifier les autorisations (routes)", "en": "Verify authorizations (routes)"}'::jsonb, 
          'authorizations', 
-         '{"fr": "Permet d''utiliser les routes de vérification des permissions", "en": "Allows using permission verification routes"}',
-         NOW(), NOW());
+         '{"fr": "Permet d''utiliser les routes de vérification des permissions", "en": "Allows using permission verification routes"}'::jsonb,
+         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
         
         RAISE NOTICE '✅ Permission authorizations.verify créée avec succès';
     ELSE
@@ -21,85 +40,73 @@ BEGIN
     END IF;
 END $$;
 
--- Assigner la permission au super admin pour corriger immédiatement le blocage
-DO $$
-BEGIN
-    -- Récupérer l'ID du rôle super_admin
-    DECLARE
-        super_admin_role_id INTEGER;
-        verify_permission_id INTEGER;
-        existing_auth_id INTEGER;
-    BEGIN
-        SELECT id INTO super_admin_role_id FROM roles WHERE code = 'super_admin' LIMIT 1;
-        SELECT id INTO verify_permission_id FROM permissions WHERE code = 'authorizations.verify' LIMIT 1;
-        
-        IF super_admin_role_id IS NOT NULL AND verify_permission_id IS NOT NULL THEN
-            -- Vérifier si l'autorisation existe déjà
-            SELECT id INTO existing_auth_id 
-            FROM authorizations 
-            WHERE role_id = super_admin_role_id 
-            AND permission_id = verify_permission_id 
-            AND deleted_at IS NULL 
-            LIMIT 1;
-            
-            IF existing_auth_id IS NULL THEN
-                -- Créer l'autorisation pour le super admin
-                INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at) VALUES
-                (super_admin_role_id, verify_permission_id, 1, NOW(), NOW());
-                
-                RAISE NOTICE '✅ Permission authorizations.verify assignée au super_admin';
-            ELSE
-                RAISE NOTICE 'ℹ️  Super admin a déjà la permission authorizations.verify';
-            END IF;
-        ELSE
-            RAISE WARNING '⚠️  Impossible de trouver le rôle super_admin ou la permission authorizations.verify';
-        END IF;
-    END;
-END $$;
+-- 3. Assigner la permission au super admin (IDEMPOTENT)
+INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
+SELECT 
+    r.id as role_id, 
+    p.id as permission_id, 
+    m.id as menu_id,
+    CURRENT_TIMESTAMP, 
+    CURRENT_TIMESTAMP
+FROM roles r
+CROSS JOIN permissions p
+CROSS JOIN LATERAL (
+    SELECT id FROM menus WHERE deleted_at IS NULL ORDER BY id LIMIT 1
+) m
+WHERE r.code = 'super_admin' 
+  AND r.deleted_at IS NULL 
+  AND p.code = 'authorizations.verify'
+  AND p.deleted_at IS NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM authorizations a 
+    WHERE a.role_id = r.id 
+      AND a.permission_id = p.id 
+      AND a.menu_id = m.id
+      AND a.deleted_at IS NULL
+  )
+ON CONFLICT (role_id, permission_id, menu_id) DO UPDATE SET
+    deleted_at = NULL,
+    updated_at = CURRENT_TIMESTAMP;
 
--- Assigner la permission au rôle admin pour éviter les blocages
-DO $$
-BEGIN
-    DECLARE
-        admin_role_id INTEGER;
-        verify_permission_id INTEGER;
-        existing_auth_id INTEGER;
-    BEGIN
-        SELECT id INTO admin_role_id FROM roles WHERE code = 'admin' LIMIT 1;
-        SELECT id INTO verify_permission_id FROM permissions WHERE code = 'authorizations.verify' LIMIT 1;
-        
-        IF admin_role_id IS NOT NULL AND verify_permission_id IS NOT NULL THEN
-            -- Vérifier si l'autorisation existe déjà
-            SELECT id INTO existing_auth_id 
-            FROM authorizations 
-            WHERE role_id = admin_role_id 
-            AND permission_id = verify_permission_id 
-            AND deleted_at IS NULL 
-            LIMIT 1;
-            
-            IF existing_auth_id IS NULL THEN
-                -- Créer l'autorisation pour le admin
-                INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at) VALUES
-                (admin_role_id, verify_permission_id, 1, NOW(), NOW());
-                
-                RAISE NOTICE '✅ Permission authorizations.verify assignée au admin';
-            ELSE
-                RAISE NOTICE 'ℹ️  Admin a déjà la permission authorizations.verify';
-            END IF;
-        END IF;
-    END;
-END $$;
+-- 4. Assigner la permission au rôle admin (IDEMPOTENT)
+INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
+SELECT 
+    r.id as role_id, 
+    p.id as permission_id, 
+    m.id as menu_id,
+    CURRENT_TIMESTAMP, 
+    CURRENT_TIMESTAMP
+FROM roles r
+CROSS JOIN permissions p
+CROSS JOIN LATERAL (
+    SELECT id FROM menus WHERE deleted_at IS NULL ORDER BY id LIMIT 1
+) m
+WHERE r.code = 'admin' 
+  AND r.deleted_at IS NULL 
+  AND p.code = 'authorizations.verify'
+  AND p.deleted_at IS NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM authorizations a 
+    WHERE a.role_id = r.id 
+      AND a.permission_id = p.id 
+      AND a.menu_id = m.id
+      AND a.deleted_at IS NULL
+  )
+ON CONFLICT (role_id, permission_id, menu_id) DO UPDATE SET
+    deleted_at = NULL,
+    updated_at = CURRENT_TIMESTAMP;
 
--- Validation finale
+-- 5. Validation finale
 DO $$
 BEGIN
     DECLARE
         permission_count INTEGER;
         super_admin_count INTEGER;
         admin_count INTEGER;
+        menu_count INTEGER;
     BEGIN
         -- Vérifier que la permission existe
-        SELECT COUNT(*) INTO permission_count FROM permissions WHERE code = 'authorizations.verify';
+        SELECT COUNT(*) INTO permission_count FROM permissions WHERE code = 'authorizations.verify' AND deleted_at IS NULL;
         
         -- Vérifier que le super admin a la permission
         SELECT COUNT(*) INTO super_admin_count
@@ -119,18 +126,25 @@ BEGIN
         AND p.code = 'authorizations.verify' 
         AND a.deleted_at IS NULL;
         
+        -- Compter les menus disponibles
+        SELECT COUNT(*) INTO menu_count 
+        FROM menus 
+        WHERE deleted_at IS NULL;
+        
         RAISE NOTICE '';
         RAISE NOTICE '🎯 RAPPORT DE MIGRATION - authorizations.verify';
         RAISE NOTICE '══════════════════════════════════════════════════';
         RAISE NOTICE '📊 Permission authorizations.verify: % (1 requis)', permission_count;
         RAISE NOTICE '👑 Super admin avec authorizations.verify: % (1 requis)', super_admin_count;
         RAISE NOTICE '🔧 Admin avec authorizations.verify: % (1 requis)', admin_count;
+        RAISE NOTICE '📋 Menus disponibles: %', menu_count;
         
-        IF permission_count = 1 AND super_admin_count = 1 AND admin_count = 1 THEN
+        IF permission_count = 1 AND super_admin_count = 1 AND admin_count = 1 AND menu_count >= 1 THEN
             RAISE NOTICE '';
             RAISE NOTICE '🏆 SUCCÈS : Migration complétée avec succès !';
             RAISE NOTICE '✅ Le bug PERMISSION_DENIED est maintenant résolu';
             RAISE NOTICE '✅ Les routes /verify/* sont accessibles au super admin et admin';
+            RAISE NOTICE '✅ Les contraintes FK sont respectées';
         ELSE
             RAISE NOTICE '';
             RAISE NOTICE '❌ ERREUR : Migration incomplète - Vérifier les logs ci-dessus';
