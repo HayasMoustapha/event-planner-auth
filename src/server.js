@@ -3,7 +3,7 @@ const app = require('./app');
 const env = require('./config/env');
 const { connection } = require('./config/database');
 const bootstrap = require('./bootstrap');
-const { validateConfig } = require('../../shared/config-validator');
+const { validateConfig } = require('../../shared/utils/config-validator');
 
 // Valider la configuration au démarrage
 validateConfig('Auth Service', [
