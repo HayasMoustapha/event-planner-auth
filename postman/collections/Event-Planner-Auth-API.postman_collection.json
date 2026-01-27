@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Event Planner Auth API",
-    "description": "Collection complète pour l'API d'authentification Event Planner avec inscription, connexion, OTP, OAuth (Google Sign-In & Apple Sign-In), gestion des comptes, rôles, permissions, accès, autorisations et hardening de validation (Rule 3) - PRODUCTION READY v1.2",
-    "version": "1.0.0",
+    "name": "Event Planner Auth API - COMPLETE",
+    "description": "Complete API collection for Event Planner Auth Service with all essential routes",
+    "version": "3.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -63,14 +63,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "health"
-              ]
-            }
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Basic health check (public)"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Detailed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/detailed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "detailed"]
+            },
+            "description": "Detailed health check (public)"
           },
           "response": []
         },
@@ -81,187 +91,48 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                ""
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Health Check Detailed",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/health/detailed",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "health",
-                "detailed"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Health Check Ready",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/health/ready",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "health",
-                "ready"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Health Check Live",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/health/live",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "health",
-                "live"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Health Check Authenticated",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/health/authenticated",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "health",
-                "authenticated"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Health Check Admin",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/health/admin",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "health",
-                "admin"
-              ]
-            }
+              "host": ["{{baseUrl}}"],
+              "path": []
+            },
+            "description": "Root endpoint with service info"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "📝 Inscription",
+      "name": "📝 Registration",
       "item": [
         {
-          "name": "1. Vérifier disponibilité Email",
+          "name": "Check Email Availability",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/check-email/{{userEmail}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "check-email",
-                "{{userEmail}}"
-              ]
-            }
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "check-email", "{{userEmail}}"]
+            },
+            "description": "Check if email is available for registration"
           },
           "response": []
         },
         {
-          "name": "2. Vérifier disponibilité Username",
+          "name": "Check Username Availability",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/check-username/testuser123",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "check-username",
-                "testuser123"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/auth/check-username/testuser",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "check-username", "testuser"]
+            },
+            "description": "Check if username is available for registration"
           },
           "response": []
         },
         {
-          "name": "3. Inscription (Register)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Sauvegarder l'email pour les prochaines requêtes",
-                  "if (pm.response.code === 201) {",
-                  "    const responseJson = pm.response.json();",
-                  "    pm.collectionVariables.set('userEmail', responseJson.data.person.email);",
-                  "    pm.collectionVariables.set('userId', responseJson.data.user.id);",
-                  "    console.log('Email sauvegardé:', responseJson.data.person.email);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Register User",
           "request": {
             "method": "POST",
             "header": [
@@ -272,66 +143,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+33612345678\",\n  \"password\": \"Password123\",\n  \"username\": \"johndoe\"\n}"
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"username\": \"testuser\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"+33612345678\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "4. Renvoyer OTP",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/resend-otp",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "resend-otp"
-              ]
-            }
+            "description": "Register a new user account"
           },
           "response": []
         },
         {
-          "name": "5. Vérifier Email avec OTP",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Si la vérification réussit, permettre la connexion",
-                  "if (pm.response.code === 200) {",
-                  "    console.log('Email vérifié avec succès!');",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Verify Email with OTP",
           "request": {
             "method": "POST",
             "header": [
@@ -342,45 +166,47 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"otpCode\": \"123456\"\n}"
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"otpCode\": \"{{otpCode}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/verify-email",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "verify-email"
-              ]
-            }
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verify-email"]
+            },
+            "description": "Verify email address with OTP code"
+          },
+          "response": []
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/resend-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "resend-otp"]
+            },
+            "description": "Resend OTP code for email verification"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "🔐 Authentification",
+      "name": "🔐 Authentication",
       "item": [
         {
-          "name": "1. Login (après vérification)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Sauvegarder le token d'authentification",
-                  "if (pm.response.code === 200) {",
-                  "    const responseJson = pm.response.json();",
-                  "    pm.collectionVariables.set('authToken', responseJson.data.token);",
-                  "    console.log('Token sauvegardé:', responseJson.data.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Login",
           "request": {
             "method": "POST",
             "header": [
@@ -391,52 +217,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login-after-verification",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login-after-verification"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "2. Login Standard",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@eventplanner.com\",\n  \"password\": \"admin123\"\n}"
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"SecurePass123!\",\n  \"rememberMe\": false\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with email and password"
           },
           "response": []
         },
         {
-          "name": "3. Valider Token",
+          "name": "Login with OTP",
           "request": {
             "method": "POST",
             "header": [
@@ -447,24 +240,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"otpCode\": \"{{otpCode}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/validate-token",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "validate-token"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/auth/login-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login-otp"]
+            },
+            "description": "Login with OTP code"
           },
           "response": []
         },
         {
-          "name": "4. Rafraîchir Token",
+          "name": "Refresh Token",
           "request": {
             "method": "POST",
             "header": [
@@ -475,24 +263,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+              "raw": "{\n  \"refreshToken\": \"refresh_token_here\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/refresh-token",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "refresh-token"
-              ]
-            }
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh-token"]
+            },
+            "description": "Refresh access token"
           },
           "response": []
         },
         {
-          "name": "5. Logout",
+          "name": "Validate Token",
           "request": {
             "method": "POST",
             "header": [
@@ -503,48 +286,47 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{}"
+              "raw": "{\n  \"token\": \"{{authToken}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/logout",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "logout"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/auth/validate-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "validate-token"]
+            },
+            "description": "Validate JWT token"
           },
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "👤 Profil Utilisateur",
-      "item": [
+        },
         {
-          "name": "1. Obtenir Profil",
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Logout user and invalidate tokens"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/profile",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "profile"
-              ]
-            }
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            },
+            "description": "Get user profile"
           },
           "response": []
         },
         {
-          "name": "2. Changer Mot de Passe",
+          "name": "Change Password",
           "request": {
             "method": "POST",
             "header": [
@@ -555,45 +337,24 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"admin123\",\n  \"newPassword\": \"NewPassword123\"\n}"
+              "raw": "{\n  \"currentPassword\": \"SecurePass123!\",\n  \"newPassword\": \"NewSecurePass456!\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/change-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "change-password"
-              ]
-            }
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password"]
+            },
+            "description": "Change user password"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "� OAuth Authentication",
+      "name": "🔢 OTP Management",
       "item": [
         {
-          "name": "1. Google Sign-In",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Sauvegarder le token d'authentification OAuth",
-                  "if (pm.response.code === 200) {",
-                  "    const responseJson = pm.response.json();",
-                  "    pm.collectionVariables.set('authToken', responseJson.data.token);",
-                  "    console.log('Token OAuth sauvegardé:', responseJson.data.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Generate Email OTP",
           "request": {
             "method": "POST",
             "header": [
@@ -604,335 +365,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idToken\": \"{{googleIdToken}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/oauth/google",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "oauth",
-                "google"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "2. Apple Sign-In",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Sauvegarder le token d'authentification OAuth",
-                  "if (pm.response.code === 200) {",
-                  "    const responseJson = pm.response.json();",
-                  "    pm.collectionVariables.set('authToken', responseJson.data.token);",
-                  "    console.log('Token OAuth sauvegardé:', responseJson.data.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"identityToken\": \"{{appleIdentityToken}}\",\n  \"user\": \"apple.user.id.12345\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/oauth/apple",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "oauth",
-                "apple"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "3. Lier compte Google",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"idToken\": \"{{googleIdToken}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/oauth/link/google",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "oauth",
-                "link",
-                "google"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "4. Lier compte Apple",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"identityToken\": \"{{appleIdentityToken}}\",\n  \"user\": \"apple.user.id.67890\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/oauth/link/apple",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "oauth",
-                "link",
-                "apple"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "5. Lister identités OAuth",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/oauth/identities",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "oauth",
-                "identities"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "6. Détacher identité Google",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/oauth/google",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "oauth",
-                "google"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "7. Détacher identité Apple",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/oauth/apple",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "oauth",
-                "apple"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "8. Vérifier configuration OAuth",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/oauth/config",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "oauth",
-                "config"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "�� OTP Management",
-      "item": [
-        {
-          "name": "1. Générer OTP Email",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Sauvegarder l'email pour les prochaines requêtes",
-                  "if (pm.response.code === 201) {",
-                  "    const responseJson = pm.response.json();",
-                  "    pm.collectionVariables.set('userEmail', responseJson.data.identifier);",
-                  "    console.log('OTP généré pour:', responseJson.data.identifier);",
-                  "    console.log('Expire le:', responseJson.data.expiresAt);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"purpose\": \"login\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/email/generate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "email",
-                "generate"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "2. Générer OTP Téléphone",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"phone\": \"+33612345678\"\n}"
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "email", "generate"]
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/otp/phone/generate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "phone",
-                "generate"
-              ]
-            }
+            "description": "Generate OTP for email"
           },
           "response": []
         },
         {
-          "name": "3. Vérifier OTP Email",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Si la vérification réussit, effacer le code OTP",
-                  "if (pm.response.code === 200) {",
-                  "    pm.collectionVariables.set('otpCode', '');",
-                  "    console.log('OTP vérifié avec succès!');",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Verify Email OTP",
           "request": {
             "method": "POST",
             "header": [
@@ -943,42 +388,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\"\n}"
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"otpCode\": \"{{otpCode}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/otp/email/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "email",
-                "verify"
-              ]
-            }
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp", "email", "verify"]
+            },
+            "description": "Verify email OTP"
           },
           "response": []
         },
         {
-          "name": "4. Générer OTP Réinitialisation MDP",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Sauvegarder l'email pour la réinitialisation",
-                  "if (pm.response.code === 201) {",
-                  "    const responseJson = pm.response.json();",
-                  "    pm.collectionVariables.set('userEmail', responseJson.data.identifier);",
-                  "    console.log('OTP de réinitialisation généré pour:', responseJson.data.identifier);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Forgot Password",
           "request": {
             "method": "POST",
             "header": [
@@ -989,41 +411,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/otp/password-reset/generate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "password-reset",
-                "generate"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "forgot-password"]
+            },
+            "description": "Forgot password - send reset OTP"
           },
           "response": []
         },
         {
-          "name": "5. Réinitialiser MDP avec OTP",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Si la réinitialisation réussit, effacer les variables sensibles",
-                  "if (pm.response.code === 200) {",
-                  "    pm.collectionVariables.set('otpCode', '');",
-                  "    console.log('Mot de passe réinitialisé avec succès!');",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Reset Password",
           "request": {
             "method": "POST",
             "header": [
@@ -1034,31 +434,24 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\",\n  \"newPassword\": \"NewPassword123\"\n}"
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"otpCode\": \"{{otpCode}}\",\n  \"newPassword\": \"NewSecurePass456!\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/otp/password-reset/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "password-reset",
-                "verify"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "reset-password"]
+            },
+            "description": "Reset password with OTP"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "� Session Management",
+      "name": "🌐 OAuth Integration",
       "item": [
         {
-          "name": "1. Créer une session",
+          "name": "Google Sign-In",
           "request": {
             "method": "POST",
             "header": [
@@ -1069,24 +462,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": 1,\n  \"ipAddress\": \"192.168.1.1\",\n  \"userAgent\": \"Mozilla/5.0 (Test Browser)\"\n}"
+              "raw": "{\n  \"idToken\": \"{{googleIdToken}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/sessions/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "create"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/oauth/google",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "oauth", "google"]
+            },
+            "description": "Authenticate with Google Sign-In"
           },
           "response": []
         },
         {
-          "name": "2. Rafraîchir les tokens",
+          "name": "Apple Sign-In",
           "request": {
             "method": "POST",
             "header": [
@@ -1097,426 +485,181 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"your_refresh_token_here\"\n}"
+              "raw": "{\n  \"identityToken\": \"{{appleIdentityToken}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/sessions/refresh",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "refresh"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "3. Générer token réinitialisation MDP",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+              "raw": "{{baseUrl}}/api/oauth/apple",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "oauth", "apple"]
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/sessions/password-reset/generate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "password-reset",
-                "generate"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "4. Vérifier token réinitialisation MDP",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"reset_token_here\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/sessions/password-reset/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "password-reset",
-                "verify"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "5. Valider une session",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/sessions/validate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "validate"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "6. Session courante",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/sessions/current",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "current"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "7. Déconnexion",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/sessions/logout",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "logout"
-              ]
-            }
+            "description": "Authenticate with Apple Sign-In"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "� Gestion Utilisateurs",
+      "name": "👥 User Management",
       "item": [
         {
-          "name": "1. Lister tous les utilisateurs",
+          "name": "Get Users",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users?page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users"
-              ],
+              "raw": "{{baseUrl}}/api/users?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
               "query": [
                 {
                   "key": "page",
-                  "value": "1"
+                  "value": "1",
+                  "description": "Page number"
                 },
                 {
                   "key": "limit",
-                  "value": "10"
+                  "value": "20",
+                  "description": "Items per page"
                 }
               ]
-            }
+            },
+            "description": "Get users list with pagination"
           },
           "response": []
         },
         {
-          "name": "2. Rechercher utilisateurs",
+          "name": "Get User by ID",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users?search=john&page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users"
-              ],
-              "query": [
-                {
-                  "key": "search",
-                  "value": "john"
-                },
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                }
-              ]
-            }
+              "raw": "{{baseUrl}}/api/users/{{personId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{personId}}"]
+            },
+            "description": "Get user details by ID"
           },
           "response": []
         },
         {
-          "name": "3. Obtenir utilisateur par ID",
+          "name": "Update User",
           "request": {
-            "method": "GET",
-            "header": [],
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John Updated\",\n  \"lastName\": \"Doe Updated\",\n  \"phone\": \"+33698765432\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/users/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "1"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/users/{{personId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{personId}}"]
+            },
+            "description": "Update user details"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "👥 Gestion People",
+      "name": "🔑 Role Management",
       "item": [
         {
-          "name": "1. Lister toutes les personnes",
+          "name": "Get Roles",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/people?page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "people"
-              ],
+              "raw": "{{baseUrl}}/api/roles?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles"],
               "query": [
                 {
                   "key": "page",
-                  "value": "1"
+                  "value": "1",
+                  "description": "Page number"
                 },
                 {
                   "key": "limit",
-                  "value": "10"
+                  "value": "20",
+                  "description": "Items per page"
                 }
               ]
-            }
+            },
+            "description": "Get roles list with pagination"
           },
           "response": []
         },
         {
-          "name": "2. Rechercher personnes",
+          "name": "Create Role",
           "request": {
-            "method": "GET",
-            "header": [],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Event Manager\",\n  \"description\": \"Can manage events and tickets\",\n  \"permissions\": [\"events.create\", \"events.update\", \"tickets.read\"]\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/people?search=doe&page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "people"
-              ],
-              "query": [
-                {
-                  "key": "search",
-                  "value": "doe"
-                },
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "3. Obtenir personne par ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/people/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "people",
-                "1"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles"]
+            },
+            "description": "Create a new role"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "📚 Documentation",
+      "name": "🛡️ Permission Management",
       "item": [
         {
-          "name": "1. Swagger UI",
+          "name": "Get Permissions",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/docs",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "docs"
+              "raw": "{{baseUrl}}/api/permissions?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                }
               ]
-            }
+            },
+            "description": "Get permissions list with pagination"
           },
           "response": []
         },
         {
-          "name": "2. OpenAPI JSON",
+          "name": "Check User Permission",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/docs/json",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "docs",
-                "json"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "3. OpenAPI YAML",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/docs/yaml",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "docs",
-                "yaml"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "4. Developer Docs",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/docs/developer",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "docs",
-                "developer"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "5. API Examples",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/docs/examples",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "docs",
-                "examples"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/permissions/user/{{personId}}/check/events.create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "user", "{{personId}}", "check", "events.create"]
+            },
+            "description": "Check if user has specific permission"
           },
           "response": []
         }
@@ -1526,956 +669,48 @@
       "name": "📊 Dashboard & Metrics",
       "item": [
         {
-          "name": "1. Dashboard Principal",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/dashboard",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "dashboard"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "2. Dashboard API Data",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/dashboard/api/data?timeframe=1h",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "dashboard",
-                "api",
-                "data"
-              ],
-              "query": [
-                {
-                  "key": "timeframe",
-                  "value": "1h"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "3. Dashboard Security Alerts",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/dashboard/api/security-alerts",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "dashboard",
-                "api",
-                "security-alerts"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "4. Dashboard Realtime",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/dashboard/api/realtime",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "dashboard",
-                "api",
-                "realtime"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "5. Metrics",
+          "name": "Dashboard Data",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/metrics",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "metrics"
-              ]
-            }
+              "raw": "{{baseUrl}}/api/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard"]
+            },
+            "description": "Get dashboard data (requires admin.dashboard.read permission)"
           },
           "response": []
         },
         {
-          "name": "6. Metrics Info",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/metrics/info",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "metrics",
-                "info"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "7. Reset Metrics",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/metrics/reset",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "metrics",
-                "reset"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "🔧 Administration OTP",
-      "item": [
-        {
-          "name": "1. Lister les OTP d'une personne",
+          "name": "Metrics",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/otp/person/{{personId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "person",
-                "{{personId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "2. Vérifier si une personne a des OTP actifs",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/otp/person/{{personId}}/active",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "person",
-                "{{personId}}",
-                "active"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "3. Invalider les OTP d'une personne",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"type\": \"email\"\n}"
+              "raw": "{{baseUrl}}/api/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics"]
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/otp/person/{{personId}}/invalidate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "person",
-                "{{personId}}",
-                "invalidate"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "4. Nettoyer les OTP expirés",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/otp/cleanup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "cleanup"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "5. Statistiques OTP",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/otp/stats",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "otp",
-                "stats"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "🔐 Gestion Accesses (User-Role)",
-      "item": [
-        {
-          "name": "1. Lister tous les accès",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses?page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "2. Créer un accès",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": 1,\n  \"roleId\": 2,\n  \"status\": \"active\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "3. Voir un accès par ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "1"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "4. Mettre à jour le statut d'un accès",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"inactive\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/1/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "1",
-                "status"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "5. Supprimer un accès (soft delete)",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "1"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "6. Supprimer définitivement un accès",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/1/hard",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "1",
-                "hard"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "7. Lister les rôles d'un utilisateur",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/user/1/roles?onlyActive=true",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "user",
-                "1",
-                "roles"
-              ],
-              "query": [
-                {
-                  "key": "onlyActive",
-                  "value": "true"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "8. Lister les utilisateurs d'un rôle",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/role/2/users?onlyActive=true",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "role",
-                "2",
-                "users"
-              ],
-              "query": [
-                {
-                  "key": "onlyActive",
-                  "value": "true"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "9. Vérifier si un utilisateur a un rôle",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/user/1/role/2?onlyActive=true",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "user",
-                "1",
-                "role",
-                "2"
-              ],
-              "query": [
-                {
-                  "key": "onlyActive",
-                  "value": "true"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "10. Assigner plusieurs rôles à un utilisateur",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"roleIds\": [1, 2, 3]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/user/1/roles/assign",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "user",
-                "1",
-                "roles",
-                "assign"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11. Retirer plusieurs rôles d'un utilisateur",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"roleIds\": [1, 2]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/user/1/roles/remove",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "user",
-                "1",
-                "roles",
-                "remove"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "12. Statistiques des accès",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/accesses/stats",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "accesses",
-                "stats"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "🔑 Gestion Authorizations CRUD",
-      "item": [
-        {
-          "name": "1. Lister toutes les autorisations",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/authorizations?page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "authorizations"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "2. Créer une autorisation",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"roleId\": 1,\n  \"permissionId\": 1,\n  \"menuId\": 1\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/authorizations",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "authorizations"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "3. Voir une autorisation par ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/authorizations/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "authorizations",
-                "1"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "4. Mettre à jour une autorisation",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"roleId\": 2,\n  \"permissionId\": 2,\n  \"menuId\": 2\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/authorizations/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "authorizations",
-                "1"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "5. Supprimer une autorisation (soft delete)",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/authorizations/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "authorizations",
-                "1"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "6. Supprimer définitivement une autorisation",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/authorizations/1/hard",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "authorizations",
-                "1",
-                "hard"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "7. Lister les autorisations d'un rôle",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/authorizations/role/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "authorizations",
-                "role",
-                "1"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "8. Lister les autorisations d'une permission",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/authorizations/permission/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "authorizations",
-                "permission",
-                "1"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "9. Lister les autorisations d'un menu",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/authorizations/menu/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "authorizations",
-                "menu",
-                "1"
-              ]
-            }
+            "description": "Get service metrics (public for monitoring)"
           },
           "response": []
         }
       ]
     }
   ],
-  "description": "Collection complète pour l'API d'authentification Event Planner avec inscription, connexion, OTP, gestion des comptes, rôles, permissions, accès, autorisations et hardening de validation (Rule 3) - PRODUCTION READY v1.1"
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Auto-refresh token if expired",
+          "if (pm.collectionVariables.get('authToken') === '') {",
+          "    pm.collectionVariables.set('authToken', 'your_real_jwt_token');",
+          "}"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ]
 }
