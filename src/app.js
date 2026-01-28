@@ -209,6 +209,10 @@ app.use('/api/accesses', accessesRoutes);
 // Routes internes pour inter-services (en dehors du scope auth)
 app.use('/api/internal/auth', require('./modules/auth/internal.routes')); // Routes internes pour inter-services
 
+// Middleware d'authentification robuste pour les routes protégées
+const RobustAuthMiddleware = require('../../shared/middlewares/robust-auth-middleware');
+app.use('/api', RobustAuthMiddleware.authenticate());
+
 app.use('/api/authorizations', authorizationRoutes);
 app.use('/api/menus', menuRoutes);
 app.use('/api/permissions', permissionRoutes);

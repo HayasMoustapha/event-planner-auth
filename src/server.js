@@ -1,10 +1,15 @@
 require('dotenv').config();
+const express = require('express');
 const app = require('./app');
 const env = require('./config/env');
 const { connection } = require('./config/database');
 const bootstrap = require('./bootstrap');
 const { validateConfig } = require('../../shared/utils/config-validator');
 const realtimePermissionsService = require('./services/realtime-permissions.service');
+const UnifiedJWTSecret = require('../../shared/config/unified-jwt-secret');
+
+// CONFIGURATION JWT UNIFIÉ - ÉTAPE CRUCIALE
+UnifiedJWTSecret.configureService('event-planner-auth');
 
 // Valider la configuration au démarrage
 validateConfig('Auth Service', [
