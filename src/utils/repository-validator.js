@@ -12,7 +12,9 @@ const paginationSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
   search: Joi.string().max(255).optional(),
-  status: Joi.string().valid('active', 'inactive').optional(),
+  status: Joi.string().valid('active', 'inactive', 'lock').optional(), // CORRECTION: Ajout du statut 'lock' manquant
+  userCode: Joi.string().optional(), // CORRECTION: Ajout du userCode manquant
+  role: Joi.string().optional(), // CORRECTION: Ajout du role manquant
   userAccess: Joi.string().optional(),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc')

@@ -199,23 +199,8 @@ app.get('/live', (req, res) => {
 });
 
 // Routes API
-app.use('/api/auth',
-  (req, res, next) => {
-    if (process.env.NODE_ENV === 'test') {
-      return next();
-    }
-    return securityMiddleware.bruteForceProtection({
-      identifier: 'email',
-      maxAttempts: 5,
-      windowMs: 900000, // 15 minutes
-      lockoutMs: 1800000  // 30 minutes
-    })(req, res, next);
-  },
-  authLimiter,
-  authRoutes
-);
-
-app.use('/api/auth/registration', registrationRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/auth', registrationRoutes); // Ajouter les routes d'inscription directement sous /api/auth
 app.use('/api/password', passwordRoutes);
 app.use('/api/people', peopleRoutes);
 app.use('/api/users', usersRoutes);
