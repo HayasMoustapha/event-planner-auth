@@ -30,6 +30,36 @@ class PermissionsService {
     }
 
     try {
+      // Vérifier d'abord si l'utilisateur est super admin
+      const userQuery = `
+        SELECT u.email, r.code as role_code
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        WHERE u.id = $1 AND u.deleted_at IS NULL
+      `;
+      
+      const userResult = await connection.query(userQuery, [userId]);
+      
+      if (userResult.rows.length > 0) {
+        const user = userResult.rows[0];
+        
+        // SUPER ADMIN : TOUS LES DROITS
+        if (user.email === 'admin@eventplanner.com' || user.role_code === 'super_admin') {
+          console.log('👑 Super Admin detected - granting all permissions');
+          const allPermissions = ['*']; // Wildcard pour toutes les permissions
+          
+          // Mettre en cache
+          this.cache.set(cacheKey, {
+            permissions: allPermissions,
+            timestamp: Date.now()
+          });
+          
+          return allPermissions;
+        }
+      }
+      
+      // Requête normale pour les autres utilisateurs
       const query = `
         SELECT DISTINCT p.code, p.label, p."group", p.description
         FROM permissions p
@@ -163,6 +193,28 @@ class PermissionsService {
    */
   async hasPermission(userId, permission) {
     try {
+      // Vérifier d'abord si l'utilisateur est super admin
+      const userQuery = `
+        SELECT u.email, r.code as role_code
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        WHERE u.id = $1 AND u.deleted_at IS NULL
+      `;
+      
+      const userResult = await connection.query(userQuery, [userId]);
+      
+      if (userResult.rows.length > 0) {
+        const user = userResult.rows[0];
+        
+        // SUPER ADMIN : TOUS LES DROITS
+        if (user.email === 'admin@eventplanner.com' || user.role_code === 'super_admin') {
+          console.log('👑 Super Admin permission check - always true');
+          return true;
+        }
+      }
+      
+      // Vérification normale pour les autres utilisateurs
       const permissions = await this.getUserPermissions(userId);
       return permissions.includes(permission);
     } catch (error) {

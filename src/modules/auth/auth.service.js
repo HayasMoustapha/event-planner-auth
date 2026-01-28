@@ -177,11 +177,17 @@ class AuthService {
     const roles = this.getUserRolesSync(user);
     const permissions = new Set();
     
+    // SUPER ADMIN : TOUS LES DROITS SANS RESTRICTION
+    if (user.email === 'admin@eventplanner.com' || roles.includes('super_admin')) {
+      // Le super admin a TOUTES les permissions possibles
+      // On retourne un wildcard ou une permission spéciale qui sera gérée dans le middleware
+      return ['*']; // Wildcard pour toutes les permissions
+    }
+    
     // Permissions basées sur les rôles (fallback)
     roles.forEach(role => {
       switch (role) {
         case 'admin':
-        case 'super_admin':
           permissions.add('admin.access');
           permissions.add('users.create');
           permissions.add('users.read');
