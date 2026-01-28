@@ -1,5 +1,5 @@
 const express = require('express');
-const authController = require('./auth.controller');
+const usersController = require('../users/users.controller'); // CORRECTION: Utiliser usersController
 const { createResponse } = require('../../utils/response');
 
 const router = express.Router();
@@ -43,24 +43,24 @@ router.use(validateServiceToken);
  */
 
 // Route pour récupérer les utilisateurs (utilisé par event-planner-core)
-router.get('/users', authController.getAll);
+router.get('/users', usersController.getAll);
 
 // Route pour récupérer un utilisateur par ID (utilisé par event-planner-core)
-router.get('/users/:id', authController.getById);
+router.get('/users/:id', usersController.getById);
 
 // Route pour récupérer un utilisateur par email (utilisé par event-planner-core)
-router.get('/users/email/:email', authController.getByEmail);
+router.get('/users/email/:email', usersController.getByEmail);
 
 // Route pour récupérer un utilisateur par username (utilisé par event-planner-core)
-router.get('/users/username/:username', authController.getByUsername);
+router.get('/users/username/:username', usersController.getByUsername);
 
 // Route pour rechercher des utilisateurs (utilisé par event-planner-core)
-router.get('/users/search', authController.search);
+router.get('/users/search', usersController.search);
 
 // Route pour récupérer les statistiques des utilisateurs (utilisé par event-planner-core)
-router.get('/users/stats', authController.getStats);
+router.get('/users/stats', usersController.getStats);
 
 // Route pour vérifier l'existence d'un utilisateur (utilisé par event-planner-core)
-router.get('/users/:id/exists', authController.exists);
+router.get('/users/:id/exists', usersController.exists);
 
 module.exports = router;

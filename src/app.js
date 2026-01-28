@@ -201,11 +201,13 @@ app.get('/live', (req, res) => {
 // Routes API
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', registrationRoutes); // Ajouter les routes d'inscription directement sous /api/auth
-app.use('/api/auth/internal', require('./modules/auth/internal.routes')); // Routes internes pour inter-services
 app.use('/api/password', passwordRoutes);
 app.use('/api/people', peopleRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/accesses', accessesRoutes);
+
+// Routes internes pour inter-services (en dehors du scope auth)
+app.use('/api/internal/auth', require('./modules/auth/internal.routes')); // Routes internes pour inter-services
 
 app.use('/api/authorizations', authorizationRoutes);
 app.use('/api/menus', menuRoutes);
