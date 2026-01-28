@@ -1,183 +1,42 @@
-# Backend Express - Event Planner Auth API
+# 🔐 Event Planner - Service d'Authentification
 
-Service d'authentification et d'autorisation enterprise-ready pour Event Planner avec sécurité avancée, monitoring complet et documentation interactive.
+## 📋 Description
 
-## 🐳 Docker - Déploiement Production Ready
+Le service d'authentification est le cœur de sécurité de notre plateforme Event Planner. Il gère toutes les opérations d'authentification, d'autorisation et de gestion des utilisateurs.
 
-Le projet est entièrement dockerisé pour un déploiement simple et reproductible.
+## 🏗️ Architecture Technique
 
-### Démarrage Rapide
-
-```bash
-# 1. Cloner le projet
-git clone https://github.com/HayasMoustapha/event-planner-auth.git
-cd event-planner-auth
-
-# 2. Configurer l'environnement
-cp .env.docker.example .env
-# Éditer .env avec vos secrets (voir instructions dans le fichier)
-
-# 3. Démarrer le stack
-docker-compose up -d
-
-# 4. Vérifier le statut
-docker-compose ps
-
-# 5. Tester l'API
-curl http://localhost:3000/api/health
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AUTH SERVICE (Port 3000)                 │
+├─────────────────────────────────────────────────────────────┤
+│  📦 Modules Principaux:                                      │
+│  ├── auth/           (Login, Register, JWT)                  │
+│  ├── users/          (Gestion utilisateurs)                  │
+│  ├── roles/          (Rôles et permissions)                 │
+│  └── permissions/    (RBAC - Contrôle d'accès)               │
+│                                                             │
+│  🔧 Technologies:                                            │
+│  ├── Node.js + Express                                      │
+│  ├── PostgreSQL (Base de données)                           │
+│  ├── JWT (Tokens d'authentification)                        │
+│  ├── bcrypt (Hashage mots de passe)                         │
+│  └── Rate Limiting (Protection contre attaques)             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Services Inclus
-
-- **auth-service** : API Node.js (port 3000)
-- **postgres** : Base de données PostgreSQL (port 5432)
-- **redis** : Cache Redis (port 6379)
-
-### Volumes Persistants
-
-- `postgres_data` : Données PostgreSQL
-- `redis_data` : Données Redis
-- `app_logs` : Logs de l'application
-
-### Configuration Docker
-
-| Fichier | Description |
-|---------|-------------|
-| `Dockerfile` | Image multi-stage optimisée |
-| `docker-compose.yml` | Stack complet avec dépendances |
-| `docker-entrypoint.sh` | Bootstrap intelligent |
-| `.env.docker.example` | Configuration template |
-| `.dockerignore` | Optimisation build |
-
-### Commandes Utiles
-
-```bash
-# Voir les logs
-docker-compose logs -f auth-service
-
-# Redémarrer un service
-docker-compose restart auth-service
-
-# Arrêter tout
-docker-compose down
-
-# Nettoyer tout (y compris volumes)
-docker-compose down -v
-
-# Reconstruire l'image
-docker-compose build --no-cache
-
-# Validation de la configuration
-node test-docker-config.js
-```
-
-### Bootstrap Automatique
-
-Le système initialise automatiquement :
-1. **Attente PostgreSQL** et Redis (retry avec timeout)
-2. **Application du schéma** SQL si base vide
-3. **Exécution des migrations** dans l'ordre
-4. **Insertion des seeds** une seule fois
-5. **Démarrage de l'application**
-
-Aucune action manuelle n'est requise après `docker-compose up`.
-
----
-
-## Fonctionnalités
-
-### Authentification & Sécurité
-- **Multi-méthodes** : Email/password, OTP, tokens JWT, **Google Sign-In**, **Apple Sign-In**
-- **Inscription complète** : Création compte people + users avec validation OTP
-- **OAuth Integration** : Google Sign-In et Apple Sign-In avec mapping persistant
-- **Sécurité avancée** : Détection automatique d'attaques (SQL injection, XSS, path traversal, command injection)
-- **Hardening de validation** : Protection contre les champs non autorisés (Rule 3)
-- **Protection brute force** : Rate limiting et blocage automatique
-- **Sanitisation** : Nettoyage automatique des entrées utilisateur
-- **IP blacklist** : Protection contre les IPs malveillantes
-- **OTP Management** : Génération et validation OTP par email/téléphone
-
-### Monitoring & Observabilité
-- **Health checks** : Monitoring détaillé de tous les composants
-- **Métriques Prometheus** : 10+ métriques temps réel
-- **Dashboard web** : Interface Grafana-like pour monitoring
-- **Logs structurés** : Winston avec rotation automatique
-- **Alerting** : Détection proactive des problèmes
-
-### Documentation & Développement
-- **Swagger/OpenAPI 3.0** : Documentation interactive complète
-- **Collection Postman** : Tests API complets avec environnement (145 endpoints)
-- **Exemples d'utilisation** : Code samples et best practices
-- **Dashboard développeur** : Outils de debugging et monitoring
-- **📚 Documentation**
-  - [🚀 Guide du Bootstrap Automatique](./BOOTSTRAP_GUIDE.md) - Initialisation de la base de données
-  - [🔐 OAuth Implementation Guide](./documentation/oauth/OAUTH_IMPLEMENTATION_GUIDE.md) - Google Sign-In & Apple Sign-In
-  - [📖 OAuth API Reference](./documentation/oauth/OAUTH_API_REFERENCE.md) - Référence complète des endpoints OAuth
-  - [📮 Collection Postman](./postman/README.md) - Tests API complets
-  - [📖 Documentation API](./docs/) - Documentation complète de l'API
-  - [📋 API Routes Inventory](./documentation/api/API_ROUTES_INVENTORY.md) - Liste complète des 145 endpoints
-  - [🔐 Flux d'Authentification](./docs/AUTH_FLOWS.md) - Processus d'authentification
-  - [🛡️ RBAC](./docs/RBAC.md) - Système de contrôle d'accès
-
-## 🚀 API Endpoints (145 Routes)
-
-### Modules Principaux
-- **🔐 Auth** (30 routes) : Login, register, OTP, reset password, profile
-- **👥 Users** (12 routes) : CRUD, search, stats, authentication
-- **👤 People** (8 routes) : Person management, search, status updates
-- **🔑 Sessions** (15+ routes) : Session management, monitoring, logout
-- **🔐 Password** (4 routes) : Reset, history, strength testing
-
-### Modules de Sécurité & Autorisations
-- **🛡️ Authorizations** (17 routes) : Cache, policy, hierarchy, verification
-- **🔑 Permissions** (13 routes) : Groups, resources, verification, custom
-- **👑 Roles** (12 routes) : Levels, system, user-specific, duplication
-- **📋 Menus** (15 routes) : Navigation, access control, tree structure
-
-### Modules de Monitoring & Système
-- **📊 Session Monitoring** (12 routes) : Active sessions, anomalies, geolocation
-- **🖥️ System** (5 routes) : Health, config, database, cache, info
-- **🧪 Test** (1 route) : Password strength testing
-
-### 📈 Statistiques
-- **Total endpoints** : 145 routes
-- **Routes publiques** : 25 (authentification, inscription)
-- **Routes protégées** : 120 (RBAC requis)
-- **Modules** : 9 modules fonctionnels
-- **Couverture Postman** : 100% ✅
-
-### Performance & Scalabilité
-- **Cache Redis** : Authorizations et sessions en cache
-- **Connection pooling** : Gestion optimisée des connexions DB
-- **Async processing** : Non-blocage des requêtes
-- **Load testing** : Tests de charge intégrés
-- **Graceful degradation** : Fonctionnement mode dégradé
-
-## Stack Technique
-
-- **Backend** : Node.js + Express
-- **Base de données** : PostgreSQL avec SQL natif
-- **Cache** : Redis
-- **Authentification** : JWT (access + refresh tokens)
-- **Sécurité** : Helmet, rate limiting, détection d'attaques
-- **Logging** : Winston + rotation quotidienne
-- **Monitoring** : Prometheus + dashboard custom
-- **Documentation** : Swagger/OpenAPI 3.0
-- **Tests** : Jest (unitaires + intégration + performance)
-
-## Installation
+## 🚀 Démarrage Rapide
 
 ### Prérequis
-- Node.js 16+
-- PostgreSQL 12+
-- Redis 6+
-- npm ou yarn
+- Node.js 18+
+- PostgreSQL 14+
+- Docker (optionnel)
 
-### Installation rapide
+### Installation
 ```bash
-# Cloner le repository
+# Cloner le projet
 git clone <repository-url>
-cd event-planner-auth
+cd event-planner-backend/event-planner-auth
 
 # Installer les dépendances
 npm install
@@ -185,414 +44,257 @@ npm install
 # Configurer l'environnement
 cp .env.example .env
 # Éditer .env avec vos configurations
-# Pour le développement, activer: DB_AUTO_BOOTSTRAP=true
 
 # Démarrer la base de données
-docker-compose up -d postgres redis
+npm run db:up
 
-# Démarrer l'application (le bootstrap s'exécutera automatiquement si DB_AUTO_BOOTSTRAP=true)
-npm start
+# Lancer les migrations
+npm run db:migrate
+
+# Démarrer le service
+npm run dev
 ```
 
-> 📖 **Pour plus de détails sur le bootstrap automatique**, voir [Guide du Bootstrap](./BOOTSTRAP_GUIDE.md)
-
-### Test rapide avec Postman
-
-1. **Importer la collection Postman** :
-   ```bash
-   # Importer les fichiers dans Postman
-   postman/Event-Planner-Auth-API.postman_collection.json
-   postman/Event-Planner-Auth-Environment.postman_environment.json
-   ```
-
-2. **Tester l'inscription** :
-   - Exécuter la requête "3. Inscription (Register)"
-   - Récupérer le code OTP dans les logs du serveur
-   - Exécuter "5. Vérifier Email avec OTP"
-   - Se connecter avec "1. Login (après vérification)"
-
-> 📮 **Guide complet Postman** : [Documentation Postman](./postman/README.md)
-
-### Configuration Docker
+### Vérification
 ```bash
-# Build et démarrage complet
-docker-compose up -d
+# Health check
+curl http://localhost:3000/health
 
-# Voir les logs
-docker-compose logs -f
-
-# Arrêter
-docker-compose down
+# Doit retourner:
+{
+  "status": "healthy",
+  "service": "auth-service",
+  "version": "1.0.0"
+}
 ```
 
-## Configuration
+## 📡 API Endpoints
 
-### Variables d'environnement principales
-```bash
-# Serveur
-PORT=3000
-NODE_ENV=production
-
-# Base de données
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=event_planner_auth
-DB_USER=postgres
-DB_PASSWORD=your_secure_password
-
-# Bootstrap automatique (désactivé par défaut en production)
-DB_AUTO_BOOTSTRAP=false
-
-# JWT
-JWT_SECRET=your_super_secure_256_bit_secret_key
-JWT_EXPIRES_IN=24h
-JWT_REFRESH_EXPIRES_IN=7d
-
-# OAuth - Google Sign-In
-GOOGLE_CLIENT_ID=votre_google_client_id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=votre_google_client_secret
-
-# OAuth - Apple Sign-In
-APPLE_CLIENT_ID=com.votreapp.service
-APPLE_TEAM_ID=votre_apple_team_id
-APPLE_KEY_ID=votre_apple_key_id
-APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
-votre_clé_privée_apple
------END PRIVATE KEY-----"
-
-# Email (SMTP)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=your_redis_password
-
-# Sécurité
-BCRYPT_ROUNDS=12
-CORS_ORIGIN=http://localhost:3000
-```
-
-### Configuration complète
-Voir [`.env.example`](./.env.example) pour toutes les options disponibles.
-
-## Documentation
-
-### Documentation Interactive
-- **Swagger UI** : http://localhost:3000/docs
-- **OpenAPI JSON** : http://localhost:3000/docs/json
-- **OpenAPI YAML** : http://localhost:3000/docs/yaml
-
-### Dashboard Monitoring
-- **Dashboard** : http://localhost:3000/dashboard (requiert authentification admin)
-- **Métriques temps réel** : http://localhost:3000/dashboard/api/realtime
-
-## Endpoints Principaux
-
-### Authentification
+### 🔓 Authentification
 ```http
-POST /api/auth/login
 POST /api/auth/register
-POST /api/auth/login-after-verification
-POST /api/auth/verify-email
-POST /api/auth/resend-otp
-POST /api/auth/refresh
+POST /api/auth/login
 POST /api/auth/logout
+POST /api/auth/refresh
+POST /api/auth/verify-email
 POST /api/auth/forgot-password
 POST /api/auth/reset-password
-POST /api/auth/change-password
-GET /api/auth/check-email/:email
-GET /api/auth/check-username/:username
-GET /api/auth/profile
 ```
 
-### OTP Management
+### 👥 Utilisateurs
 ```http
-POST /api/auth/otp/email/generate
-POST /api/auth/otp/phone/generate
-POST /api/auth/otp/email/verify
-POST /api/auth/otp/phone/verify
-POST /api/auth/otp/password-reset/generate
-POST /api/auth/otp/password-reset/verify
-```
-
-### Utilisateurs
-```http
-GET /api/users/me
-PUT /api/users/me
-GET /api/users
-POST /api/users
-PUT /api/users/:id
+GET    /api/users
+GET    /api/users/:id
+PUT    /api/users/:id
 DELETE /api/users/:id
 ```
 
-### Rôles & Permissions
+### 🎭 Rôles & Permissions
 ```http
-GET /api/roles
-POST /api/roles
-GET /api/permissions
-POST /api/authorizations
+GET    /api/roles
+POST   /api/roles
+PUT    /api/roles/:id
+DELETE /api/roles/:id
+
+GET    /api/permissions
+POST   /api/permissions
 ```
 
-### Monitoring
-```http
-GET /health
-GET /health/detailed
-GET /ready
-GET /live
-GET /metrics
+## 🔐 Flux d'Authentification
+
+### 1. Inscription
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthAPI
+    participant Database
+    participant EmailService
+
+    Client->>AuthAPI: POST /api/auth/register
+    AuthAPI->>Database: Vérifier email existe
+    Database-->>AuthAPI: Email non trouvé
+    AuthAPI->>Database: Créer utilisateur
+    Database-->>AuthAPI: Utilisateur créé
+    AuthAPI->>EmailService: Envoyer email vérification
+    AuthAPI-->>Client: 201 - Utilisateur créé
 ```
 
-## Tests
+### 2. Connexion
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthAPI
+    participant Database
+    participant JWT
 
-### Exécuter tous les tests
+    Client->>AuthAPI: POST /api/auth/login
+    AuthAPI->>Database: Vérifier identifiants
+    Database-->>AuthAPI: Utilisateur validé
+    AuthAPI->>JWT: Générer tokens
+    JWT-->>AuthAPI: Access + Refresh tokens
+    AuthAPI-->>Client: 200 - Tokens + infos utilisateur
+```
+
+## 🛡️ Sécurité
+
+### 🔑 JWT Tokens
+- **Access Token** : 15 minutes (accès aux ressources)
+- **Refresh Token** : 7 jours (renouvellement session)
+- **Algorithm** : HS256 avec secret partagé
+
+### 🔒 Protection des Routes
+Toutes les routes protégées utilisent le middleware `RobustAuthMiddleware.authenticate()` qui vérifie:
+- Validité du JWT token
+- Permissions requises (RBAC)
+- Rate limiting par IP
+- Headers de sécurité
+
+### 🚨 Rate Limiting
+- **Login** : 5 tentatives par 15 minutes
+- **Register** : 3 tentatives par heure
+- **API générales** : 100 requêtes par minute
+
+## 📊 Base de Données
+
+### Tables Principales
+```sql
+users          -- Informations utilisateurs
+roles          -- Rôles système
+permissions    -- Permissions granulaires
+user_roles     -- Association utilisateurs/rôles
+role_permissions -- Association rôles/permissions
+refresh_tokens -- Tokens de rafraîchissement
+```
+
+### Schéma Simplifié
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## 🔧 Configuration
+
+### Variables d'Environnement Essentielles
 ```bash
-npm test
+# Base de données
+DATABASE_URL=postgresql://user:password@localhost:5432/event_planner_auth
+
+# JWT
+JWT_SECRET=votre-secret-super-securise
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Serveur
+PORT=3000
+NODE_ENV=development
+
+# Email (vérification)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=votre-email@gmail.com
+SMTP_PASS=votre-mot-de-passe
 ```
 
-### Tests par catégorie
+## 🧪 Tests
+
+### Lancer les tests
 ```bash
 # Tests unitaires
-npm run test:unit
+npm run test
 
 # Tests d'intégration
 npm run test:integration
 
-# Tests de performance
-npm run test:performance
-
-# Tests de sécurité
-npm run test:security
-
-# Tests avec coverage
+# Tests avec couverture
 npm run test:coverage
 ```
 
-### Configuration de test avancée
-- **Jest setup** : Configuration optimisée avec variables d'environnement test
-- **Timeout global** : 30 secondes pour les tests asynchrones
-- **Nettoyage automatique** : Fermeture des connexions DB après les tests
-- **Services externes mockés** : Configuration SMTP et services optionnels
-
-### Tests de charge
+### Tests API Importants
 ```bash
-# Test de charge basique (100 requêtes concurrentes)
-npm run test:load
+# Inscription
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "Password123!", "username": "testuser"}'
 
-# Test de stress (1000 requêtes concurrentes)
-npm run test:stress
-
-# Test de performance avancé
-npm run test:performance:advanced
+# Connexion
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "Password123!"}'
 ```
 
-## Monitoring
+## 🚨 Erreurs Communes
 
-### Health Checks
+### 1. "Invalid credentials"
+- Vérifier email/mot de passe
+- Confirmer que l'utilisateur est `active`
+
+### 2. "Token expired"
+- Utiliser le refresh token
+- Ou se reconnecter
+
+### 3. "Email already exists"
+- Utiliser la récupération de mot de passe
+- Ou choisir un autre email
+
+## 📈 Monitoring
+
+### Logs Importants
 ```bash
-# Health check basique
-curl http://localhost:3000/health
+# Tentatives de connexion échouées
+grep "login.*failed" logs/auth.log
 
-# Health check détaillé
-curl http://localhost:3000/health/detailed
+# Nouvelles inscriptions
+grep "register.*success" logs/auth.log
 
-# Readiness probe (Kubernetes)
-curl http://localhost:3000/ready
-
-# Liveness probe (Kubernetes)
-curl http://localhost:3000/live
+# Erreurs de validation JWT
+grep "jwt.*error" logs/auth.log
 ```
 
-### Métriques Prometheus
-```bash
-# Exporter les métriques
-curl http://localhost:3000/metrics
+### Métriques à Surveiller
+- Taux de succès/échec des connexions
+- Temps de réponse des endpoints critiques
+- Nombre de tokens actifs
+- Rate limiting triggers
 
-# Métriques avec authentification
-curl -H "Authorization: Bearer <token>" \
-     http://localhost:3000/metrics/info
+## 🤝 Intégration avec Autres Services
+
+### Communication Inter-Services
+Les autres services communiquent avec l'auth service via:
+- **JWT Tokens** : Pour authentifier les utilisateurs
+- **Service Token** : Pour les communications inter-services
+- **API REST** : Pour vérifier les permissions
+
+### Exemple: Vérification Permission
+```javascript
+// Dans un autre service
+const authResponse = await fetch('http://localhost:3000/api/auth/verify', {
+  headers: {
+    'Authorization': 'Bearer ' + userToken,
+    'X-Service-Token': serviceToken
+  }
+});
 ```
 
-### Dashboard Web
-Accédez au dashboard : http://localhost:3000/dashboard
+## 📚 Documentation Complémentaire
 
-Features incluses :
-- Métriques temps réel
-- Graphiques de performance
-- Alertes de sécurité
-- Statistiques système
-- Utilisation mémoire/CPU
+- [Guide de Déploiement](./docs/DEPLOYMENT.md)
+- [Référence API Complète](./docs/API_ROUTES.md)
+- [Sécurité Avancée](./docs/SECURITY.md)
+- [Dépannage](./docs/TROUBLESHOOTING.md)
 
-## Sécurité
+## 🆘 Support
 
-### Protection intégrée
-- **SQL Injection** : Détection et blocage automatiques
-- **XSS** : Sanitisation et échappement HTML
-- **Path Traversal** : Validation des chemins de fichiers
-- **Command Injection** : Filtrage des commandes système
-- **Hardening validation** : Protection contre les champs non autorisés (Rule 3)
-- **Brute Force** : Rate limiting et blocage IP
-- **CSRF** : Tokens CSRF et validation d'origine
-
-### Headers de sécurité
-```http
-Content-Security-Policy: default-src 'self'
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-X-XSS-Protection: 1; mode=block
-Strict-Transport-Security: max-age=31536000
-```
-
-### Rate Limiting
-```bash
-# Global : 100 requêtes / 15 minutes
-# Auth : 5 requêtes / minute / IP
-# Brute force : 5 tentatives / 15 minutes
-```
-
-## Déploiement
-
-### Docker
-```bash
-# Build image
-docker build -t event-planner-auth .
-
-# Run container
-docker run -p 3000:3000 \
-  -e NODE_ENV=production \
-  -e DB_HOST=postgres \
-  event-planner-auth
-```
-
-### Kubernetes
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: event-planner-auth
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: event-planner-auth
-  template:
-    metadata:
-      labels:
-        app: event-planner-auth
-    spec:
-      containers:
-      - name: auth
-        image: event-planner-auth:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: NODE_ENV
-          value: "production"
-        livenessProbe:
-          httpGet:
-            path: /live
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-```
-
-## Performance
-
-### Benchmarks
-- **Requêtes/seconde** : 1000+ (health checks)
-- **Response time** : < 50ms (95th percentile)
-- **Memory usage** : < 100MB (charge normale)
-- **CPU usage** : < 30% (charge normale)
-- **Uptime** : 99.9%+
-
-### Scaling
-- **Horizontal** : Support load balancing
-- **Vertical** : Scaling CPU/memory
-- **Cache** : Redis cluster support
-- **Database** : Connection pooling + read replicas
-
-## Debugging
-
-### Logs
-```bash
-# Voir les logs en temps réel
-npm run logs
-
-# Logs par niveau
-npm run logs:info
-npm run logs:error
-npm run logs:security
-
-# Logs avec filtre
-npm run logs -- --filter=auth
-```
-
-### Mode développement
-```bash
-# Démarrer avec debug
-DEBUG=auth:* npm start
-
-# Mode watch
-npm run dev
-
-# Hot reload
-npm run dev:hot
-```
-
-## Contributing
-
-1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/amazing-feature`)
-3. Commit les changements (`git commit -m 'Add amazing feature'`)
-4. Push vers la branche (`git push origin feature/amazing-feature`)
-5. Ouvrir une Pull Request
-
-### Standards de code
-- ESLint + Prettier configurés
-- Tests requis pour nouvelles fonctionnalités
-- Comments JSDoc pour les fonctions publiques
-- Conventional commits pour les messages
-
-## Licence
-
-MIT License - voir [LICENSE](LICENSE) pour les détails.
-
-## Support
-
-- **Documentation** : http://localhost:3000/docs
-- **Issues** : [GitHub Issues](https://github.com/your-org/event-planner-auth/issues)
-- **Email** : support@eventplanner.com
-- **Discord** : [Serveur Discord](https://discord.gg/eventplanner)
-
-## Roadmap
-
-### ✅ Version Actuelle (v1.0) - PRODUCTION READY
-- [x] **Score 100/100** : Validation production complète
-- [x] **Hardening validation** : Protection Rule 3 implémentée
-- [x] **Tests avancés** : Configuration Jest optimisée
-- [x] **Postman synchronisé** : 28/28 routes validées
-
-### v1.1 (Prochain)
-- [ ] OAuth2 (Google, GitHub, Microsoft)
-- [ ] 2FA avec TOTP
-- [ ] API rate limiting avancé
-- [ ] Dashboard amélioré
-
-### v1.2 (Futur)
-- [ ] GraphQL API
-- [ ] WebSocket real-time
-- [ ] Advanced analytics
-- [ ] Multi-tenant support
+En cas de problème:
+1. Vérifier les logs: `tail -f logs/auth.log`
+2. Consulter la documentation de dépannage
+3. Créer une issue avec les détails de l'erreur
 
 ---
 
-**Event Planner Auth API** - Sécurité enterprise, monitoring complet, performance optimisée 
+**🎯 Ce service est la fondation de sécurité de toute la plateforme Event Planner !**
