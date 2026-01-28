@@ -4,6 +4,7 @@ const env = require('./config/env');
 const { connection } = require('./config/database');
 const bootstrap = require('./bootstrap');
 const { validateConfig } = require('../../shared/utils/config-validator');
+const realtimePermissionsService = require('./services/realtime-permissions.service');
 
 // Valider la configuration au démarrage
 validateConfig('Auth Service', [
@@ -62,12 +63,21 @@ const startServer = async () => {
 🕐 Heure: ${new Date().toLocaleString()}
 📖 Documentation: http://localhost:${env.PORT}/api/docs
 ❤️  Santé: http://localhost:${env.PORT}/api/health
+🔄 Permissions temps réel: WebSocket/SSE activé
   `);
+    
+    // Initialiser le service temps réel après le démarrage du serveur
+    realtimePermissionsService.initialize(server, {
+      refreshRate: 30000 // 30 secondes
+    });
   });
 
   // Gestion gracieuse de l'arrêt
   const gracefulShutdown = (signal) => {
     console.log(`\n📡 Signal ${signal} reçu, arrêt gracieux du serveur...`);
+    
+    // Arrêter le service temps réel
+    realtimePermissionsService.shutdown();
     
     server.close(() => {
       console.log('✅ Serveur arrêté avec succès');

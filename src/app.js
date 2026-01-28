@@ -39,6 +39,10 @@ const metricsRoutes = require('./metrics/metrics.routes');
 const docsRoutes = require('./docs/docs.routes');
 const dashboardRoutes = require('./dashboard/dashboard.routes');
 
+// Nouvelles routes RBAC avancées
+const adminRoutes = require('./modules/admin/admin.routes');
+const realtimeRoutes = require('./modules/realtime/realtime.routes');
+
 const app = express();
 
 // TEST: Route absolue avant tout middleware
@@ -243,6 +247,10 @@ app.use('/docs', docsRoutes);
 
 // Routes du dashboard de monitoring
 app.use('/dashboard', dashboardRoutes);
+
+// Nouvelles routes RBAC avancées
+app.use('/api/admin', adminRoutes);
+app.use('/api/realtime', realtimeRoutes);
 
 // Documentation API (si disponible)
 app.get('/api/docs', (req, res) => {

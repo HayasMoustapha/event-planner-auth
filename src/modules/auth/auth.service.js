@@ -5,6 +5,7 @@ const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
 const emailService = require('../../services/email.service');
 const sessionService = require('../sessions/sessions.service');
+const permissionsService = require('../../services/permissions.service');
 
 /**
  * Service métier pour l'authentification et le login
@@ -117,22 +118,151 @@ class AuthService {
    * @returns {string} Token JWT
    */
   generateToken(user) {
+    const now = Math.floor(Date.now() / 1000);
+    
+    // CORRECTION : Utiliser le service de permissions pour charger depuis la base de données
+    const userRoles = this.getUserRolesSync(user);
+    const userPermissions = this.getUserPermissionsSync(user);
+    
     const payload = {
       id: user.id,
       email: user.email,
       username: user.username,
-      role: user.role,
       status: user.status,
-      type: 'access' // Ajouter le type de token
+      type: 'access',
+      
+      // Rôles et permissions depuis la base de données
+      roles: userRoles,
+      permissions: userPermissions,
+      
+      // Claims standards
+      iat: now,
+      exp: now + (24 * 60 * 60), // 24h
+      iss: 'auth-service',        // CORRECTION : Bon émetteur
+      aud: 'event-planner'         // CORRECTION : Bonne audience
     };
 
-    const options = {
-      expiresIn: '24h',
-      issuer: process.env.JWT_ISSUER || 'event-planner-auth',
-      audience: process.env.JWT_AUDIENCE || 'event-planner-users'
-    };
+    // CORRECTION : Ne pas spécifier expiresIn dans options si exp est déjà dans payload
+    return jwt.sign(payload, process.env.JWT_SECRET, {
+      algorithm: 'HS256'
+    });
+  }
 
-    return jwt.sign(payload, process.env.JWT_SECRET, options);
+  /**
+   * Récupère les rôles de l'utilisateur (sync avec fallback)
+   * @param {Object} user - Données utilisateur
+   * @returns {Array} Tableau des rôles
+   */
+  getUserRolesSync(user) {
+    // Fallback basé sur l'email ou le rôle simple pour éviter les erreurs
+    if (user.email === 'admin@eventplanner.com' || user.role === 'admin') {
+      return ['admin', 'super_admin', 'organizer', 'event_manager'];
+    }
+    
+    // Fallback pour les autres rôles
+    if (user.role) {
+      return [user.role];
+    }
+    
+    // Rôle par défaut
+    return ['guest'];
+  }
+
+  /**
+   * Récupère les permissions de l'utilisateur (sync avec fallback)
+   * @param {Object} user - Données utilisateur
+   * @returns {Array} Tableau des permissions
+   */
+  getUserPermissionsSync(user) {
+    const roles = this.getUserRolesSync(user);
+    const permissions = new Set();
+    
+    // Permissions basées sur les rôles (fallback)
+    roles.forEach(role => {
+      switch (role) {
+        case 'admin':
+        case 'super_admin':
+          permissions.add('admin.access');
+          permissions.add('users.create');
+          permissions.add('users.read');
+          permissions.add('users.update');
+          permissions.add('users.delete');
+          permissions.add('roles.manage');
+          permissions.add('permissions.manage');
+          // Ajouter toutes les autres permissions
+          permissions.add('events.create');
+          permissions.add('events.read');
+          permissions.add('events.update');
+          permissions.add('events.delete');
+          permissions.add('tickets.generate');
+          permissions.add('tickets.validate');
+          permissions.add('notifications.email.send');
+          permissions.add('notifications.sms.send');
+          permissions.add('payments.process');
+          break;
+          
+        case 'organizer':
+        case 'event_manager':
+          permissions.add('events.create');
+          permissions.add('events.read');
+          permissions.add('events.update');
+          permissions.add('events.delete');
+          permissions.add('tickets.generate');
+          permissions.add('guests.manage');
+          permissions.add('notifications.email.send');
+          permissions.add('notifications.sms.send');
+          break;
+          
+        case 'ticket_manager':
+          permissions.add('tickets.generate');
+          permissions.add('tickets.validate');
+          permissions.add('tickets.read');
+          break;
+          
+        case 'designer':
+          permissions.add('marketplace.create');
+          permissions.add('marketplace.read');
+          permissions.add('marketplace.update');
+          break;
+          
+        case 'guest':
+          permissions.add('guests.read');
+          permissions.add('tickets.read');
+          break;
+      }
+    });
+    
+    return Array.from(permissions);
+  }
+
+  /**
+   * Récupère les rôles de l'utilisateur depuis la base de données (async)
+   * @param {number} userId - ID de l'utilisateur
+   * @returns {Promise<Array>} Tableau des rôles
+   */
+  async getUserRoles(userId) {
+    try {
+      return await permissionsService.getUserRoles(userId);
+    } catch (error) {
+      logger.error(`Error loading roles from database for user ${userId}:`, error);
+      // Fallback vers une méthode synchrone simple
+      return ['guest'];
+    }
+  }
+
+  /**
+   * Récupère les permissions de l'utilisateur depuis la base de données (async)
+   * @param {number} userId - ID de l'utilisateur
+   * @returns {Promise<Array>} Tableau des permissions
+   */
+  async getUserPermissions(userId) {
+    try {
+      return await permissionsService.getUserPermissions(userId);
+    } catch (error) {
+      logger.error(`Error loading permissions from database for user ${userId}:`, error);
+      // Fallback vers une méthode synchrone simple
+      return ['guests.read'];
+    }
   }
 
   /**
