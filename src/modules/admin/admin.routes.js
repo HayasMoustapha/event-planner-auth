@@ -113,4 +113,22 @@ router.post('/permissions', [
  */
 router.post('/cache/refresh', adminController.refreshCache);
 
+/**
+ * @route   POST /api/admin/users/:userId/assign-all-roles
+ * @desc    Assigne TOUS les rôles à un utilisateur super admin
+ * @access  Private (Super Admin)
+ */
+router.post('/users/:userId/assign-all-roles', [
+  param('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer')
+], adminController.assignAllRolesToSuperAdmin);
+
+/**
+ * @route   POST /api/admin/users/:userId/ensure-super-admin
+ * @desc    Vérifie et corrige les accès d'un super admin
+ * @access  Private (Super Admin)
+ */
+router.post('/users/:userId/ensure-super-admin', [
+  param('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer')
+], adminController.ensureSuperAdminAccess);
+
 module.exports = router;

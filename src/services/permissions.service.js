@@ -34,7 +34,7 @@ class PermissionsService {
       const userQuery = `
         SELECT u.email, r.code as role_code
         FROM users u
-        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN accesses ur ON u.id = ur.user_id
         LEFT JOIN roles r ON ur.role_id = r.id
         WHERE u.id = $1 AND u.deleted_at IS NULL
       `;
@@ -64,7 +64,7 @@ class PermissionsService {
         SELECT DISTINCT p.code, p.label, p."group", p.description
         FROM permissions p
         INNER JOIN authorizations a ON p.id = a.permission_id
-        INNER JOIN user_roles ur ON a.role_id = ur.role_id
+        INNER JOIN accesses ur ON a.role_id = ur.role_id
         WHERE ur.user_id = $1 
           AND p.deleted_at IS NULL 
           AND ur.deleted_at IS NULL 
@@ -115,7 +115,7 @@ class PermissionsService {
       const query = `
         SELECT r.id, r.code, r.label, r."group", r.description
         FROM roles r
-        INNER JOIN user_roles ur ON r.id = ur.role_id
+        INNER JOIN accesses ur ON r.id = ur.role_id
         WHERE ur.user_id = $1 
           AND r.deleted_at IS NULL 
           AND ur.deleted_at IS NULL
@@ -197,7 +197,7 @@ class PermissionsService {
       const userQuery = `
         SELECT u.email, r.code as role_code
         FROM users u
-        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN accesses ur ON u.id = ur.user_id
         LEFT JOIN roles r ON ur.role_id = r.id
         WHERE u.id = $1 AND u.deleted_at IS NULL
       `;
@@ -361,7 +361,7 @@ class PermissionsService {
       if (!userRoles.includes('super_admin')) {
         // Ajouter le rôle super admin
         await connection.query(`
-          INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
+          INSERT INTO accesses (user_id, role_id, created_at, updated_at)
           VALUES ($1, (SELECT id FROM roles WHERE code = 'super_admin'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
           ON CONFLICT (user_id, role_id) DO NOTHING
         `, [userId]);

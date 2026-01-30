@@ -277,7 +277,7 @@ class RbacSeeder {
       const roleId = roleResult.rows[0].id;
       
       await connection.query(`
-        INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
+        INSERT INTO accesses (user_id, role_id, created_at, updated_at)
         VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ON CONFLICT (user_id, role_id) DO NOTHING
       `, [userId, roleId]);
@@ -286,6 +286,186 @@ class RbacSeeder {
       return { success: true };
     } catch (error) {
       logger.error(`❌ Failed to assign super admin role to user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Assigne TOUS les rôles existants à un utilisateur super_admin
+   * Le super admin doit avoir accès à tous les rôles du système
+   */
+  async assignAllRolesToSuperAdmin(userId) {
+    try {
+      logger.info(`👑 Assigning ALL roles to super admin user ${userId}...`);
+      
+      // Récupérer TOUS les rôles existants dans le système
+      const allRolesResult = await connection.query(`
+        SELECT id, code, label 
+        FROM roles 
+        WHERE deleted_at IS NULL 
+        ORDER BY code ASC
+      `);
+      
+      if (allRolesResult.rows.length === 0) {
+        throw new Error('No roles found in the system');
+      }
+      
+      const allRoles = allRolesResult.rows;
+      let assignedCount = 0;
+      let skippedCount = 0;
+      
+      // Assigner chaque rôle à l'utilisateur super admin
+      for (const role of allRoles) {
+        try {
+          await connection.query(`
+            INSERT INTO accesses (user_id, role_id, created_at, updated_at)
+            VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_id, role_id) DO UPDATE SET
+              updated_at = CURRENT_TIMESTAMP
+          `, [userId, role.id]);
+          
+          assignedCount++;
+          logger.info(`✅ Role '${role.code}' assigned to super admin ${userId}`);
+        } catch (error) {
+          if (error.code === '23505') { // Violation de contrainte unique
+            skippedCount++;
+            logger.info(`⏭️ Role '${role.code}' already assigned to super admin ${userId}`);
+          } else {
+            logger.error(`❌ Failed to assign role '${role.code}' to super admin ${userId}:`, error);
+            throw error;
+          }
+        }
+      }
+      
+      logger.info(`🎉 Super admin ${userId} now has access to ALL roles: ${assignedCount} assigned, ${skippedCount} already existed`);
+      
+      return {
+        success: true,
+        message: 'All roles assigned to super admin',
+        stats: {
+          totalRoles: allRoles.length,
+          assignedCount,
+          skippedCount,
+          roles: allRoles.map(r => r.code)
+        }
+      };
+    } catch (error) {
+      logger.error(`❌ Failed to assign all roles to super admin ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Vérifie et corrige les permissions d'un super admin
+   * S'assure que le super admin a bien tous les rôles et permissions
+   */
+  async ensureSuperAdminCompleteAccess(userId) {
+    try {
+      logger.info(`🔍 Ensuring complete access for super admin ${userId}...`);
+      
+      // 1. Vérifier si l'utilisateur existe
+      const userResult = await connection.query(
+        'SELECT id, email, status FROM users WHERE id = $1 AND deleted_at IS NULL',
+        [userId]
+      );
+      
+      if (userResult.rows.length === 0) {
+        throw new Error(`User ${userId} not found`);
+      }
+      
+      const user = userResult.rows[0];
+      
+      // 2. Assigner tous les rôles
+      const rolesResult = await this.assignAllRolesToSuperAdmin(userId);
+      
+      // 3. S'assurer que le rôle super admin a toutes les permissions
+      await this.ensureSuperAdminHasAllPermissions();
+      
+      logger.info(`🎯 Complete access ensured for super admin ${user.email} (ID: ${userId})`);
+      
+      return {
+        success: true,
+        message: 'Super admin complete access ensured',
+        user: {
+          id: user.id,
+          email: user.email,
+          status: user.status
+        },
+        roles: rolesResult.stats
+      };
+    } catch (error) {
+      logger.error(`❌ Failed to ensure complete access for super admin ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * S'assure que le rôle super_admin a toutes les permissions disponibles
+   */
+  async ensureSuperAdminHasAllPermissions() {
+    try {
+      logger.info('🔐 Ensuring super admin role has all permissions...');
+      
+      // Récupérer le rôle super_admin
+      const superAdminRoleResult = await connection.query(
+        'SELECT id FROM roles WHERE code = $1 AND deleted_at IS NULL',
+        ['super_admin']
+      );
+      
+      if (superAdminRoleResult.rows.length === 0) {
+        throw new Error('Super admin role not found');
+      }
+      
+      const superAdminRoleId = superAdminRoleResult.rows[0].id;
+      
+      // Récupérer toutes les permissions
+      const allPermissionsResult = await connection.query(
+        'SELECT id, code FROM permissions WHERE deleted_at IS NULL ORDER BY code ASC'
+      );
+      
+      if (allPermissionsResult.rows.length === 0) {
+        logger.warn('⚠️ No permissions found in the system');
+        return { success: true, message: 'No permissions to assign' };
+      }
+      
+      const allPermissions = allPermissionsResult.rows;
+      let assignedCount = 0;
+      let skippedCount = 0;
+      
+      // Assigner chaque permission au rôle super_admin
+      for (const permission of allPermissions) {
+        try {
+          await connection.query(`
+            INSERT INTO authorizations (role_id, permission_id, created_at, updated_at)
+            VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (role_id, permission_id) DO UPDATE SET
+              updated_at = CURRENT_TIMESTAMP
+          `, [superAdminRoleId, permission.id]);
+          
+          assignedCount++;
+        } catch (error) {
+          if (error.code === '23505') { // Violation de contrainte unique
+            skippedCount++;
+          } else {
+            logger.error(`❌ Failed to assign permission '${permission.code}' to super admin role:`, error);
+            throw error;
+          }
+        }
+      }
+      
+      logger.info(`🎯 Super admin role now has ALL permissions: ${assignedCount} assigned, ${skippedCount} already existed`);
+      
+      return {
+        success: true,
+        message: 'Super admin role has all permissions',
+        stats: {
+          totalPermissions: allPermissions.length,
+          assignedCount,
+          skippedCount
+        }
+      };
+    } catch (error) {
+      logger.error('❌ Failed to ensure super admin has all permissions:', error);
       throw error;
     }
   }

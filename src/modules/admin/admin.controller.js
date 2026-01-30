@@ -444,6 +444,102 @@ class AdminController {
       next(error);
     }
   }
+
+  /**
+   * Assigne TOUS les rôles à un utilisateur super admin
+   */
+  async assignAllRolesToSuperAdmin(req, res, next) {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json(createResponse(
+          false,
+          'Invalid user ID',
+          { code: 'INVALID_USER_ID' }
+        ));
+      }
+      
+      const userIdInt = parseInt(userId);
+      
+      logger.info(`👑 Admin requesting all roles assignment for super admin ${userIdInt}`);
+      
+      const result = await rbacSeeder.ensureSuperAdminCompleteAccess(userIdInt);
+      
+      res.status(200).json(createResponse(
+        true,
+        'All roles assigned to super admin successfully',
+        result
+      ));
+    } catch (error) {
+      logger.error(`❌ Failed to assign all roles to super admin ${req.params.userId}:`, error);
+      next(error);
+    }
+  }
+
+  /**
+   * Vérifie et corrige les accès d'un super admin
+   */
+  async ensureSuperAdminAccess(req, res, next) {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json(createResponse(
+          false,
+          'Invalid user ID',
+          { code: 'INVALID_USER_ID' }
+        ));
+      }
+      
+      const userIdInt = parseInt(userId);
+      
+      logger.info(`🔍 Admin requesting super admin access check for user ${userIdInt}`);
+      
+      // Récupérer l'état actuel
+      const [currentRoles, currentPermissions] = await Promise.all([
+        permissionsService.getUserRoles(userIdInt),
+        permissionsService.getUserPermissions(userIdInt)
+      ]);
+      
+      // Corriger les accès si nécessaire
+      const result = await rbacSeeder.ensureSuperAdminCompleteAccess(userIdInt);
+      
+      // Récupérer le nouvel état
+      const [newRoles, newPermissions] = await Promise.all([
+        permissionsService.getUserRoles(userIdInt),
+        permissionsService.getUserPermissions(userIdInt)
+      ]);
+      
+      res.status(200).json(createResponse(
+        true,
+        'Super admin access verified and corrected',
+        {
+          user: result.user,
+          before: {
+            roles: currentRoles,
+            permissions: currentPermissions,
+            roleCount: currentRoles.length,
+            permissionCount: currentPermissions.length
+          },
+          after: {
+            roles: newRoles,
+            permissions: newPermissions,
+            roleCount: newRoles.length,
+            permissionCount: newPermissions.length
+          },
+          changes: {
+            rolesAdded: newRoles.length - currentRoles.length,
+            permissionsAdded: newPermissions.length - currentPermissions.length
+          },
+          stats: result.roles
+        }
+      ));
+    } catch (error) {
+      logger.error(`❌ Failed to ensure super admin access for user ${req.params.userId}:`, error);
+      next(error);
+    }
+  }
 }
 
 module.exports = new AdminController();

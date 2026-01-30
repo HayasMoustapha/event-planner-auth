@@ -55,6 +55,19 @@ class AuthService {
     // Mettre à jour la date de dernière connexion
     await usersRepository.updateLastLogin(user.id);
 
+    // 🔥 SUPER ADMIN AUTO-ROLE ASSIGNMENT
+    // Si l'utilisateur est un super admin, s'assurer qu'il a TOUS les rôles
+    if (user.email === 'admin@eventplanner.com' || user.email?.includes('admin@')) {
+      try {
+        const rbacSeeder = require('../database/seeders/rbac-seeder');
+        await rbacSeeder.ensureSuperAdminCompleteAccess(user.id);
+        logger.info(`👑 Super admin ${user.email} automatically granted all roles`);
+      } catch (error) {
+        logger.warn(`⚠️ Failed to auto-assign roles to super admin ${user.email}:`, error.message);
+        // Ne pas bloquer la connexion si l'assignment échoue
+      }
+    }
+
     // Générer le token JWT
     const token = this.generateToken(user);
     console.log('🔍 Debug authenticate - Token généré:', token ? 'Oui' : 'Non');
