@@ -26,7 +26,7 @@ jest.setTimeout(30000);
 // Nettoyage global après tous les tests
 afterAll(async () => {
     // Fermer la connexion à la base de données
-    const { connection } = require('../src/config/database');
+    const { connection } = require('../../src/config/database');
     if (connection && connection.end) {
         await connection.end();
     }
