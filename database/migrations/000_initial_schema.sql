@@ -203,6 +203,46 @@ CREATE INDEX IF NOT EXISTS idx_authorizations_menu_id ON authorizations(menu_id)
 CREATE INDEX IF NOT EXISTS idx_authorizations_created_by ON authorizations(created_by);
 
 -- ========================================
+-- TABLES OAUTH (IDEMPOTENT)
+-- ========================================
+
+-- Table des identités OAuth des utilisateurs
+CREATE TABLE IF NOT EXISTS user_oauth_identities (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL CHECK (provider IN ('google', 'apple')),
+    provider_user_id VARCHAR(255) NOT NULL,
+    provider_email VARCHAR(255),
+    provider_name VARCHAR(255),
+    provider_avatar VARCHAR(500),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, provider, provider_user_id)
+);
+
+-- Table des logs OAuth pour audit
+CREATE TABLE IF NOT EXISTS user_oauth_logs (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    identity_id BIGINT REFERENCES user_oauth_identities(id) ON DELETE SET NULL,
+    operator_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(50) NOT NULL CHECK (action IN ('link', 'unlink', 'login', 'register')),
+    details JSONB,
+    ip_address INET,
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index pour les tables OAuth
+CREATE INDEX IF NOT EXISTS idx_user_oauth_identities_user_id ON user_oauth_identities(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_oauth_identities_provider ON user_oauth_identities(provider);
+CREATE INDEX IF NOT EXISTS idx_user_oauth_identities_active ON user_oauth_identities(is_active);
+CREATE INDEX IF NOT EXISTS idx_user_oauth_logs_user_id ON user_oauth_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_oauth_logs_action ON user_oauth_logs(action);
+CREATE INDEX IF NOT EXISTS idx_user_oauth_logs_created_at ON user_oauth_logs(created_at);
+
+-- ========================================
 -- COMMENTAIRES (IDEMPOTENT)
 -- ========================================
 
@@ -213,11 +253,14 @@ COMMENT ON TABLE permissions IS 'Table des permissions du système RBAC';
 COMMENT ON TABLE menus IS 'Table des menus de navigation';
 COMMENT ON TABLE accesses IS 'Table de jointure entre utilisateurs et rôles';
 COMMENT ON TABLE authorizations IS 'Table de jointure entre rôles, permissions et menus';
+COMMENT ON TABLE user_oauth_identities IS 'Table des identités OAuth des utilisateurs';
+COMMENT ON TABLE user_oauth_logs IS 'Table des logs OAuth pour audit';
 
 -- Confirmation de la migration
 DO $$
 BEGIN
     RAISE NOTICE '✅ Migration initiale appliquée avec succès';
     RAISE NOTICE '   Tables créées: people, users, roles, permissions, menus, accesses, authorizations';
-    RAISE NOTICE '   Index créés: 28 index de performance';
+    RAISE NOTICE '   Tables OAuth: user_oauth_identities, user_oauth_logs';
+    RAISE NOTICE '   Index créés: 34 index de performance';
 END $$;

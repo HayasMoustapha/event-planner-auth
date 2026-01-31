@@ -64,9 +64,9 @@ class OAuthMiddleware {
     // Vérifier l'en-tête Origin pour les requêtes cross-origin
     const origin = req.get('Origin');
     const referer = req.get('Referer');
-    const allowedOrigins = this.getAllowedOrigins();
+    const allowedOrigins = OAuthMiddleware.getAllowedOrigins();
 
-    if (origin && !allowedOrigins.includes(origin)) {
+    if (origin && !allowedOrigins.includes(origin) && !allowedOrigins.includes('*')) {
       logger.security('Suspicious OAuth request - Invalid Origin', {
         ip: req.ip,
         origin,
@@ -195,7 +195,7 @@ class OAuthMiddleware {
    */
   static oauthCors() {
     return (req, res, next) => {
-      const allowedOrigins = this.getAllowedOrigins();
+      const allowedOrigins = OAuthMiddleware.getAllowedOrigins();
       const origin = req.get('Origin');
 
       if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
@@ -277,11 +277,11 @@ class OAuthMiddleware {
           }
         }
       }),
-      this.oauthCors(),
-      this.validateSecurityHeaders,
-      this.validateTokenFormat,
-      this.logOAuthAttempt,
-      this.oauthRateLimit()
+      OAuthMiddleware.oauthCors(),
+      OAuthMiddleware.validateSecurityHeaders,
+      OAuthMiddleware.validateTokenFormat,
+      OAuthMiddleware.logOAuthAttempt,
+      OAuthMiddleware.oauthRateLimit()
     ];
   }
 
@@ -290,8 +290,8 @@ class OAuthMiddleware {
    */
   static secureOAuthRoutes() {
     return [
-      this.validateOAuthConfig,
-      ...this.oauthProtection()
+      OAuthMiddleware.validateOAuthConfig,
+      ...OAuthMiddleware.oauthProtection()
     ];
   }
 }
