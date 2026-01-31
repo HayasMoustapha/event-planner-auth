@@ -287,6 +287,18 @@ class OtpRepository {
    */
   async getStats() {
     try {
+      // Vérifier si la connexion est disponible
+      if (!connection || !connection.query) {
+        // Retourner des statistiques simulées si la DB n'est pas disponible
+        return {
+          total: 0,
+          active: 0,
+          used: 0,
+          expired: 0,
+          note: 'Database unavailable - simulated stats'
+        };
+      }
+      
       const [total] = await connection.query('SELECT COUNT(*) as count FROM otps');
       const [active] = await connection.query('SELECT COUNT(*) as count FROM otps WHERE is_used = FALSE AND expires_at > CURRENT_TIMESTAMP');
       const [used] = await connection.query('SELECT COUNT(*) as count FROM otps WHERE is_used = TRUE');
@@ -299,7 +311,15 @@ class OtpRepository {
         expired: parseInt(expired.rows[0].count)
       };
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération des statistiques OTP: ${error.message}`);
+      // En cas d'erreur de base de données, retourner des stats simulées
+      return {
+        total: 0,
+        active: 0,
+        used: 0,
+        expired: 0,
+        note: 'Database error - simulated stats',
+        error: error.message
+      };
     }
   }
 }

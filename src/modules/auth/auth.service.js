@@ -169,7 +169,7 @@ class AuthService {
   getUserRolesSync(user) {
     // Fallback basé sur l'email ou le rôle simple pour éviter les erreurs
     if (user.email === 'admin@eventplanner.com' || user.role === 'admin') {
-      return ['admin', 'super_admin', 'organizer', 'event_manager'];
+      return ['admin', 'super_admin', 'organizer', 'event_manager', 'designer'];
     }
     
     // Fallback pour les autres rôles

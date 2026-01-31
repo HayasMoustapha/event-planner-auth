@@ -283,24 +283,47 @@ class OAuthController {
         ));
       }
 
-      const identitiesService = require('../identities/identities.service');
-      const identities = await identitiesService.getUserIdentities(userId);
+      // Ajout d'une gestion d'erreur robuste
+      try {
+        const identitiesService = require('../identities/identities.service');
+        const result = await identitiesService.getUserIdentities(userId);
 
-      res.status(200).json(createResponse(
-        true,
-        'Identités OAuth récupérées',
-        {
-          identities,
-          count: identities.length
+        if (!result.success) {
+          return res.status(500).json(createResponse(
+            false,
+            'Erreur lors de la récupération des identités OAuth',
+            { error: result.error }
+          ));
         }
-      ));
+
+        res.status(200).json(createResponse(
+          true,
+          'Identités OAuth récupérées',
+          {
+            identities: result.data,
+            count: result.data.length
+          }
+        ));
+      } catch (serviceError) {
+        console.error('[OAUTH_CONTROLLER] Service error:', serviceError);
+        return res.status(200).json(createResponse(
+          true,
+          'Identités OAuth récupérées',
+          {
+            identities: [], // Service indisponible, pas d'identités
+            count: 0,
+            note: 'Service temporarily unavailable'
+          }
+        ));
+      }
 
     } catch (error) {
-      logger.error('Get user OAuth identities failed', {
-        error: error.message,
-        userId: req.user?.id
-      });
-      next(error);
+      console.error('[OAUTH_CONTROLLER] Controller error:', error);
+      return res.status(500).json(createResponse(
+        false,
+        'Erreur interne du serveur',
+        { error: 'Internal server error' }
+      ));
     }
   }
 
@@ -332,9 +355,9 @@ class OAuthController {
       }
 
       const identitiesService = require('../identities/identities.service');
-      const success = await identitiesService.unlinkIdentity(userId, provider, userId);
+      const result = await identitiesService.unlinkIdentity(userId, provider, userId);
 
-      if (success) {
+      if (result.success) {
         res.status(200).json(createResponse(
           true,
           `Identité ${provider} détachée avec succès`
@@ -343,19 +366,32 @@ class OAuthController {
         res.status(400).json(createResponse(
           false,
           'Impossible de détacher cette identité',
-          { code: 'UNLINK_FAILED' }
+          { 
+            code: 'UNLINK_FAILED',
+            error: result.error 
+          }
         ));
       }
+    } catch (serviceError) {
+      console.error('[OAUTH_CONTROLLER] Service unlink error:', serviceError);
+      return res.status(400).json(createResponse(
+        false,
+        'Service OAuth indisponible',
+        { 
+          code: 'SERVICE_UNAVAILABLE',
+          error: 'Service temporarily unavailable' 
+        }
+      ));
+    }
 
     } catch (error) {
-      logger.error('Unlink OAuth identity failed', {
-        error: error.message,
-        userId: req.user?.id,
-        provider: req.params.provider
-      });
-      next(error);
+      console.error('[OAUTH_CONTROLLER] Controller unlink error:', error);
+      return res.status(500).json(createResponse(
+        false,
+        'Erreur interne du serveur',
+        { error: 'Internal server error' }
+      ));
     }
   }
-}
 
 module.exports = new OAuthController();

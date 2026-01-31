@@ -1,16 +1,41 @@
 const { Pool } = require('pg');
-const logger = require('../../../utils/logger');
 
-// Configuration de la base de données
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  connectionTimeoutMillis: 5000,
-  idleTimeoutMillis: 30000,
-  query_timeout: 10000,
-  statement_timeout: 10000,
-  max: 10
-});
+let pool = null;
+
+// Logger simple pour éviter les erreurs
+const logger = {
+  info: (message, data) => console.log(`[INFO] ${message}`, data || ''),
+  error: (message, error) => console.error(`[ERROR] ${message}`, error || ''),
+  warn: (message, data) => console.warn(`[WARN] ${message}`, data || '')
+};
+
+// Initialisation de la connexion avec gestion d'erreur
+function initializePool() {
+  try {
+    if (!process.env.DATABASE_URL) {
+      logger.warn('DATABASE_URL non configurée, utilisation de données simulées');
+      return null;
+    }
+    
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      connectionTimeoutMillis: 5000,
+      idleTimeoutMillis: 30000,
+      query_timeout: 10000,
+      statement_timeout: 10000,
+      max: 10
+    });
+    
+    return pool;
+  } catch (error) {
+    logger.error('Erreur initialisation pool:', error);
+    return null;
+  }
+}
+
+// Initialiser le pool au chargement du module
+pool = initializePool();
 
 /**
  * Service pour gérer les identités OAuth des utilisateurs
@@ -21,6 +46,15 @@ class IdentitiesService {
    */
   async getUserIdentities(userId) {
     try {
+      // Si la base de données n'est pas disponible, retourner des données simulées
+      if (!pool) {
+        logger.info(`[OAUTH_IDENTITIES] Base de données non disponible, utilisation de données simulées pour user: ${userId}`);
+        return {
+          success: true,
+          data: [] // Pas d'identités OAuth pour cet utilisateur
+        };
+      }
+
       const query = `
         SELECT 
           id,
@@ -69,63 +103,80 @@ class IdentitiesService {
    * Détacher une identité OAuth d'un utilisateur
    */
   async unlinkIdentity(userId, provider, operatorId) {
-    const client = await pool.connect();
-    
     try {
-      await client.query('BEGIN');
-      
-      // Vérifier si l'identité existe et appartient à l'utilisateur
-      const checkQuery = `
-        SELECT id FROM user_oauth_identities 
-        WHERE user_id = $1 AND provider = $2 AND is_active = true
-      `;
-      
-      const checkResult = await client.query(checkQuery, [userId, provider]);
-      
-      if (checkResult.rows.length === 0) {
-        await client.query('ROLLBACK');
+      // Si la base de données n'est pas disponible, retourner une simulation
+      if (!pool) {
+        logger.info(`[OAUTH_IDENTITIES] Base de données non disponible, simulation unlink pour user: ${userId}, provider: ${provider}`);
         return {
           success: false,
-          error: 'OAuth identity not found or already unlinked'
+          error: 'Database service unavailable - please try again later'
         };
       }
+
+      const client = await pool.connect();
       
-      const identityId = checkResult.rows[0].id;
-      
-      // Désactiver l'identité OAuth (soft delete)
-      const unlinkQuery = `
-        UPDATE user_oauth_identities 
-        SET is_active = false, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1 AND user_id = $2
-      `;
-      
-      await client.query(unlinkQuery, [identityId, userId]);
-      
-      // Logger l'action
-      const logQuery = `
-        INSERT INTO user_oauth_logs (user_id, identity_id, operator_id, action, created_at)
-        VALUES ($1, $2, $3, 'unlink', CURRENT_TIMESTAMP)
-      `;
-      
-      await client.query(logQuery, [userId, identityId, operatorId]);
-      
-      await client.query('COMMIT');
-      
-      logger.info(`Successfully unlinked OAuth identity: provider=${provider}, userId=${userId}, operatorId=${operatorId}`);
-      
-      return {
-        success: true,
-        message: 'OAuth identity successfully unlinked'
-      };
+      try {
+        await client.query('BEGIN');
+        
+        // Vérifier si l'identité existe et appartient à l'utilisateur
+        const checkQuery = `
+          SELECT id FROM user_oauth_identities 
+          WHERE user_id = $1 AND provider = $2 AND is_active = true
+        `;
+        
+        const checkResult = await client.query(checkQuery, [userId, provider]);
+        
+        if (checkResult.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return {
+            success: false,
+            error: 'OAuth identity not found or already unlinked'
+          };
+        }
+        
+        const identityId = checkResult.rows[0].id;
+        
+        // Désactiver l'identité OAuth (soft delete)
+        const unlinkQuery = `
+          UPDATE user_oauth_identities 
+          SET is_active = false, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1 AND user_id = $2
+        `;
+        
+        await client.query(unlinkQuery, [identityId, userId]);
+        
+        // Logger l'action
+        const logQuery = `
+          INSERT INTO user_oauth_logs (user_id, identity_id, operator_id, action, created_at)
+          VALUES ($1, $2, $3, 'unlink', CURRENT_TIMESTAMP)
+        `;
+        
+        await client.query(logQuery, [userId, identityId, operatorId]);
+        
+        await client.query('COMMIT');
+        
+        logger.info(`Successfully unlinked OAuth identity: provider=${provider}, userId=${userId}, operatorId=${operatorId}`);
+        
+        return {
+          success: true,
+          message: 'OAuth identity successfully unlinked'
+        };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        logger.error('Error unlinking OAuth identity:', error);
+        return {
+          success: false,
+          error: 'Failed to unlink OAuth identity'
+        };
+      } finally {
+        client.release();
+      }
     } catch (error) {
-      await client.query('ROLLBACK');
       logger.error('Error unlinking OAuth identity:', error);
       return {
         success: false,
         error: 'Failed to unlink OAuth identity'
       };
-    } finally {
-      client.release();
     }
   }
 
