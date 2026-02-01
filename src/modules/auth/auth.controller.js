@@ -470,11 +470,14 @@ class AuthController {
 
       const otp = await otpService.generatePasswordResetOtp(person.id, email);
 
-      // Envoyer l'OTP par email
-      await emailService.sendPasswordResetEmail(email, otp.code, {
-        ip: req.ip,
-        userAgent: req.get('User-Agent')
-      });
+      // Récupérer l'utilisateur pour la notification
+      const usersRepository = require('../users/users.repository');
+      const user = await usersRepository.findByEmail(email);
+
+      if (user) {
+        // Envoyer la notification de réinitialisation de mot de passe
+        await authService.sendPasswordResetNotification(user, otp.code, otp.expires_at);
+      }
 
       logger.security('Password reset OTP generated', {
         email,
@@ -540,6 +543,9 @@ class AuthController {
 
       // Mettre à jour le mot de passe
       const updatedUser = await usersRepository.updatePassword(user.id, newPassword, user.id);
+
+      // Envoyer une notification de changement de mot de passe
+      await authService.sendPasswordChangeNotification(updatedUser);
 
       // Retourner l'utilisateur sans le mot de passe
       const userResponse = { ...updatedUser };

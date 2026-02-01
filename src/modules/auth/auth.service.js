@@ -6,6 +6,7 @@ const logger = require('../../utils/logger');
 const emailService = require('../../services/email.service');
 const sessionService = require('../sessions/sessions.service');
 const permissionsService = require('../../services/permissions.service');
+const notificationClient = require('../../../../shared/clients/notification-client');
 
 /**
  * Service métier pour l'authentification et le login
@@ -790,6 +791,199 @@ class AuthService {
         expired: false,
         error: error.message
       };
+    }
+  }
+
+  /**
+   * Envoie une notification de bienvenue après inscription réussie
+   * @param {Object} user - Données de l'utilisateur
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendWelcomeNotification(user) {
+    try {
+      const result = await notificationClient.sendWelcomeEmail(user.email, {
+        firstName: user.first_name,
+        lastName: user.last_name,
+        username: user.username
+      });
+
+      if (!result.success) {
+        logger.error('Failed to send welcome notification:', result.error);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error sending welcome notification:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Envoie une notification d'activation de compte
+   * @param {Object} user - Données de l'utilisateur
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendAccountActivationNotification(user) {
+    try {
+      const result = await notificationClient.sendAccountActivationEmail(user.email, {
+        firstName: user.first_name,
+        lastName: user.last_name,
+        username: user.username
+      });
+
+      if (!result.success) {
+        logger.error('Failed to send account activation notification:', result.error);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error sending account activation notification:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Envoie une notification de réinitialisation de mot de passe
+   * @param {Object} user - Données de l'utilisateur
+   * @param {string} resetToken - Token de réinitialisation
+   * @param {Date} expiresAt - Date d'expiration
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendPasswordResetNotification(user, resetToken, expiresAt) {
+    try {
+      const result = await notificationClient.sendPasswordResetEmail(user.email, {
+        resetToken,
+        expiresAt,
+        firstName: user.first_name
+      });
+
+      if (!result.success) {
+        logger.error('Failed to send password reset notification:', result.error);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error sending password reset notification:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Envoie une alerte de sécurité
+   * @param {Object} user - Données de l'utilisateur
+   * @param {Object} alertData - Données de l'alerte
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendSecurityAlert(user, alertData) {
+    try {
+      const result = await notificationClient.sendSecurityAlert(user.email, {
+        type: alertData.type,
+        description: alertData.description,
+        ipAddress: alertData.ipAddress,
+        location: alertData.location,
+        timestamp: alertData.timestamp,
+        actionRequired: alertData.actionRequired
+      });
+
+      if (!result.success) {
+        logger.error('Failed to send security alert:', result.error);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error sending security alert:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Envoie une notification OTP par SMS
+   * @param {string} phoneNumber - Numéro de téléphone
+   * @param {string} code - Code OTP
+   * @param {string} purpose - But de l'OTP
+   * @param {Date} validUntil - Date de validité
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendOTPNotification(phoneNumber, code, purpose, validUntil) {
+    try {
+      const result = await notificationClient.sendOTPSMS(phoneNumber, {
+        code,
+        purpose,
+        validUntil
+      });
+
+      if (!result.success) {
+        logger.error('Failed to send OTP notification:', result.error);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error sending OTP notification:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Envoie une notification de changement de mot de passe
+   * @param {Object} user - Données de l'utilisateur
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendPasswordChangeNotification(user) {
+    try {
+      const result = await notificationClient.sendEmail({
+        to: user.email,
+        template: 'password-changed',
+        subject: 'Votre mot de passe a été modifié',
+        data: {
+          firstName: user.first_name,
+          lastName: user.last_name,
+          changeDate: new Date().toLocaleDateString('fr-FR'),
+          changeTime: new Date().toLocaleTimeString('fr-FR')
+        },
+        priority: 'high'
+      });
+
+      if (!result.success) {
+        logger.error('Failed to send password change notification:', result.error);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error sending password change notification:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Envoie une notification de blocage de compte
+   * @param {Object} user - Données de l'utilisateur
+   * @param {string} reason - Raison du blocage
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendAccountLockedNotification(user, reason) {
+    try {
+      const result = await notificationClient.sendEmail({
+        to: user.email,
+        template: 'account-locked',
+        subject: '⚠️ Votre compte a été verrouillé',
+        data: {
+          firstName: user.first_name,
+          lastName: user.last_name,
+          lockReason: reason,
+          lockDate: new Date().toLocaleDateString('fr-FR'),
+          supportEmail: 'support@eventplanner.com'
+        },
+        priority: 'high'
+      });
+
+      if (!result.success) {
+        logger.error('Failed to send account locked notification:', result.error);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error sending account locked notification:', error);
+      return { success: false, error: error.message };
     }
   }
 }

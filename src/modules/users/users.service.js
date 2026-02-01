@@ -1,6 +1,8 @@
 const usersRepository = require('./users.repository');
 const accessesRepository = require('../accesses/accesses.repository');
 const { validateEmail, validatePassword } = require('../../utils/validators');
+const notificationClient = require('../../../../shared/clients/notification-client');
+const authService = require('../auth/auth.service');
 
 /**
  * Service métier pour la gestion des utilisateurs
@@ -248,6 +250,46 @@ class UsersService {
     }
 
     return await usersRepository.create(cleanData);
+  }
+
+  /**
+   * Envoie une notification de bienvenue après création d'utilisateur
+   * @param {Object} user - Données de l'utilisateur créé
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendWelcomeNotification(user) {
+    try {
+      const result = await authService.sendWelcomeNotification(user);
+      
+      if (!result.success) {
+        console.error('Failed to send welcome notification:', result.error);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error sending welcome notification:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Envoie une notification d'activation de compte
+   * @param {Object} user - Données de l'utilisateur
+   * @returns {Promise<Object>} Résultat de l'envoi
+   */
+  async sendAccountActivationNotification(user) {
+    try {
+      const result = await authService.sendAccountActivationNotification(user);
+      
+      if (!result.success) {
+        console.error('Failed to send account activation notification:', result.error);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error sending account activation notification:', error);
+      return { success: false, error: error.message };
+    }
   }
 
   /**
