@@ -75,6 +75,32 @@ class UsersRepository {
   }
 
   /**
+   * Récupère un utilisateur par son ID
+   * @param {number} id - ID de l'utilisateur
+   * @param {boolean} includePassword - Inclure le mot de passe
+   * @returns {Promise<Object|null>} Données de l'utilisateur
+   */
+  async findById(id, includePassword = false) {
+    const fields = includePassword 
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email';
+    
+    const query = `
+      SELECT ${fields}
+      FROM users u
+      LEFT JOIN people p ON u.person_id = p.id
+      WHERE u.id = $1 AND u.deleted_at IS NULL
+    `;
+    
+    try {
+      const result = await connection.query(query, [id]);
+      return result.rows[0] || null;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération de l'utilisateur par ID ${id}: ${error.message}`);
+    }
+  }
+
+  /**
    * Récupère un utilisateur par son email (optimisé avec index)
    * @param {string} email - Email de l'utilisateur
    * @param {boolean} includePassword - Inclure le mot de passe
@@ -145,58 +171,7 @@ class UsersRepository {
     }
   }
 
-  /**
-   * Récupère un utilisateur par son email
-   * @param {string} email - Email de l'utilisateur
-   * @param {boolean} includePassword - Inclure le mot de passe
-   * @returns {Promise<Object>} Données de l'utilisateur
-   */
-  async findByEmail(email, includePassword = false) {
-    const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
-    
-    const query = `
-      SELECT ${fields}
-      FROM users u
-      LEFT JOIN people p ON u.person_id = p.id
-      WHERE u.email = $1 AND u.deleted_at IS NULL
-    `;
-    
-    try {
-      const result = await connection.query(query, [email]);
-      return result.rows[0] || null;
-    } catch (error) {
-      throw new Error(`Erreur lors de la recherche par email ${email}: ${error.message}`);
-    }
-  }
-
-  /**
-   * Récupère un utilisateur par son username
-   * @param {string} username - Username de l'utilisateur
-   * @param {boolean} includePassword - Inclure le mot de passe
-   * @returns {Promise<Object>} Données de l'utilisateur
-   */
-  async findByUsername(username, includePassword = false) {
-    const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
-    
-    const query = `
-      SELECT ${fields}
-      FROM users u
-      LEFT JOIN people p ON u.person_id = p.id
-      WHERE u.username = $1 AND u.deleted_at IS NULL
-    `;
-    
-    try {
-      const result = await connection.query(query, [username]);
-      return result.rows[0] || null;
-    } catch (error) {
-      throw new Error(`Erreur lors de la recherche par username ${username}: ${error.message}`);
-    }
-  }
-
+  
   /**
    * Récupère un utilisateur par son ID de personne
    * @param {number} personId - ID de la personne
@@ -240,10 +215,6 @@ class UsersRepository {
       createdBy = null
     } = userData;
 
-    console.log('🔍 Debug users.repository.create - userData:', userData);
-    console.log('🔍 Debug users.repository.create - person_id:', person_id);
-    console.log('🔍 Debug users.repository.create - typeof person_id:', typeof person_id);
-
     if (!person_id) {
       throw new Error('person_id est requis pour créer un utilisateur');
     }
@@ -258,7 +229,6 @@ class UsersRepository {
     `;
 
     try {
-      console.log('🔍 Debug users.repository.create - Avant requête SQL');
       const result = await connection.query(query, [
         person_id,
         username,
@@ -269,8 +239,6 @@ class UsersRepository {
         status,
         createdBy
       ]);
-
-      console.log('🔍 Debug users.repository.create - result.rows[0]:', result.rows[0]);
 
       // Ajouter à l'historique des mots de passe
       await this.addPasswordHistory(result.rows[0].id, hashedPassword);
@@ -515,7 +483,18 @@ class UsersRepository {
    * @returns {Promise<boolean>} Succès de l'opération
    */
   async updateLastLogin(id) {
-    // Note: last_login_at n'existe pas dans le schéma SQL actuel
+    const query = `
+      UPDATE users 
+      SET updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND deleted_at IS NULL
+    `;
+
+    try {
+      const result = await connection.query(query, [id]);
+      return result.rowCount > 0;
+    } catch (error) {
+      throw new Error(`Erreur lors de la mise à jour de la dernière connexion: ${error.message}`);
+    }
   }
 
   /**

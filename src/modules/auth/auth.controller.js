@@ -61,7 +61,6 @@ class AuthController {
       try {
         // Blacklister directement le token sans vérifier la session
         await sessionService.blacklistTokenSimple(token, 'logout');
-        console.log('🔍 Debug auth.controller logout - Token blacklisté directement');
         
         res.status(200).json(createResponse(
           true,
@@ -69,8 +68,7 @@ class AuthController {
         ));
       } catch (sessionError) {
         // Si erreur, considérer que le logout réussit
-        console.warn('Erreur lors du logout:', sessionError.message);
-        console.log('🔍 Debug auth.controller logout - Erreur session:', sessionError.message);
+        logger.warn('Erreur lors du logout:', sessionError.message);
         
         res.status(200).json(createResponse(
           true,
