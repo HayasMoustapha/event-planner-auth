@@ -196,6 +196,7 @@ CREATE TABLE password_histories (
 
 -- Créer les index
 CREATE INDEX password_histories_user_id_created_at_index ON password_histories(user_id, created_at);
+
 -- Table des autorisations (rôles-permissions)
 DROP TABLE IF EXISTS authorizations CASCADE;
 CREATE TABLE authorizations (

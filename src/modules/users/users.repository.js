@@ -75,29 +75,56 @@ class UsersRepository {
   }
 
   /**
-   * Récupère un utilisateur par son ID
-   * @param {number} id - ID de l'utilisateur
-   * @param {boolean} includePassword - Inclure le mot de passe (pour authentification)
+   * Récupère un utilisateur par son email (optimisé avec index)
+   * @param {string} email - Email de l'utilisateur
+   * @param {boolean} includePassword - Inclure le mot de passe
    * @returns {Promise<Object>} Données de l'utilisateur
    */
-  async findById(id, includePassword = false) {
-    // Colonnes selon schéma SQL : id, person_id, user_code, username, phone, email, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+  async findByEmail(email, includePassword = false) {
+    // CORRECTION: Utilisation de l'index users_email_unique
     const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email';
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
     
     const query = `
       SELECT ${fields}
       FROM users u
       LEFT JOIN people p ON u.person_id = p.id
-      WHERE u.id = $1 AND u.deleted_at IS NULL
+      WHERE u.email = $1 AND u.deleted_at IS NULL
     `;
     
     try {
-      const result = await connection.query(query, [id]);
+      const result = await connection.query(query, [email]);
       return result.rows[0] || null;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération de l'utilisateur ${id}: ${error.message}`);
+      throw new Error(`Erreur lors de la récupération de l'utilisateur par email ${email}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Récupère un utilisateur par son username (optimisé avec index)
+   * @param {string} username - Username de l'utilisateur
+   * @param {boolean} includePassword - Inclure le mot de passe
+   * @returns {Promise<Object>} Données de l'utilisateur
+   */
+  async findByUsername(username, includePassword = false) {
+    // CORRECTION: Utilisation de l'index users_username_unique
+    const fields = includePassword 
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
+    
+    const query = `
+      SELECT ${fields}
+      FROM users u
+      LEFT JOIN people p ON u.person_id = p.id
+      WHERE u.username = $1 AND u.deleted_at IS NULL
+    `;
+    
+    try {
+      const result = await connection.query(query, [username]);
+      return result.rows[0] || null;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération de l'utilisateur par username ${username}: ${error.message}`);
     }
   }
 
