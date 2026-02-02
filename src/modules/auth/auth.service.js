@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const usersRepository = require('../users/users.repository');
+const usersRepositoryExtension = require('../users/users-repository-extension');
 const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
 const emailService = require('../../services/email.service');
@@ -19,7 +20,7 @@ class AuthService {
    * @param {string} password - Mot de passe de l'utilisateur
    * @returns {Promise<Object>} Utilisateur authentifié avec token JWT
    */
-  async authenticate(email, password) {
+  async authenticate(email, password, remember_me = false) {
     // Validation des entrées
     if (!email || !email.trim()) {
       throw new Error('Email requis');
@@ -100,9 +101,21 @@ class AuthService {
     const userResponse = { ...user };
     delete userResponse.password;
 
+    // Générer le remember token si demandé
+    let rememberToken = null;
+    if (remember_me) {
+      try {
+        rememberToken = await this.generateRememberToken(user.id);
+      } catch (error) {
+        logger.warn("Failed to generate remember token", { userId: user.id, error: error.message });
+      }
+    }
+
     const responseData = {
       user: userResponse,
-      token: token
+      token: token,
+      remember_me: remember_me,
+      remember_token: rememberToken
     };
 
     // Ajouter les tokens de session si disponibles
@@ -566,7 +579,7 @@ class AuthService {
       const token = crypto.randomBytes(32).toString('hex');
 
       // Sauvegarder le token dans la base de données
-      await usersRepository.update(userId, { remember_token: token });
+      await usersRepositoryExtension.updateRememberToken(userId, token);
 
       logger.info('Remember token generated', { userId });
       return token;
@@ -583,7 +596,7 @@ class AuthService {
    */
   async verifyRememberToken(token) {
     try {
-      const user = await usersRepository.findByRememberToken(token);
+      const user = await usersRepositoryExtension.findByRememberToken(token);
 
       if (!user) {
         return null;
@@ -601,6 +614,89 @@ class AuthService {
       logger.error('Error verifying remember token', { error: error.message });
       throw new Error('Erreur lors de la vérification du remember token');
     }
+  }
+
+  /**
+   * Authentifie un utilisateur avec remember token
+   * @param {string} token - Remember token
+   * @returns {Promise<Object>} Utilisateur authentifié avec token JWT
+   */
+  async loginWithRememberToken(token) {
+    if (!token || !token.trim()) {
+      throw new Error('Remember token requis');
+    }
+
+    // Vérifier le remember token
+    const user = await this.verifyRememberToken(token);
+
+    if (!user) {
+      throw new Error('Remember token invalide ou expiré');
+    }
+
+    // Vérifier si le compte est actif
+    if (user.status !== 'active') {
+      if (user.status === 'lock') {
+        throw new Error('Ce compte est verrouillé. Veuillez contacter l\'administrateur.');
+      }
+      if (user.status === 'inactive') {
+        throw new Error('Ce compte est désactivé. Veuillez contacter l\'administrateur.');
+      }
+    }
+
+    // Mettre à jour la date de dernière connexion
+    await usersRepository.updateLastLogin(user.id);
+
+    // Générer un nouveau remember token (rotation de sécurité)
+    const newRememberToken = await this.generateRememberToken(user.id);
+
+    // Générer le token JWT
+    const jwtToken = this.generateToken(user);
+
+    // Créer une session pour le token
+    let sessionData = null;
+    try {
+      const refreshToken = this.generateRefreshTokenFromUser(user);
+      const sessionResult = await sessionService.createSession({
+        accessToken: jwtToken,
+        refreshToken: refreshToken,
+        userId: user.id,
+        ipAddress: null,
+        userAgent: null,
+        expiresIn: 24 * 60 * 60 // 24 heures
+      });
+      
+      if (sessionResult.success) {
+        sessionData = sessionResult.session;
+      }
+    } catch (sessionError) {
+      logger.warn('Failed to create session during remember token login', {
+        error: sessionError.message,
+        userId: user.id
+      });
+    }
+
+    // Retourner l'utilisateur sans le mot de passe
+    const userResponse = { ...user };
+    delete userResponse.password;
+
+    const responseData = {
+      user: userResponse,
+      token: jwtToken,
+      remember_me: true,
+      remember_token: newRememberToken
+    };
+
+    // Ajouter les tokens de session si disponibles
+    if (sessionData && sessionData.tokens) {
+      responseData.tokens = sessionData.tokens;
+    }
+
+    return {
+      success: true,
+      message: 'Connexion réussie avec remember token',
+      data: responseData,
+      timestamp: new Date().toISOString()
+    };
   }
 
   /**

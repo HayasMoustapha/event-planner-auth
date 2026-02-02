@@ -64,6 +64,11 @@ const validateLogin = [
     .notEmpty()
     .withMessage('Le mot de passe est requis'),
 
+  body('remember_me')
+    .optional()
+    .isBoolean()
+    .withMessage('Le champ remember_me doit être un booléen'),
+
   handleValidationErrors
 ];
 
