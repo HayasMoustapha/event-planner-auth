@@ -6,6 +6,14 @@ const { connection } = require('../../config/database');
  */
 class AccessesRepository {
   /**
+   * Obtient un client PostgreSQL pour les transactions
+   * @returns {Promise<Object>} Client PostgreSQL
+   */
+  async getClient() {
+    return connection;
+  }
+
+  /**
    * Crée une nouvelle association utilisateur-rôle
    * @param {Object} accessData - Données de l'accès
    * @returns {Promise<Object>} Accès créé

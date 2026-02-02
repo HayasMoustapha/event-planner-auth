@@ -320,6 +320,36 @@ class AccessesController {
   }
 
   /**
+   * Sélectionne un rôle métier post-inscription
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async selectBusinessRole(req, res, next) {
+    try {
+      const { role } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json(createResponse(
+          false,
+          'Utilisateur non authentifié'
+        ));
+      }
+
+      const result = await accessesService.selectBusinessRole(userId, role);
+
+      res.status(200).json(createResponse(
+        true,
+        'Rôle assigné avec succès',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Récupère les statistiques des accès
    * @param {Object} req - Requête Express
    * @param {Object} res - Réponse Express

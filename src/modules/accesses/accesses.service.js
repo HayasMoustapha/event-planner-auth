@@ -346,6 +346,127 @@ class AccessesService {
   }
 
   /**
+   * Sélectionne un rôle métier post-inscription avec transaction
+   * @param {number} userId - ID de l'utilisateur
+   * @param {string} roleCode - Code du rôle métier (designer, organizer, manager)
+   * @returns {Promise<Object>} Résultat de l'assignation avec permissions
+   */
+  async selectBusinessRole(userId, roleCode) {
+    if (!userId || userId <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+
+    if (!roleCode || !['designer', 'organizer', 'manager'].includes(roleCode)) {
+      throw new Error('Rôle invalide. Rôles autorisés: designer, organizer, manager');
+    }
+
+    // Démarrer une transaction PostgreSQL
+    const client = await accessesRepository.getClient();
+    
+    try {
+      await client.query('BEGIN');
+
+      // 1. Vérifier que l'utilisateur existe
+      const userResult = await client.query(
+        'SELECT id, email FROM users WHERE id = $1 AND deleted_at IS NULL',
+        [userId]
+      );
+
+      if (userResult.rows.length === 0) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      // 2. Vérifier que l'utilisateur n'a pas déjà de rôle métier
+      const existingBusinessRoleResult = await client.query(`
+        SELECT r.code 
+        FROM accesses a
+        JOIN roles r ON a.role_id = r.id
+        WHERE a.user_id = $1 
+        AND r.code IN ('designer', 'organizer', 'manager')
+        AND a.status = 'active'
+        AND a.deleted_at IS NULL
+        FOR UPDATE
+      `, [userId]);
+
+      if (existingBusinessRoleResult.rows.length > 0) {
+        const existingRole = existingBusinessRoleResult.rows[0].code;
+        throw new Error(`L'utilisateur a déjà un rôle métier: ${existingRole}`);
+      }
+
+      // 3. Récupérer le rôle demandé
+      const roleResult = await client.query(
+        'SELECT id, code, label FROM roles WHERE code = $1 AND deleted_at IS NULL',
+        [roleCode]
+      );
+
+      if (roleResult.rows.length === 0) {
+        throw new Error('Rôle non trouvé');
+      }
+
+      const role = roleResult.rows[0];
+
+      // 4. Créer l'association utilisateur-rôle
+      const accessResult = await client.query(`
+        INSERT INTO accesses (user_id, role_id, status, created_at, updated_at)
+        VALUES ($1, $2, 'active', NOW(), NOW())
+        ON CONFLICT (user_id, role_id) DO UPDATE SET
+          status = EXCLUDED.status,
+          updated_at = NOW()
+        RETURNING id, user_id, role_id, status, created_at
+      `, [userId, role.id]);
+
+      const access = accessResult.rows[0];
+
+      // 5. Récupérer toutes les permissions associées à ce rôle
+      const permissionsResult = await client.query(`
+        SELECT DISTINCT p.code, p.label, p."group"
+        FROM authorizations auth
+        JOIN permissions p ON auth.permission_id = p.id
+        WHERE auth.role_id = $1
+        AND auth.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        ORDER BY p."group", p.code
+      `, [role.id]);
+
+      const permissions = permissionsResult.rows;
+
+      // 6. Valider la transaction
+      await client.query('COMMIT');
+
+      return {
+        access: {
+          id: access.id,
+          userId: access.user_id,
+          roleId: access.role_id,
+          status: access.status,
+          createdAt: access.created_at
+        },
+        role: {
+          id: role.id,
+          code: role.code,
+          label: role.label
+        },
+        permissions: permissions.map(perm => ({
+          code: perm.code,
+          label: perm.label,
+          group: perm.group
+        })),
+        user: {
+          id: userId,
+          email: userResult.rows[0].email
+        }
+      };
+
+    } catch (error) {
+      // Rollback en cas d'erreur
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Retire plusieurs rôles d'un utilisateur
    * @param {number} userId - ID de l'utilisateur
    * @param {Array} roleIds - Liste des IDs de rôles à retirer

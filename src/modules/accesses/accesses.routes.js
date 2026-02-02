@@ -464,6 +464,75 @@ router.post('/user/:userId/roles/remove',
 
 /**
  * @swagger
+ * /api/accesses/select-role:
+ *   post:
+ *     summary: Sélectionner un rôle métier post-inscription
+ *     tags: [Accesses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - role
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 enum: [designer, organizer, manager]
+ *                 description: Rôle métier à sélectionner
+ *     responses:
+ *       200:
+ *         description: Rôle assigné avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Rôle assigné avec succès"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     role:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         code:
+ *                           type: string
+ *                         label:
+ *                           type: object
+ *                     permissions:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           code:
+ *                             type: string
+ *                           label:
+ *                             type: object
+ *       400:
+ *         description: Erreur de validation ou rôle déjà assigné
+ *       401:
+ *         description: Non authentifié
+ *       404:
+ *         description: Rôle non trouvé
+ */
+router.post('/select-role', 
+  // Pas de permission requise - route accessible par tout utilisateur authentifié
+  accessesValidation.validateSelectRole,
+  accessesController.selectBusinessRole
+);
+
+/**
+ * @swagger
  * /api/accesses/stats:
  *   get:
  *     summary: Récupérer les statistiques des accès

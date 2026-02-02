@@ -246,6 +246,20 @@ const validateQueryParams = [
   handleValidationErrors
 ];
 
+/**
+ * Validation pour la sélection de rôle métier post-inscription
+ */
+const validateSelectRole = [
+  body('role')
+    .trim()
+    .notEmpty()
+    .withMessage('Le rôle est requis')
+    .isIn(['designer', 'organizer', 'manager'])
+    .withMessage('Le rôle doit être designer, organizer ou manager'),
+
+  handleValidationErrors
+];
+
 module.exports = {
   validateCreateAccess,
   validateGetAccesses,
@@ -256,5 +270,6 @@ module.exports = {
   validateUpdateAccessStatus,
   validateAssignMultipleRoles,
   validateRemoveMultipleRoles,
-  validateQueryParams
+  validateQueryParams,
+  validateSelectRole
 };
