@@ -1,4 +1,4 @@
-const { connection } = require('../../config/database');
+const { connection, pool } = require('../../config/database');
 
 /**
  * Repository pour la gestion des accès (rôles utilisateurs)
@@ -7,10 +7,10 @@ const { connection } = require('../../config/database');
 class AccessesRepository {
   /**
    * Obtient un client PostgreSQL pour les transactions
-   * @returns {Promise<Object>} Client PostgreSQL
+   * @returns {Promise<Object>} Client PostgreSQL avec méthode release()
    */
   async getClient() {
-    return connection;
+    return await pool.connect();
   }
 
   /**

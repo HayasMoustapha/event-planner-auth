@@ -346,18 +346,73 @@ class AccessesService {
   }
 
   /**
-   * Sélectionne un rôle métier post-inscription avec transaction
+   * Récupère la liste des rôles métier disponibles pour la sélection post-inscription
    * @param {number} userId - ID de l'utilisateur
-   * @param {string} roleCode - Code du rôle métier (designer, organizer, manager)
-   * @returns {Promise<Object>} Résultat de l'assignation avec permissions
+   * @returns {Promise<Object>} Liste des rôles métier disponibles
    */
-  async selectBusinessRole(userId, roleCode) {
+  async getBusinessRoles(userId) {
     if (!userId || userId <= 0) {
       throw new Error('ID d\'utilisateur invalide');
     }
 
-    if (!roleCode || !['designer', 'organizer', 'manager'].includes(roleCode)) {
-      throw new Error('Rôle invalide. Rôles autorisés: designer, organizer, manager');
+    // Récupérer les rôles métier disponibles
+    const rolesResult = await accessesRepository.getClient().then(client => {
+      return client.query(`
+        SELECT r.id, r.code, r.label, r.description
+        FROM roles r
+        WHERE r.code IN ('designer', 'organizer', 'manager')
+        AND r.is_system = false
+        AND r.deleted_at IS NULL
+        ORDER BY r.code
+      `);
+    });
+
+    const roles = rolesResult.rows;
+
+    // Vérifier si l'utilisateur a déjà un rôle métier
+    const existingRoleResult = await accessesRepository.getClient().then(client => {
+      return client.query(`
+        SELECT r.id, r.code, r.label
+        FROM accesses a
+        JOIN roles r ON a.role_id = r.id
+        WHERE a.user_id = $1 
+        AND r.code IN ('designer', 'organizer', 'manager')
+        AND a.status = 'active'
+        AND a.deleted_at IS NULL
+      `, [userId]);
+    });
+
+    const existingRole = existingRoleResult.rows.length > 0 ? existingRoleResult.rows[0] : null;
+
+    return {
+      roles: roles.map(role => ({
+        id: role.id,
+        code: role.code,
+        label: role.label,
+        description: role.description
+      })),
+      userHasBusinessRole: existingRole !== null,
+      currentRole: existingRole ? {
+        id: existingRole.id,
+        code: existingRole.code,
+        label: existingRole.label
+      } : null
+    };
+  }
+
+  /**
+   * Sélectionne un rôle métier post-inscription avec transaction
+   * @param {number} userId - ID de l'utilisateur
+   * @param {number} roleId - ID du rôle métier (provenant de la table roles)
+   * @returns {Promise<Object>} Résultat de l'assignation avec permissions
+   */
+  async selectBusinessRole(userId, roleId) {
+    if (!userId || userId <= 0) {
+      throw new Error('ID d\'utilisateur invalide');
+    }
+
+    if (!roleId || roleId <= 0) {
+      throw new Error('ID de rôle invalide');
     }
 
     // Démarrer une transaction PostgreSQL
@@ -378,7 +433,7 @@ class AccessesService {
 
       // 2. Vérifier que l'utilisateur n'a pas déjà de rôle métier
       const existingBusinessRoleResult = await client.query(`
-        SELECT r.code 
+        SELECT r.code, r.id 
         FROM accesses a
         JOIN roles r ON a.role_id = r.id
         WHERE a.user_id = $1 
@@ -393,14 +448,14 @@ class AccessesService {
         throw new Error(`L'utilisateur a déjà un rôle métier: ${existingRole}`);
       }
 
-      // 3. Récupérer le rôle demandé
+      // 3. Récupérer et valider le rôle demandé
       const roleResult = await client.query(
-        'SELECT id, code, label FROM roles WHERE code = $1 AND deleted_at IS NULL',
-        [roleCode]
+        'SELECT id, code, label FROM roles WHERE id = $1 AND code IN (\'designer\', \'organizer\', \'manager\') AND deleted_at IS NULL',
+        [roleId]
       );
 
       if (roleResult.rows.length === 0) {
-        throw new Error('Rôle non trouvé');
+        throw new Error('Rôle métier non trouvé ou non autorisé');
       }
 
       const role = roleResult.rows[0];

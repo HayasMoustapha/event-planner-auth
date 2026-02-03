@@ -27,6 +27,7 @@ connection.on('error', (err) => {
 
 module.exports = {
   connection,
+  pool: connection, // connection est déjà un Pool
   dbConfig,
   dbType: 'postgres'
 };

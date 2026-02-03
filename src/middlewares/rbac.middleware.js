@@ -554,6 +554,27 @@ class RBACMiddleware {
       next();
     };
   }
+
+  /**
+   * Middleware qui bypass la vérification des permissions
+   * Nécessite seulement d'être authentifié
+   * @returns {Function} Middleware Express
+   */
+  bypassPermission() {
+    return (req, res, next) => {
+      // Vérifie seulement si l'utilisateur est authentifié
+      if (!req.user || !req.user.id) {
+        return res.status(401).json(createResponse(
+          false,
+          'Authentification requise',
+          { code: 'AUTHENTICATION_REQUIRED' }
+        ));
+      }
+      
+      // Continue sans vérifier les permissions
+      next();
+    };
+  }
 }
 
 // Créer une instance de la classe pour l'export
@@ -565,5 +586,6 @@ module.exports = {
   requireAnyRole: rbacMiddleware.requireAnyRole.bind(rbacMiddleware),
   requireAllRoles: rbacMiddleware.requireAllRoles.bind(rbacMiddleware),
   requireOwnershipOrRole: rbacMiddleware.requireOwnershipOrRole.bind(rbacMiddleware),
-  requireSuperAdmin: rbacMiddleware.requireSuperAdmin.bind(rbacMiddleware)
+  requireSuperAdmin: rbacMiddleware.requireSuperAdmin.bind(rbacMiddleware),
+  bypassPermission: rbacMiddleware.bypassPermission.bind(rbacMiddleware)
 };

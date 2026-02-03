@@ -6,10 +6,139 @@ const { asyncAccessesErrorHandler } = require('./accesses.errorHandler');
 const rbacMiddleware = require('../../middlewares/rbac.middleware');
 const authMiddleware = require('../../middlewares/auth.middleware');
 
+// Routes publiques (sans middleware RBAC) - à placer AVANT les middlewares globaux
+const publicRouter = express.Router();
+
+// Middleware d'authentification uniquement pour les routes publiques
+publicRouter.use(authMiddleware.authenticate);
+
+/**
+ * @swagger
+ * /api/accesses/business-roles:
+ *   get:
+ *     summary: Récupérer la liste des rôles métier disponibles pour la sélection post-inscription
+ *     tags: [Accesses]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Liste des rôles métier disponibles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Rôles métier récupérés avec succès"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     roles:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 5
+ *                           code:
+ *                             type: string
+ *                             example: "designer"
+ *                           label:
+ *                             type: object
+ *                             example: {"fr": "Designer", "en": "Designer"}
+ *                           description:
+ *                             type: object
+ *                             example: {"fr": "Créateur de templates", "en": "Template creator"}
+ *       401:
+ *         description: Non authentifié
+ */
+publicRouter.get('/business-roles', 
+  // Pas de permission requise - route accessible par tout utilisateur authentifié
+  accessesController.getBusinessRoles
+);
+
+/**
+ * @swagger
+ * /api/accesses/select-role:
+ *   post:
+ *     summary: Sélectionner un rôle métier post-inscription
+ *     tags: [Accesses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - roleId
+ *             properties:
+ *               roleId:
+ *                 type: integer
+ *                 minimum: 1
+ *                 description: ID du rôle métier à sélectionner (provenant de la table roles)
+ *                 example: 5
+ *     responses:
+ *       200:
+ *         description: Rôle assigné avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Rôle assigné avec succès"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     role:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         code:
+ *                           type: string
+ *                         label:
+ *                           type: object
+ *                     permissions:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           code:
+ *                             type: string
+ *                           label:
+ *                             type: object
+ *       400:
+ *         description: Erreur de validation ou rôle déjà assigné
+ *       401:
+ *         description: Non authentifié
+ *       404:
+ *         description: Rôle non trouvé
+ */
+publicRouter.post('/select-role', 
+  // Pas de permission requise - route accessible par tout utilisateur authentifié
+  accessesValidation.validateSelectRole,
+  accessesController.selectBusinessRole
+);
+
+// Monter les routes publiques
+router.use(publicRouter);
+
 // Middleware de gestion d'erreurs pour toutes les routes
 router.use(asyncAccessesErrorHandler);
 
-// Middleware d'authentification pour toutes les routes Accesses
+// Middleware d'authentification pour toutes les routes Accesses (avec RBAC)
 router.use(authMiddleware.authenticate);
 
 /**
@@ -460,75 +589,6 @@ router.post('/user/:userId/roles/remove',
   accessesValidation.validateUserId,
   accessesValidation.validateRemoveMultipleRoles,
   accessesController.removeMultipleRoles
-);
-
-/**
- * @swagger
- * /api/accesses/select-role:
- *   post:
- *     summary: Sélectionner un rôle métier post-inscription
- *     tags: [Accesses]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - role
- *             properties:
- *               role:
- *                 type: string
- *                 enum: [designer, organizer, manager]
- *                 description: Rôle métier à sélectionner
- *     responses:
- *       200:
- *         description: Rôle assigné avec succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Rôle assigné avec succès"
- *                 data:
- *                   type: object
- *                   properties:
- *                     role:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: integer
- *                         code:
- *                           type: string
- *                         label:
- *                           type: object
- *                     permissions:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           code:
- *                             type: string
- *                           label:
- *                             type: object
- *       400:
- *         description: Erreur de validation ou rôle déjà assigné
- *       401:
- *         description: Non authentifié
- *       404:
- *         description: Rôle non trouvé
- */
-router.post('/select-role', 
-  // Pas de permission requise - route accessible par tout utilisateur authentifié
-  accessesValidation.validateSelectRole,
-  accessesController.selectBusinessRole
 );
 
 /**

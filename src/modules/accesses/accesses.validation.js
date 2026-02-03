@@ -250,12 +250,12 @@ const validateQueryParams = [
  * Validation pour la sélection de rôle métier post-inscription
  */
 const validateSelectRole = [
-  body('role')
+  body('roleId')
     .trim()
     .notEmpty()
-    .withMessage('Le rôle est requis')
-    .isIn(['designer', 'organizer', 'manager'])
-    .withMessage('Le rôle doit être designer, organizer ou manager'),
+    .withMessage('L\'ID du rôle est requis')
+    .isInt({ min: 1 })
+    .withMessage('L\'ID du rôle doit être un entier positif'),
 
   handleValidationErrors
 ];

@@ -329,6 +329,17 @@ const validateChangePassword = [
       return true;
     }),
 
+  body('confirmPassword')
+    .trim()
+    .isLength({ min: 8 })
+    .withMessage('La confirmation du mot de passe doit contenir au moins 8 caractères')
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error('La confirmation du mot de passe doit correspondre au nouveau mot de passe');
+      }
+      return true;
+    }),
+
   body('userId')
     .optional()
     .isInt({ min: 1 })
@@ -346,32 +357,32 @@ const validateRegister = [
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Le prénom doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-zA-ZÀ-ÿ\s'-]+$/)
-    .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+    .matches(/^[a-zA-Z0-9À-ÿ\s'-]+$/)
+    .withMessage('Le prénom peut contenir des lettres, chiffres, espaces, tirets et apostrophes'),
 
   body('firstName')
     .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Le prénom doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-zA-ZÀ-ÿ\s'-]+$/)
-    .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+    .matches(/^[a-zA-Z0-9À-ÿ\s'-]+$/)
+    .withMessage('Le prénom peut contenir des lettres, chiffres, espaces, tirets et apostrophes'),
 
   body('last_name')
     .optional()
     .trim()
     .isLength({ max: 50 })
     .withMessage('Le nom ne doit pas dépasser 50 caractères')
-    .matches(/^[a-zA-ZÀ-ÿ\s'-]*$/)
-    .withMessage('Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+    .matches(/^[a-zA-Z0-9À-ÿ\s'-]*$/)
+    .withMessage('Le nom peut contenir des lettres, chiffres, espaces, tirets et apostrophes'),
 
   body('lastName')
     .optional()
     .trim()
     .isLength({ max: 50 })
     .withMessage('Le nom ne doit pas dépasser 50 caractères')
-    .matches(/^[a-zA-ZÀ-ÿ\s'-]*$/)
-    .withMessage('Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+    .matches(/^[a-zA-Z0-9À-ÿ\s'-]*$/)
+    .withMessage('Le nom peut contenir des lettres, chiffres, espaces, tirets et apostrophes'),
 
 
 
@@ -401,8 +412,8 @@ const validateRegister = [
   body('username')
     .optional()
     .trim()
-    .matches(/^[a-zA-Z0-9_]{3,20}$/)
-    .withMessage('Le username doit contenir entre 3 et 20 caractères alphanumériques et underscores'),
+    .matches(/^[a-zA-Z0-9_\-\.]{3,30}$/)
+    .withMessage('Le username doit contenir entre 3 et 30 caractères alphanumériques, underscores, tirets et points'),
 
   body('userCode')
     .optional()
@@ -480,7 +491,7 @@ const validateEmailParam = [
 const validateUsernameParam = [
   param('username')
     .trim()
-    .matches(/^[a-zA-Z0-9_]{3,20}$/)
+    .matches(/^[a-zA-Z0-9_\-\.]{3,30}$/)
     .withMessage('Format de username invalide'),
 
   handleValidationErrors

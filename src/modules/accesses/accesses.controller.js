@@ -320,14 +320,13 @@ class AccessesController {
   }
 
   /**
-   * Sélectionne un rôle métier post-inscription
+   * Récupère la liste des rôles métier disponibles pour la sélection post-inscription
    * @param {Object} req - Requête Express
    * @param {Object} res - Réponse Express
    * @param {Function} next - Middleware suivant
    */
-  async selectBusinessRole(req, res, next) {
+  async getBusinessRoles(req, res, next) {
     try {
-      const { role } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -337,7 +336,37 @@ class AccessesController {
         ));
       }
 
-      const result = await accessesService.selectBusinessRole(userId, role);
+      const result = await accessesService.getBusinessRoles(userId);
+
+      res.status(200).json(createResponse(
+        true,
+        'Rôles métier récupérés avec succès',
+        result
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Sélectionne un rôle métier post-inscription
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async selectBusinessRole(req, res, next) {
+    try {
+      const { roleId } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json(createResponse(
+          false,
+          'Utilisateur non authentifié'
+        ));
+      }
+
+      const result = await accessesService.selectBusinessRole(userId, roleId);
 
       res.status(200).json(createResponse(
         true,
