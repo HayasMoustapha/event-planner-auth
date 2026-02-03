@@ -314,16 +314,17 @@ class AuthController {
    */
   async verifyEmailOtp(req, res, next) {
     try {
-      const { email, code, personId } = req.body;
+      const { email, otpCode, code, personId } = req.body;
+      const finalCode = otpCode || code;
 
-      if (!email || !code) {
+      if (!email || !finalCode) {
         return res.status(400).json(createResponse(
           false,
           'Email et code OTP requis'
         ));
       }
 
-      const result = await otpService.verifyEmailOtp(code, email, personId);
+      const result = await otpService.verifyEmailOtp(finalCode, email, personId);
 
       res.status(200).json(createResponse(
         true,
@@ -343,16 +344,17 @@ class AuthController {
    */
   async verifyPhoneOtp(req, res, next) {
     try {
-      const { phone, code, personId } = req.body;
+      const { phone, otpCode, code, personId } = req.body;
+      const finalCode = otpCode || code;
 
-      if (!phone || !code) {
+      if (!phone || !finalCode) {
         return res.status(400).json(createResponse(
           false,
           'Téléphone et code OTP requis'
         ));
       }
 
-      const result = await otpService.verifyPhoneOtp(code, phone, personId);
+      const result = await otpService.verifyPhoneOtp(finalCode, phone, personId);
 
       res.status(200).json(createResponse(
         true,
@@ -506,10 +508,10 @@ class AuthController {
    */
   async resetPasswordWithOtp(req, res, next) {
     try {
-      const { email, code, token, newPassword } = req.body;
-      const otpCode = code || token;
+      const { email, otpCode, code, token, newPassword } = req.body;
+      const finalCode = otpCode || code || token;
 
-      if (!email || !otpCode || !newPassword) {
+      if (!email || !finalCode || !newPassword) {
         return res.status(400).json(createResponse(
           false,
           'Email, code OTP et nouveau mot de passe requis'
@@ -528,7 +530,7 @@ class AuthController {
       }
 
       // Vérifier l'OTP de réinitialisation
-      const otpResult = await otpService.verifyPasswordResetOtp(otpCode, email, person.id);
+      const otpResult = await otpService.verifyPasswordResetOtp(finalCode, email, person.id);
 
       // Récupérer l'utilisateur associé
       const usersRepository = require('../users/users.repository');
@@ -632,17 +634,17 @@ class AuthController {
    */
   async hasActiveOtp(req, res, next) {
     try {
-      const { userId } = req.params;
+      const { personId } = req.params;
       const { type } = req.query;
 
-      if (!userId) {
+      if (!personId) {
         return res.status(400).json(createResponse(
           false,
-          'ID utilisateur requis'
+          'ID personne requis'
         ));
       }
 
-      const hasActive = await otpService.hasActiveOtp(parseInt(userId), type);
+      const hasActive = await otpService.hasActiveOtp(parseInt(personId), type);
 
       res.status(200).json(createResponse(
         true,

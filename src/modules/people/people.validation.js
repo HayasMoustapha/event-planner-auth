@@ -67,6 +67,14 @@ const validateCreate = [
     .matches(/^[a-zA-Z\u00C0-\u017F\s'\-]+$/)
     .withMessage('Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
 
+  body('first_name')
+    .custom((value, { req }) => {
+      if (!value && !req.body.firstName) {
+        throw new Error('Le prénom est obligatoire');
+      }
+      return true;
+    }),
+
   body('last_name')
     .optional()
     .trim()

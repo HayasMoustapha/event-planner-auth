@@ -64,8 +64,8 @@ const validateCreateAccess = [
   body('status')
     .optional()
     .trim()
-    .isIn(['active', 'inactive', 'lock'])
-    .withMessage('Le statut doit être active, inactive ou lock'),
+    .isIn(['active', 'inactive'])
+    .withMessage('Le statut doit être active ou inactive'),
 
   handleValidationErrors
 ];
@@ -93,8 +93,8 @@ const validateGetAccesses = [
   query('status')
     .optional()
     .trim()
-    .isIn(['active', 'inactive', 'lock'])
-    .withMessage('Le statut de filtre doit être active, inactive ou lock'),
+    .isIn(['active', 'inactive'])
+    .withMessage('Le statut de filtre doit être active ou inactive'),
 
   query('userId')
     .optional()
@@ -187,8 +187,8 @@ const validateUpdateAccessStatus = [
     .trim()
     .notEmpty()
     .withMessage('Le statut est requis')
-    .isIn(['active', 'inactive', 'lock'])
-    .withMessage('Le statut doit être active, inactive ou lock'),
+    .isIn(['active', 'inactive'])
+    .withMessage('Le statut doit être active ou inactive'),
 
   handleValidationErrors
 ];

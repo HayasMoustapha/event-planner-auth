@@ -127,6 +127,20 @@ const validateToken = [
 ];
 
 /**
+ * Validation pour la connexion avec remember token
+ */
+const validateRememberToken = [
+  body('token')
+    .trim()
+    .notEmpty()
+    .withMessage('Le remember token est requis')
+    .isLength({ min: 10 })
+    .withMessage('Le remember token est invalide'),
+
+  handleValidationErrors
+];
+
+/**
  * Validation pour la génération d'OTP par email
  */
 const validateGenerateEmailOtp = [
@@ -518,6 +532,7 @@ module.exports = {
   validateLoginWithOtp,
   validateRefreshToken,
   validateToken,
+  validateRememberToken,
   validateGenerateEmailOtp,
   validateGeneratePhoneOtp,
   validateVerifyEmailOtp,

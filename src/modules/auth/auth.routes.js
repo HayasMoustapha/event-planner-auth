@@ -22,7 +22,7 @@ router.post('/login',
 
 // Connexion avec remember token
 router.post('/login-remember',
-  authValidation.validateLogin,
+  authValidation.validateRememberToken,
   authController.loginWithRememberToken
 );
 
