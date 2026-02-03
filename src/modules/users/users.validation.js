@@ -79,9 +79,8 @@ const validateCreate = [
     .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
 
   body('user_code')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Le code utilisateur est requis')
     .isLength({ max: 50 })
     .withMessage('Le code utilisateur ne doit pas dépasser 50 caractères'),
 
@@ -98,7 +97,19 @@ const validateCreate = [
     .isLength({ min: 1, max: 50 })
     .withMessage('Le prénom doit contenir entre 1 et 50 caractères'),
 
+  body('first_name')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Le prénom doit contenir entre 1 et 50 caractères'),
+
   body('lastName')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Le nom doit contenir entre 1 et 50 caractères'),
+
+  body('last_name')
     .optional()
     .trim()
     .isLength({ min: 1, max: 50 })
@@ -146,7 +157,19 @@ const validateUpdate = [
     .isLength({ min: 1, max: 50 })
     .withMessage('Le prénom doit contenir entre 1 et 50 caractères'),
 
+  body('first_name')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Le prénom doit contenir entre 1 et 50 caractères'),
+
   body('lastName')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Le nom doit contenir entre 1 et 50 caractères'),
+
+  body('last_name')
     .optional()
     .trim()
     .isLength({ min: 1, max: 50 })

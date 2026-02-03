@@ -132,6 +132,15 @@ class UsersController {
         userData.userCode = userData.user_code;
         delete userData.user_code;
       }
+      // Convertir snake_case en camelCase si nécessaire
+      if (userData.first_name && !userData.firstName) {
+        userData.firstName = userData.first_name;
+        delete userData.first_name;
+      }
+      if (userData.last_name && !userData.lastName) {
+        userData.lastName = userData.last_name;
+        delete userData.last_name;
+      }
       
       // Récupérer l'ID de l'utilisateur authentifié si disponible
       const createdBy = req.user?.id || null;
@@ -164,7 +173,15 @@ class UsersController {
       const { id } = req.params;
       
       // Utiliser req.body directement avec validation simple
-      const updateData = req.body;
+      const updateData = { ...req.body };
+      if (updateData.first_name && !updateData.firstName) {
+        updateData.firstName = updateData.first_name;
+        delete updateData.first_name;
+      }
+      if (updateData.last_name && !updateData.lastName) {
+        updateData.lastName = updateData.last_name;
+        delete updateData.last_name;
+      }
       
       // Debug: afficher les données reçues
       console.log('🔍 Debug update - req.body:', req.body);
@@ -178,7 +195,7 @@ class UsersController {
       }
       
       // Valider manuellement les champs autorisés
-      const allowedFields = ['username', 'email', 'password', 'firstName', 'lastName', 'phone', 'status', 'personId', 'person_id'];
+      const allowedFields = ['username', 'email', 'password', 'firstName', 'lastName', 'first_name', 'last_name', 'phone', 'status', 'personId', 'person_id'];
       const invalidFields = Object.keys(updateData).filter(field => !allowedFields.includes(field));
       
       if (invalidFields.length > 0) {

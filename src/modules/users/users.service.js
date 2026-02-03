@@ -10,6 +10,34 @@ const authService = require('../auth/auth.service');
  */
 class UsersService {
   /**
+   * Génère un user_code unique (format similaire au service d'identités)
+   * @returns {Promise<string>} code unique
+   */
+  async generateUniqueUserCode() {
+    const { connection } = require('../../config/database');
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (attempts < maxAttempts) {
+      const userCode = `U${Date.now()}${Math.floor(Math.random() * 100)}`;
+      try {
+        const result = await connection.query(
+          'SELECT id FROM users WHERE user_code = $1 AND deleted_at IS NULL',
+          [userCode]
+        );
+        if (result.rows.length === 0) {
+          return userCode;
+        }
+      } catch (error) {
+        // En cas d'erreur DB, retourner quand même un code probable
+        return userCode;
+      }
+      attempts++;
+    }
+
+    return `U${Date.now()}${Math.floor(Math.random() * 10000)}`;
+  }
+  /**
    * Récupère tous les utilisateurs avec pagination et filtres
    * @param {Object} options - Options de recherche et pagination
    * @returns {Promise<Object>} Données paginées
@@ -118,12 +146,6 @@ class UsersService {
       lastName = null
     } = userData;
 
-    
-    // Gestion obligatoire de person_id (contrainte NOT NULL)
-    if (!person_id) {
-      throw new Error('La personne est obligatoire');
-    }
-
     // Validation des champs obligatoires
     if (!username || !username.trim()) {
       throw new Error('Le username est obligatoire');
@@ -134,8 +156,9 @@ class UsersService {
     if (!password || !password.trim()) {
       throw new Error('Le mot de passe est obligatoire');
     }
+    // Générer automatiquement userCode si absent
     if (!userCode || !userCode.trim()) {
-      throw new Error('Le userCode est obligatoire');
+      userCode = await this.generateUniqueUserCode();
     }
 
     // Gestion obligatoire de person_id (contrainte NOT NULL)
@@ -164,7 +187,7 @@ class UsersService {
           phone: phone || null,
           createdBy
         });
-        
+        person_id = person.id;
         console.log(' Personne créée avec ID:', person_id);
         
       } catch (error) {
