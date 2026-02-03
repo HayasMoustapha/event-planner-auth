@@ -36,11 +36,9 @@ class RegistrationService {
    * @param {string} last_name - Nom de famille
    * @returns {string} Code utilisateur généré
    */
-  generateUserCode(first_name, last_name) {
-    const firstName = first_name?.trim() || '';
-    const lastName = last_name?.trim() || '';
-    const base = `${firstName.toLowerCase()}${lastName.toLowerCase()}`.replace(/[^a-z0-9]/g, '');
-    return base || 'user';
+  async generateUserCode() {
+    const usersService = require('../users/users.service');
+    return await usersService.generateUniqueUserCode();
   }
 
   /**
@@ -56,8 +54,7 @@ class RegistrationService {
       email,
       phone,
       password,
-      username,
-      userCode
+      username
     } = registrationData;
 
     // Validation des données de base
@@ -125,7 +122,7 @@ class RegistrationService {
         username: username?.trim() || email.split('@')[0],
         email: `${email.trim().toLowerCase()}+user`, // Email unique pour éviter la contrainte
         password: password,
-        userCode: userCode || this.generateUserCode(first_name, last_name),
+        userCode: await this.generateUserCode(),
         phone: phone?.trim() || null,
         status: 'inactive', // Inactif jusqu'à validation OTP
         person_id: person.id

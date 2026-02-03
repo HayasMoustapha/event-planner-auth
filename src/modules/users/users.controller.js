@@ -141,6 +141,10 @@ class UsersController {
         userData.lastName = userData.last_name;
         delete userData.last_name;
       }
+      // Champs gérés par le serveur
+      if (userData.user_code) delete userData.user_code;
+      if (userData.userCode) delete userData.userCode;
+      if (userData.status) delete userData.status;
       
       // Récupérer l'ID de l'utilisateur authentifié si disponible
       const createdBy = req.user?.id || null;
@@ -182,6 +186,10 @@ class UsersController {
         updateData.lastName = updateData.last_name;
         delete updateData.last_name;
       }
+      // Champs gérés par le serveur
+      if (updateData.user_code) delete updateData.user_code;
+      if (updateData.userCode) delete updateData.userCode;
+      if (updateData.status) delete updateData.status;
       
       // Debug: afficher les données reçues
       console.log('🔍 Debug update - req.body:', req.body);

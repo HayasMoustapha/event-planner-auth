@@ -78,11 +78,6 @@ const validateCreate = [
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
 
-  body('user_code')
-    .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage('Le code utilisateur ne doit pas dépasser 50 caractères'),
 
   // Champs optionnels
   body('phone')
@@ -115,10 +110,6 @@ const validateCreate = [
     .isLength({ min: 1, max: 50 })
     .withMessage('Le nom doit contenir entre 1 et 50 caractères'),
 
-  body('status')
-    .optional()
-    .isIn(['active', 'inactive', 'lock'])
-    .withMessage('Le statut doit être active, inactive ou lock'),
 
   body('personId')
     .optional()
@@ -192,11 +183,6 @@ const validateUpdate = [
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
 
-  body('userCode')
-    .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage('Le code utilisateur ne doit pas dépasser 50 caractères'),
 
   body('phone')
     .optional()
@@ -204,10 +190,6 @@ const validateUpdate = [
     .matches(/^[+]?[\d\s\-\(\)]+$/)
     .withMessage('Format de numéro de téléphone invalide'),
 
-  body('status')
-    .optional()
-    .isIn(['active', 'inactive', 'lock'])
-    .withMessage('Le statut doit être active, inactive ou lock'),
 
   body('personId')
     .optional()

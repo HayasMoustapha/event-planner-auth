@@ -138,9 +138,7 @@ class UsersService {
       username,
       email,
       password,
-      userCode = null,
       phone = null,
-      status = 'active',
       person_id ,  // Ajout pour supporter person_id
       firstName = null,
       lastName = null
@@ -156,10 +154,8 @@ class UsersService {
     if (!password || !password.trim()) {
       throw new Error('Le mot de passe est obligatoire');
     }
-    // Générer automatiquement userCode si absent
-    if (!userCode || !userCode.trim()) {
-      userCode = await this.generateUniqueUserCode();
-    }
+    // user_code est géré par le serveur (génération normalisée)
+    const userCode = await this.generateUniqueUserCode();
 
     // Gestion obligatoire de person_id (contrainte NOT NULL)
     if (!person_id) {
@@ -228,10 +224,8 @@ class UsersService {
       throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
     }
 
-    // Validation du statut
-    if (!['active', 'inactive', 'lock'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
-    }
+    // Statut géré par le serveur
+    const status = 'active';
 
     // Nettoyage des données
     const cleanData = {
@@ -337,9 +331,7 @@ class UsersService {
       username,
       email,
       password,
-      userCode,
       phone,
-      status,
       person_id
     } = updateData;
 
@@ -358,18 +350,12 @@ class UsersService {
         throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
       }
     }
-    if (status && !['active', 'inactive', 'lock'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
-    }
-
     // Nettoyage des données
     const cleanData = {};
     if (username !== undefined) cleanData.username = username.trim().toLowerCase();
     if (email !== undefined) cleanData.email = email.toLowerCase().trim();
     if (password !== undefined) cleanData.password = password.trim();
-    if (userCode !== undefined) cleanData.userCode = userCode.trim();
     if (phone !== undefined) cleanData.phone = phone ? phone.trim() : null;
-    if (status !== undefined) cleanData.status = status;
     if (person_id !== undefined) cleanData.person_id = person_id;
     cleanData.updatedBy = updatedBy;
 
