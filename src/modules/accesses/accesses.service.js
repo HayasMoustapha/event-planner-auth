@@ -360,8 +360,8 @@ class AccessesService {
       return client.query(`
         SELECT r.id, r.code, r.label, r.description
         FROM roles r
-        WHERE r.code IN ('designer', 'organizer', 'manager')
-        AND r.is_system = false
+        WHERE r.code IN ('designer', 'organizer', 'manager', 'user')
+        AND (r.is_system = false OR r.code = 'user')
         AND r.deleted_at IS NULL
         ORDER BY r.code
       `);
@@ -376,7 +376,7 @@ class AccessesService {
         FROM accesses a
         JOIN roles r ON a.role_id = r.id
         WHERE a.user_id = $1 
-        AND r.code IN ('designer', 'organizer', 'manager')
+        AND r.code IN ('designer', 'organizer', 'manager', 'user')
         AND a.status = 'active'
         AND a.deleted_at IS NULL
       `, [userId]);
@@ -437,7 +437,7 @@ class AccessesService {
         FROM accesses a
         JOIN roles r ON a.role_id = r.id
         WHERE a.user_id = $1 
-        AND r.code IN ('designer', 'organizer', 'manager')
+        AND r.code IN ('designer', 'organizer', 'manager', 'user')
         AND a.status = 'active'
         AND a.deleted_at IS NULL
         FOR UPDATE
@@ -450,7 +450,7 @@ class AccessesService {
 
       // 3. Récupérer et valider le rôle demandé
       const roleResult = await client.query(
-        'SELECT id, code, label FROM roles WHERE id = $1 AND code IN (\'designer\', \'organizer\', \'manager\') AND deleted_at IS NULL',
+        'SELECT id, code, label FROM roles WHERE id = $1 AND code IN (\'designer\', \'organizer\', \'manager\', \'user\') AND deleted_at IS NULL',
         [roleId]
       );
 

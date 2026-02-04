@@ -77,6 +77,10 @@ class DatabaseBootstrap {
       await this.ensureSuperAdminPermissions();
       actions.push('Garantie des permissions super-admin');
 
+      // Phase 7: Garantir les permissions des rôles métier
+      await this.ensureBusinessRolePermissions();
+      actions.push('Garantie des permissions des rôles métier');
+
       // Libération du verrou
       await this.releaseLock();
       lockAcquired = false;
@@ -760,6 +764,52 @@ class DatabaseBootstrap {
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('❌ Erreur lors de la garantie des permissions super-admin:', error.message);
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Donne toutes les permissions aux rôles métier (organizer, designer, user)
+   * Objectif: éviter les blocages RBAC pour les workflows
+   */
+  async ensureBusinessRolePermissions() {
+    const client = await connection.connect();
+    try {
+      const roleCodes = ['organizer', 'designer', 'user'];
+
+      const roleResult = await client.query(
+        'SELECT id, code FROM roles WHERE code = ANY($1)',
+        [roleCodes]
+      );
+
+      if (roleResult.rows.length === 0) {
+        console.log('⚠️  Aucun rôle métier trouvé pour l\'assignation des permissions');
+        return;
+      }
+
+      const permResult = await client.query('SELECT id FROM permissions');
+      if (permResult.rows.length === 0) {
+        console.log('⚠️  Aucune permission disponible pour l\'assignation');
+        return;
+      }
+
+      await client.query(
+        `
+        INSERT INTO authorizations (role_id, permission_id, created_at, updated_at)
+        SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        FROM roles r
+        CROSS JOIN permissions p
+        WHERE r.code = ANY($1)
+        ON CONFLICT ON CONSTRAINT authorizations_unique_role_permission_menu DO NOTHING
+        `,
+        [roleCodes]
+      );
+
+      console.log('✅ Permissions des rôles métier garanties');
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'assignation des permissions aux rôles métier:', error.message);
       throw error;
     } finally {
       client.release();
