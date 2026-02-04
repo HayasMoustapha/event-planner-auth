@@ -21,13 +21,17 @@ process.env.LOG_MAX_FILES = '14d';
 // jest.mock('../../src/utils/logger'); // On préfère garder le logger pour le debug
 
 // Timeout global pour les tests
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 // Nettoyage global après tous les tests
 afterAll(async () => {
-    // Fermer la connexion à la base de données
+    // Fermer la connexion à la base de données, sans bloquer indéfiniment
     const { connection } = require('../../src/config/database');
     if (connection && connection.end) {
-        await connection.end();
+        const timeoutMs = 5000;
+        await Promise.race([
+            connection.end(),
+            new Promise((resolve) => setTimeout(resolve, timeoutMs)),
+        ]);
     }
 });

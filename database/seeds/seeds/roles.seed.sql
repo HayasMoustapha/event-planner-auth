@@ -1,28 +1,30 @@
 -- ========================================
 -- SEED DES RÔLES SYSTÈME RBAC (POSTGRESQL)
 -- ========================================
--- Création des rôles hiérarchiques pour le système RBAC
+-- Nettoyage + normalisation : 4 rôles uniques
 -- Compatible avec le schéma PostgreSQL actuel
 
--- Insertion des rôles de base avec hiérarchie claire (IDEMPOTENT)
+-- Supprimer tous les rôles hors modèle cible (cascade sur authorizations/accesses)
+DELETE FROM roles
+WHERE code NOT IN ('super_admin', 'organizer', 'designer', 'user');
+
+-- Insertion / mise à jour des rôles cibles (IDEMPOTENT)
 INSERT INTO roles (code, label, description, is_system, level, created_at, updated_at) VALUES
--- Rôles système (non modifiables)
-('super_admin', '{"fr": "Super Administrateur", "en": "Super Administrator"}', '{"fr": "Super administrateur avec tous les droits absolus", "en": "Super administrator with absolute rights"}', true, 1, NOW(), NOW()),
-('admin', '{"fr": "Administrateur", "en": "Administrator"}', '{"fr": "Administrateur avec droits de gestion complète", "en": "Administrator with full management rights"}', true, 2, NOW(), NOW()),
-('manager', '{"fr": "Gestionnaire", "en": "Manager"}', '{"fr": "Gestionnaire avec droits de gestion limités", "en": "Manager with limited management rights"}', true, 3, NOW(), NOW()),
-('user', '{"fr": "Utilisateur", "en": "User"}', '{"fr": "Utilisateur standard avec droits de base", "en": "Standard user with basic rights"}', true, 4, NOW(), NOW()),
-('guest', '{"fr": "Invité", "en": "Guest"}', '{"fr": "Invité avec droits de lecture seule", "en": "Guest with read-only rights"}', true, 5, NOW(), NOW()),
--- Rôles métier (modifiables)
-('event_manager', '{"fr": "Gestionnaire d''événements", "en": "Event Manager"}', '{"fr": "Gestionnaire spécialisé dans les événements", "en": "Specialized event manager"}', false, 3, NOW(), NOW()),
-('content_manager', '{"fr": "Gestionnaire de contenu", "en": "Content Manager"}', '{"fr": "Gestionnaire du contenu de la plateforme", "en": "Platform content manager"}', false, 3, NOW(), NOW()),
-('support_agent', '{"fr": "Agent de support", "en": "Support Agent"}', '{"fr": "Agent de support client", "en": "Customer support agent"}', false, 4, NOW(), NOW()),
-('moderator', '{"fr": "Modérateur", "en": "Moderator"}', '{"fr": "Modérateur de contenu et communauté", "en": "Content and community moderator"}', false, 4, NOW(), NOW()),
-('developer', '{"fr": "Développeur", "en": "Developer"}', '{"fr": "Développeur avec accès techniques", "en": "Developer with technical access"}', false, 3, NOW(), NOW())
-ON CONFLICT (code) DO NOTHING;
+('super_admin', '{"fr": "Super Administrateur", "en": "Super Administrator"}'::jsonb, '{"fr": "Super administrateur avec tous les droits absolus", "en": "Super administrator with absolute rights"}'::jsonb, true, 1, NOW(), NOW()),
+('organizer', '{"fr": "Organisateur", "en": "Organizer"}'::jsonb, '{"fr": "Organisateur d''événements et gestionnaire de participants", "en": "Event organizer and participant manager"}'::jsonb, false, 3, NOW(), NOW()),
+('designer', '{"fr": "Designer", "en": "Designer"}'::jsonb, '{"fr": "Créateur de templates et designs visuels", "en": "Template creator and visual designer"}'::jsonb, false, 3, NOW(), NOW()),
+('user', '{"fr": "Utilisateur", "en": "User"}'::jsonb, '{"fr": "Utilisateur standard avec droits de base", "en": "Standard user with basic rights"}'::jsonb, true, 4, NOW(), NOW())
+ON CONFLICT (code) DO UPDATE SET
+  label = EXCLUDED.label,
+  description = EXCLUDED.description,
+  is_system = EXCLUDED.is_system,
+  level = EXCLUDED.level,
+  deleted_at = NULL,
+  updated_at = NOW();
 
 -- Afficher confirmation
 DO $$
 BEGIN
-    RAISE NOTICE '✅ Rôles créés avec succès: % rôles insérés', 
-        (SELECT COUNT(*) FROM roles);
+    RAISE NOTICE '✅ Rôles normalisés avec succès: % rôles actifs', 
+        (SELECT COUNT(*) FROM roles WHERE deleted_at IS NULL);
 END $$;

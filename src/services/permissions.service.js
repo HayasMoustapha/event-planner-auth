@@ -113,7 +113,7 @@ class PermissionsService {
 
     try {
       const query = `
-        SELECT r.id, r.code, r.label, r."group", r.description
+        SELECT r.id, r.code, r.label, r.description
         FROM roles r
         INNER JOIN accesses ur ON r.id = ur.role_id
         WHERE ur.user_id = $1 
@@ -295,7 +295,7 @@ class PermissionsService {
 
     try {
       const query = `
-        SELECT r.id, r.code, r.label, r."group", r.description
+        SELECT r.id, r.code, r.label, r.description
         FROM roles r
         WHERE r.deleted_at IS NULL
         ORDER BY r.code ASC

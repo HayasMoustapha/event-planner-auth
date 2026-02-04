@@ -127,7 +127,8 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
  '{"fr": "Audit système", "en": "System audit"}', 
  'system', 
  '{"fr": "Permet d''accéder aux logs et rapports d''audit", "en": "Allows accessing audit logs and reports"}',
- NOW(), NOW());
+ NOW(), NOW())
+ON CONFLICT (code) DO NOTHING;
 
 -- Mettre à jour la séquence pour les prochaines insertions
 SELECT setval('permissions_id_seq', (SELECT MAX(id) FROM permissions));
