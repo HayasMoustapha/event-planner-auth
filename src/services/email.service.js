@@ -321,6 +321,49 @@ class EmailService {
   }
 
   /**
+   * Envoie un email de confirmation d'activation de compte
+   * @param {string} email - Adresse email du destinataire
+   * @param {Object} userData - Données de l'utilisateur (firstName, lastName, username, activationDate, email)
+   * @param {Object} options - Options additionnelles
+   * @returns {Promise<boolean>} True si envoyé avec succès
+   */
+  async sendAccountActivationEmail(email, userData, options = {}) {
+    try {
+      if (!this.isConfigured) {
+        return this.fallbackAccountActivation(email, userData);
+      }
+
+      const { subject, html, text } = this.generateAccountActivationTemplate(userData, options);
+
+      const mailOptions = {
+        from: `"${options.fromName || 'Event Planner'}" <${configValidation.getConfig().SMTP_USER}>`,
+        to: email,
+        subject,
+        html,
+        text
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+
+      logger.security('Account activation email sent', {
+        email,
+        username: userData.username,
+        messageId: result.messageId
+      });
+
+      return true;
+    } catch (error) {
+      logger.error('Failed to send account activation email', {
+        email,
+        username: userData.username,
+        error: error.message
+      });
+
+      return this.fallbackAccountActivation(email, userData);
+    }
+  }
+
+  /**
    * Génère le template pour les emails OTP
    * @param {string} email - Email du destinataire
    * @param {string} otpCode - Code OTP
@@ -560,6 +603,115 @@ Pour définir un nouveau mot de passe, visitez : ${resetUrl}
   }
 
   /**
+   * Génère le template pour l'email d'activation de compte
+   * @param {Object} userData - Données de l'utilisateur (firstName, lastName, username, activationDate, email)
+   * @param {Object} options - Options additionnelles
+   * @returns {Object} Template généré
+   */
+  generateAccountActivationTemplate(userData, options = {}) {
+    const loginUrl = options.loginUrl || 'http://localhost:3000/login';
+    const subject = '✅ Votre compte Event Planner a été activé !';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Compte Activé</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #10b981; color: white; padding: 20px; text-align: center; }
+          .content { padding: 30px 20px; background: #f9fafb; }
+          .button { display: inline-block; background: #10b981; color: white; padding: 12px 24px; 
+                   text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+          .success-box { background: #d1fae5; border: 1px solid #10b981; padding: 20px; 
+                       border-radius: 8px; margin: 20px 0; text-align: center; }
+          .info-box { background: #dbeafe; border: 1px solid #3b82f6; padding: 15px; 
+                    border-radius: 6px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎉 Bienvenue !</h1>
+            <p>Votre compte est maintenant activé</p>
+          </div>
+          <div class="content">
+            <p>Bonjour ${userData.firstName || userData.username},</p>
+            
+            <div class="success-box">
+              <h2>✅ Compte Activé avec Succès !</h2>
+              <p>Votre compte Event Planner a été vérifié et activé le ${userData.activationDate}.</p>
+              <p>Vous pouvez maintenant vous connecter et utiliser toutes les fonctionnalités de la plateforme.</p>
+            </div>
+            
+            <div style="text-align: center;">
+              <a href="${loginUrl}" class="button">Me connecter maintenant</a>
+            </div>
+            
+            <div class="info-box">
+              <strong>📋 Informations de votre compte :</strong>
+              <ul>
+                <li><strong>Nom d'utilisateur :</strong> ${userData.username}</li>
+                <li><strong>Email :</strong> ${userData.email}</li>
+                <li><strong>Date d'activation :</strong> ${userData.activationDate}</li>
+              </ul>
+            </div>
+            
+            <p><strong>Prochaines étapes :</strong></p>
+            <ul>
+              <li>Connectez-vous à votre compte</li>
+              <li>Complétez votre profil si nécessaire</li>
+              <li>Explorez les fonctionnalités d'Event Planner</li>
+            </ul>
+            
+            <p>Si vous avez des questions ou besoin d'aide, n'hésitez pas à contacter notre support.</p>
+            
+            <p>À très bientôt sur Event Planner !</p>
+          </div>
+          <div class="footer">
+            <p>© 2024 Event Planner. Tous droits réservés.</p>
+            <p>Cet email a été envoyé suite à l'activation de votre compte.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+✅ Compte Activé - Event Planner
+
+Bonjour ${userData.firstName || userData.username},
+
+Bonne nouvelle ! Votre compte Event Planner a été activé avec succès le ${userData.activationDate}.
+
+Informations de votre compte :
+- Nom d'utilisateur : ${userData.username}
+- Email : ${userData.email}
+- Date d'activation : ${userData.activationDate}
+
+Vous pouvez maintenant vous connecter : ${loginUrl}
+
+Prochaines étapes :
+1. Connectez-vous à votre compte
+2. Complétez votre profil si nécessaire  
+3. Explorez les fonctionnalités d'Event Planner
+
+Si vous avez des questions, contactez notre support.
+
+À très bientôt sur Event Planner !
+
+© 2024 Event Planner. Tous droits réservés.
+Cet email a été envoyé suite à l'activation de votre compte.
+    `;
+
+    return { subject, html, text };
+  }
+
+  /**
    * Fallback pour l'envoi d'OTP quand le service n'est pas configuré
    * @param {string} email - Email du destinataire
    * @param {string} otpCode - Code OTP
@@ -607,6 +759,27 @@ Pour définir un nouveau mot de passe, visitez : ${resetUrl}
       email,
       resetToken: resetToken.substring(0, 8) + '***'
     });
+
+    return true;
+  }
+
+  /**
+   * Fallback pour l'email d'activation de compte
+   * @param {string} email - Email du destinataire
+   * @param {Object} userData - Données de l'utilisateur
+   * @returns {boolean} True (fallback réussi)
+   */
+  fallbackAccountActivation(email, userData) {
+    logger.info('Account activation email fallback - service not configured', {
+      email,
+      username: userData.username
+    });
+
+    // En développement, afficher les informations dans les logs
+    if (configValidation.getConfig().NODE_ENV === 'development') {
+      console.log(`✅ [FALLBACK] Compte activé pour ${userData.username} (${email})`);
+      console.log(`Date d'activation: ${userData.activationDate}`);
+    }
 
     return true;
   }

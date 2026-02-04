@@ -11,6 +11,7 @@ const logger = require('../../utils/logger');
 const emailService = require('../../services/email.service');
 const smsService = require('../../services/sms.service');
 const sessionService = require('../sessions/sessions.service');
+const notificationClient = require('../../../../shared/clients/notification-client');
 
 /**
  * Controller HTTP pour la gestion de l'authentification et des OTP
@@ -326,9 +327,71 @@ class AuthController {
 
       const result = await otpService.verifyEmailOtp(finalCode, email, personId);
 
+      // 🔥 ACTIVATION AUTOMATIQUE DU COMPTE APRÈS VÉRIFICATION OTP
+      if (result.valid) {
+        try {
+          // Récupérer l'utilisateur associé à la personne
+          const usersRepository = require('../users/users.repository');
+          const peopleRepository = require('../people/people.repository');
+          
+          // Si personId n'est pas fourni, le récupérer depuis l'email
+          let targetPersonId = personId;
+          if (!targetPersonId) {
+            const person = await peopleRepository.findByEmail(email);
+            if (person) {
+              targetPersonId = person.id;
+            }
+          }
+
+          if (targetPersonId) {
+            const user = await usersRepository.findByPersonId(targetPersonId);
+            if (user && user.status !== 'active') {
+              // Activer le compte utilisateur
+              await usersRepository.updateStatus(user.id, 'active', user.id);
+              result.accountActivated = true;
+              result.message = 'OTP vérifié et compte activé avec succès';
+              
+              console.log(`✅ Compte utilisateur ${user.id} activé automatiquement après vérification OTP`);
+              
+              // 📧 ENVOI EMAIL DE CONFIRMATION D'ACTIVATION
+              try {
+                // Récupérer les informations complètes de la personne pour l'email
+                const peopleRepository = require('../people/people.repository');
+                const person = await peopleRepository.findById(targetPersonId);
+                
+                if (person && person.email) {
+                  await notificationClient.sendAccountActivationEmail(person.email, {
+                    firstName: person.first_name || '',
+                    lastName: person.last_name || '',
+                    username: user.username || person.email,
+                    activationDate: new Date().toLocaleDateString('fr-FR'),
+                    email: person.email
+                  });
+                  
+                  console.log(`📧 Email de confirmation d'activation envoyé à ${person.email}`);
+                  result.activationEmailSent = true;
+                }
+              } catch (emailError) {
+                console.error('⚠️ Erreur lors de l\'envoi de l\'email d\'activation:', emailError.message);
+                result.activationEmailSent = false;
+                result.activationEmailError = emailError.message;
+              }
+            } else if (user && user.status === 'active') {
+              result.accountActivated = false;
+              result.message = 'OTP vérifié avec succès (compte déjà actif)';
+            }
+          }
+        } catch (activationError) {
+          console.error('⚠️ Erreur lors de l\'activation automatique du compte:', activationError.message);
+          // Ne pas bloquer la réponse OTP si l'activation échoue
+          result.accountActivated = false;
+          result.activationError = activationError.message;
+        }
+      }
+
       res.status(200).json(createResponse(
         true,
-        'OTP vérifié avec succès',
+        result.message || 'OTP vérifié avec succès',
         result
       ));
     } catch (error) {
@@ -356,9 +419,71 @@ class AuthController {
 
       const result = await otpService.verifyPhoneOtp(finalCode, phone, personId);
 
+      // 🔥 ACTIVATION AUTOMATIQUE DU COMPTE APRÈS VÉRIFICATION OTP
+      if (result.valid) {
+        try {
+          // Récupérer l'utilisateur associé à la personne
+          const usersRepository = require('../users/users.repository');
+          const peopleRepository = require('../people/people.repository');
+          
+          // Si personId n'est pas fourni, le récupérer depuis le téléphone
+          let targetPersonId = personId;
+          if (!targetPersonId) {
+            const person = await peopleRepository.findByPhone(phone);
+            if (person) {
+              targetPersonId = person.id;
+            }
+          }
+
+          if (targetPersonId) {
+            const user = await usersRepository.findByPersonId(targetPersonId);
+            if (user && user.status !== 'active') {
+              // Activer le compte utilisateur
+              await usersRepository.updateStatus(user.id, 'active', user.id);
+              result.accountActivated = true;
+              result.message = 'OTP vérifié et compte activé avec succès';
+              
+              console.log(`✅ Compte utilisateur ${user.id} activé automatiquement après vérification OTP téléphone`);
+              
+              // 📧 ENVOI EMAIL DE CONFIRMATION D'ACTIVATION
+              try {
+                // Récupérer les informations complètes de la personne pour l'email
+                const peopleRepository = require('../people/people.repository');
+                const person = await peopleRepository.findById(targetPersonId);
+                
+                if (person && person.email) {
+                  await notificationClient.sendAccountActivationEmail(person.email, {
+                    firstName: person.first_name || '',
+                    lastName: person.last_name || '',
+                    username: user.username || person.email,
+                    activationDate: new Date().toLocaleDateString('fr-FR'),
+                    email: person.email
+                  });
+                  
+                  console.log(`📧 Email de confirmation d'activation envoyé à ${person.email}`);
+                  result.activationEmailSent = true;
+                }
+              } catch (emailError) {
+                console.error('⚠️ Erreur lors de l\'envoi de l\'email d\'activation:', emailError.message);
+                result.activationEmailSent = false;
+                result.activationEmailError = emailError.message;
+              }
+            } else if (user && user.status === 'active') {
+              result.accountActivated = false;
+              result.message = 'OTP vérifié avec succès (compte déjà actif)';
+            }
+          }
+        } catch (activationError) {
+          console.error('⚠️ Erreur lors de l\'activation automatique du compte:', activationError.message);
+          // Ne pas bloquer la réponse OTP si l'activation échoue
+          result.accountActivated = false;
+          result.activationError = activationError.message;
+        }
+      }
+
       res.status(200).json(createResponse(
         true,
-        'OTP vérifié avec succès',
+        result.message || 'OTP vérifié avec succès',
         result
       ));
     } catch (error) {
