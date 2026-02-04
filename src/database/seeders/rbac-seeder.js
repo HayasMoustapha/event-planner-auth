@@ -250,9 +250,9 @@ class RbacSeeder {
         
         // Insérer l'autorisation
         await connection.query(`
-          INSERT INTO authorizations (role_id, permission_id, created_at, updated_at)
-          VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          ON CONFLICT (role_id, permission_id) DO NOTHING
+          INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
+          VALUES ($1, $2, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ON CONFLICT ON CONSTRAINT authorizations_unique_role_permission_menu DO NOTHING
         `, [roleId, permissionId]);
       }
     }

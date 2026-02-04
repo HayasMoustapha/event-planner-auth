@@ -155,10 +155,10 @@ class AdminController {
         ));
       }
       
-      // Assigner le rôle
+      // Assigner le rôle via la table accesses (schéma actuel)
       await permissionsService.connection.query(`
-        INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
-        VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        INSERT INTO accesses (user_id, role_id, status, granted_at, created_at, updated_at)
+        VALUES ($1, $2, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ON CONFLICT (user_id, role_id) DO NOTHING
       `, [userId, roleId]);
       
@@ -196,7 +196,7 @@ class AdminController {
       }
       
       const result = await permissionsService.connection.query(`
-        UPDATE user_roles 
+        UPDATE accesses 
         SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
         WHERE user_id = $1 AND role_id = $2 AND deleted_at IS NULL
         RETURNING *
@@ -259,9 +259,9 @@ class AdminController {
       
       // Ajouter la permission au rôle
       await permissionsService.connection.query(`
-        INSERT INTO authorizations (role_id, permission_id, created_at, updated_at)
-        VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT (role_id, permission_id) DO NOTHING
+        INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
+        VALUES ($1, $2, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT ON CONSTRAINT authorizations_unique_role_permission_menu DO NOTHING
       `, [roleId, permissionId]);
       
       // Vider les caches

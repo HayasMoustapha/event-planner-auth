@@ -71,7 +71,26 @@ class AuthService {
     }
 
     // Générer le token JWT
-    const token = this.generateToken(user);
+    let dbRoles = null;
+    let dbPermissions = null;
+    try {
+      if (permissionsService.cache) {
+        permissionsService.cache.delete(`user_roles_${user.id}`);
+        permissionsService.cache.delete(`user_permissions_${user.id}`);
+      }
+      dbRoles = await permissionsService.getUserRoles(user.id);
+      dbPermissions = await permissionsService.getUserPermissions(user.id);
+    } catch (error) {
+      logger.warn('Failed to load roles/permissions from DB, using fallback', {
+        userId: user.id,
+        error: error.message
+      });
+    }
+
+    const token = this.generateToken(user, {
+      roles: Array.isArray(dbRoles) && dbRoles.length > 0 ? dbRoles : null,
+      permissions: Array.isArray(dbPermissions) && dbPermissions.length > 0 ? dbPermissions : null
+    });
 
     // Créer une session pour le token
     let sessionData = null;
@@ -136,12 +155,12 @@ class AuthService {
    * @param {Object} user - Données de l'utilisateur
    * @returns {string} Token JWT
    */
-  generateToken(user) {
+  generateToken(user, overrides = {}) {
     const now = Math.floor(Date.now() / 1000);
     
     // CORRECTION : Utiliser le service de permissions pour charger depuis la base de données
-    const userRoles = this.getUserRolesSync(user);
-    const userPermissions = this.getUserPermissionsSync(user);
+    const userRoles = overrides.roles || this.getUserRolesSync(user);
+    const userPermissions = overrides.permissions || this.getUserPermissionsSync(user);
     
     const payload = {
       id: user.id,

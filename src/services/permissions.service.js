@@ -11,6 +11,7 @@ class PermissionsService {
   constructor() {
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+    this.connection = connection;
   }
 
   /**
@@ -295,7 +296,7 @@ class PermissionsService {
 
     try {
       const query = `
-        SELECT r.id, r.code, r.label, r.description
+        SELECT r.id, r.code, r.label, r.description, r."group"
         FROM roles r
         WHERE r.deleted_at IS NULL
         ORDER BY r.code ASC

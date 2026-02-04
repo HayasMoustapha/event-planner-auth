@@ -302,7 +302,7 @@ class DatabaseBootstrap {
     // Ordre strict d'exécution des seeds
     const seedOrder = [
       'roles.seed.sql',
-      'permissions.seed.sql', 
+      'permissions.seed.sql',
       'menus.seed.sql',
       'permissions_new_modules.seed.sql', // NOUVEAU: Permissions pour modules authorizations/accesses
       'authorizations.seed.sql',
@@ -310,14 +310,21 @@ class DatabaseBootstrap {
     ];
 
     for (const seedFile of seedOrder) {
-      const seedPath = path.join(this.seedsPath, 'seeds', seedFile);
+      const primarySeedPath = path.join(this.seedsPath, 'seeds', seedFile);
+      const fallbackSeedPath = path.join(this.seedsPath, seedFile);
+      let seedPath = primarySeedPath;
       
       try {
         await fs.access(seedPath);
       } catch {
-        console.warn(`⚠️  Fichier seed non trouvé: ${seedFile}`);
-        failedSeeds.push(seedFile);
-        continue;
+        try {
+          seedPath = fallbackSeedPath;
+          await fs.access(seedPath);
+        } catch {
+          console.warn(`⚠️  Fichier seed non trouvé: ${seedFile}`);
+          failedSeeds.push(seedFile);
+          continue;
+        }
       }
 
       // Exécuter chaque seed dans sa propre transaction
@@ -370,7 +377,7 @@ class DatabaseBootstrap {
       console.log('🔍 Vérification de l\'intégrité des seeds...');
       
       // 1. Vérifier les rôles attendus
-      const expectedRoles = ['super_admin', 'admin', 'user'];
+      const expectedRoles = ['super_admin', 'organizer', 'designer', 'user'];
       const rolesResult = await client.query(`
         SELECT code FROM roles WHERE code IN (${expectedRoles.map((_, i) => `$${i + 1}`).join(', ')})
       `, expectedRoles);
@@ -480,7 +487,7 @@ class DatabaseBootstrap {
       console.log(`📊 Tables existantes: ${existingTables.length}/${requiredTables.length}`);
       
       // 2. Vérifier le nombre de rôles attendus
-      const expectedRoles = ['super_admin', 'admin', 'user'];
+      const expectedRoles = ['super_admin', 'organizer', 'designer', 'user'];
       const rolesResult = await client.query(`
         SELECT COUNT(*) as count FROM roles 
         WHERE code IN (${expectedRoles.map((_, i) => `$${i + 1}`).join(', ')})
