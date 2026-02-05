@@ -200,8 +200,39 @@ class RegistrationService {
           email: person.email,
           error: emailError.message
         });
+
+        // En dev/test, on ne bloque pas l'inscription si l'email n'est pas configuré
+        if (process.env.NODE_ENV !== 'production') {
+          // Valider la transaction malgré l'échec d'envoi email
+          await client.query('COMMIT');
+
+          return {
+            success: true,
+            message: 'Inscription réussie (email non envoyé en dev).',
+            data: {
+              person: {
+                id: person.id,
+                email: person.email,
+                first_name: person.first_name,
+                last_name: person.last_name
+              },
+              user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                status: user.status
+              },
+              otp: {
+                id: otp.id,
+                purpose: otp.purpose,
+                expires_at: otp.expires_at,
+                ...(process.env.NODE_ENV === 'development' && { code: otpCode })
+              }
+            }
+          };
+        }
         
-        // Supprimer l'OTP généré si l'envoi échoue
+        // Supprimer l'OTP généré si l'envoi échoue en production
         const deleteOtpQuery = `DELETE FROM otps WHERE id = $1`;
         await client.query(deleteOtpQuery, [otp.id]);
         

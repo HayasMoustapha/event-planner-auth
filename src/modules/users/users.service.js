@@ -139,10 +139,11 @@ class UsersService {
       email,
       password,
       phone = null,
-      person_id ,  // Ajout pour supporter person_id
+      person_id: personIdInput,  // Ajout pour supporter person_id
       firstName = null,
       lastName = null
     } = userData;
+    let person_id = personIdInput;
 
     // Validation des champs obligatoires
     if (!username || !username.trim()) {

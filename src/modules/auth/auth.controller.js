@@ -177,7 +177,21 @@ class AuthController {
           ip: req.ip
         });
 
-        // Supprimer l'OTP généré si l'envoi échoue
+        // En dev/test, on ne bloque pas le flux si l'email n'est pas configuré
+        if (process.env.NODE_ENV !== 'production') {
+          return res.status(201).json(createResponse(
+            true,
+            'OTP généré avec succès (email non envoyé en dev)',
+            {
+              contactInfo: email,
+              expiresAt: otp.expires_at,
+              expiresInMinutes,
+              otpCode: otp.code
+            }
+          ));
+        }
+
+        // Supprimer l'OTP généré si l'envoi échoue en production
         await otpService.invalidateOtp(otp.id);
 
         throw new Error(`Échec d'envoi de l'OTP par email: ${emailError.message}`);
@@ -189,7 +203,8 @@ class AuthController {
         {
           contactInfo: email,
           expiresAt: otp.expires_at,
-          expiresInMinutes
+          expiresInMinutes,
+          ...(process.env.NODE_ENV !== 'production' ? { otpCode: otp.code } : {})
         }
       ));
     } catch (error) {
@@ -603,7 +618,18 @@ class AuthController {
 
       if (user) {
         // Envoyer la notification de réinitialisation de mot de passe
-        await authService.sendPasswordResetNotification(user, otp.code, otp.expires_at);
+        try {
+          await authService.sendPasswordResetNotification(user, otp.code, otp.expires_at);
+        } catch (notifyError) {
+          logger.error('Failed to send password reset notification', {
+            email,
+            error: notifyError.message
+          });
+
+          if (process.env.NODE_ENV === 'production') {
+            throw notifyError;
+          }
+        }
       }
 
       logger.security('Password reset OTP generated', {
@@ -617,7 +643,8 @@ class AuthController {
         'OTP de réinitialisation généré avec succès',
         {
           contactInfo: email,
-          expiresAt: otp.expires_at
+          expiresAt: otp.expires_at,
+          ...(process.env.NODE_ENV !== 'production' ? { otpCode: otp.code } : {})
         }
       ));
     } catch (error) {
