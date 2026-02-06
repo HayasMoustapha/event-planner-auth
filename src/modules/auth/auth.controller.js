@@ -41,6 +41,64 @@ class AuthController {
   }
 
   /**
+   * Authentifie un utilisateur via un token présent dans l'URL
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async loginWithToken(req, res, next) {
+    try {
+      const { token } = req.params;
+
+      if (!token) {
+        return res.status(400).json(createResponse(
+          false,
+          'Token requis'
+        ));
+      }
+
+      const validation = authService.validateToken(token);
+
+      if (!validation.valid || !validation.decoded) {
+        return res.status(401).json(createResponse(
+          false,
+          validation.message || 'Token invalide'
+        ));
+      }
+
+      const usersRepository = require('../users/users.repository');
+      const user = await usersRepository.findById(validation.decoded.id);
+
+      if (!user || user.status !== 'active') {
+        return res.status(401).json(createResponse(
+          false,
+          'Utilisateur non trouvé ou inactif'
+        ));
+      }
+
+      const userResponse = { ...user };
+      delete userResponse.password;
+
+      const roles = await authService.getUserRoles(user.id);
+      const permissions = await authService.getUserPermissions(user.id);
+      const freshToken = authService.generateToken(user, { roles, permissions });
+
+      res.status(200).json(createResponse(
+        true,
+        'Connexion réussie via lien',
+        {
+          user: userResponse,
+          token: freshToken,
+          remember_me: false,
+          remember_token: null
+        }
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Déconnecte un utilisateur
    * @param {Object} req - Requête Express
    * @param {Object} res - Réponse Express

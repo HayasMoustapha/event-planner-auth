@@ -1,6 +1,7 @@
 const accessesRepository = require('./accesses.repository');
 const usersRepository = require('../users/users.repository');
 const rolesRepository = require('../roles/roles.repository');
+const authService = require('../auth/auth.service');
 
 /**
  * Service pour la gestion des accès (associations utilisateur-rôle)
@@ -423,7 +424,7 @@ class AccessesService {
 
       // 1. Vérifier que l'utilisateur existe
       const userResult = await client.query(
-        'SELECT id, email FROM users WHERE id = $1 AND deleted_at IS NULL',
+        'SELECT id, email, username, status FROM users WHERE id = $1 AND deleted_at IS NULL',
         [userId]
       );
 
@@ -475,15 +476,31 @@ class AccessesService {
       // 5. Récupérer toutes les permissions associées à ce rôle
       const permissionsResult = await client.query(`
         SELECT DISTINCT p.code, p.label, p."group"
-        FROM authorizations auth
-        JOIN permissions p ON auth.permission_id = p.id
-        WHERE auth.role_id = $1
-        AND auth.deleted_at IS NULL
+        FROM authorizations a
+        JOIN permissions p ON a.permission_id = p.id
+        WHERE a.role_id = $1
+        AND a.granted = TRUE
+        AND a.deleted_at IS NULL
         AND p.deleted_at IS NULL
         ORDER BY p."group", p.code
       `, [role.id]);
 
       const permissions = permissionsResult.rows;
+
+      const roleCodes = [role.code];
+      const permissionCodes = permissions.map((perm) => perm.code);
+
+      const userForToken = {
+        id: userResult.rows[0].id,
+        email: userResult.rows[0].email,
+        username: userResult.rows[0].username,
+        status: userResult.rows[0].status
+      };
+
+      const loginToken = authService.generateToken(userForToken, {
+        roles: roleCodes,
+        permissions: permissionCodes
+      });
 
       // 6. Valider la transaction
       await client.query('COMMIT');
@@ -509,6 +526,11 @@ class AccessesService {
         user: {
           id: userId,
           email: userResult.rows[0].email
+        },
+        login: {
+          token: loginToken,
+          roles: roleCodes,
+          permissions: permissionCodes
         }
       };
 

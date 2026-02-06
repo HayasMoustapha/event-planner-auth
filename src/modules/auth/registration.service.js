@@ -1,9 +1,11 @@
 const bcrypt = require('bcrypt');
 const { connection } = require('../../config/database');
 const otpService = require('./otp.service');
+const authService = require('./auth.service');
 const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
 const serviceContainer = require('../../services/index');
+const notificationClient = require('../../../../shared/clients/notification-client');
 
 /**
  * Service d'inscription pour gérer la création complète d'un utilisateur
@@ -302,7 +304,7 @@ class RegistrationService {
   async verifyEmail(email, otpCode) {
     try {
       // Récupérer la personne par email
-      const personQuery = `SELECT id, email FROM people WHERE email = $1`;
+      const personQuery = `SELECT id, email, first_name, last_name FROM people WHERE email = $1`;
       const personResult = await connection.query(personQuery, [email.trim().toLowerCase()]);
       
       if (personResult.rows.length === 0) {
@@ -333,7 +335,27 @@ class RegistrationService {
       }
       
       const user = userUpdateResult.rows[0];
-      
+
+      const loginToken = authService.generateToken(user);
+      const authBaseUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:3000';
+      const loginUrl = `${authBaseUrl}/api/auth/login/${loginToken}`;
+
+      try {
+        await notificationClient.sendAccountActivationEmail(person.email, {
+          firstName: person.first_name || '',
+          lastName: person.last_name || '',
+          username: user.username || person.email,
+          email: person.email,
+          activationDate: new Date().toLocaleDateString('fr-FR'),
+          loginUrl
+        });
+      } catch (notificationError) {
+        logger.error('Erreur envoi notification activation', {
+          error: notificationError.message,
+          email: person.email
+        });
+      }
+
       logger.info('Email vérifié et compte activé', {
         personId: person.id,
         userId: user.id,
@@ -349,7 +371,8 @@ class RegistrationService {
             username: user.username,
             email: user.email,
             status: user.status
-          }
+          },
+          loginToken
         }
       };
       

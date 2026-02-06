@@ -20,6 +20,11 @@ router.post('/login',
   authController.login
 );
 
+// Connexion via token (lien d'activation)
+router.post('/login/:token',
+  authController.loginWithToken
+);
+
 // Connexion avec remember token
 router.post('/login-remember',
   authValidation.validateRememberToken,
