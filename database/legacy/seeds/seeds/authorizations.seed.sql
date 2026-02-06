@@ -1,30 +1,48 @@
 -- ========================================
--- SEED AUTHORIZATIONS (role-permission)
+-- SEED DES AUTORISATIONS RBAC (POSTGRESQL)
+-- Modèle cible : 4 rôles uniques
 -- ========================================
 
--- Clean roles outside target
+-- S'assurer qu'un menu par défaut existe
+INSERT INTO menus (parent_id, label, icon, route, component, parent_path, menu_group, sort_order, depth, description, is_visible, created_at, updated_at)
+SELECT 
+  NULL,
+  '{"en": "System", "fr": "Système"}'::jsonb,
+  'settings',
+  '/admin',
+  'AdminLayout',
+  '/admin',
+  1,
+  1,
+  0,
+  '{"en": "System administration menu", "fr": "Menu d''administration système"}'::jsonb,
+  TRUE,
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM menus WHERE deleted_at IS NULL LIMIT 1);
+
+-- Nettoyage des autorisations hors modèle cible
 DELETE FROM authorizations
 WHERE role_id IN (SELECT id FROM roles WHERE code NOT IN ('super_admin', 'organizer', 'designer', 'user'));
 
--- Reset target roles (except super_admin which is full)
+-- Réinitialiser les autorisations des rôles cibles (hors super_admin)
 DELETE FROM authorizations
 WHERE role_id IN (SELECT id FROM roles WHERE code IN ('organizer', 'designer', 'user'));
 
--- Super admin gets all permissions
-INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at, granted)
-SELECT r.id, p.id, m.id, NOW(), NOW(), TRUE
+-- Super Admin: toutes les permissions
+INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
+SELECT r.id, p.id, m.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
 CROSS JOIN LATERAL (SELECT id FROM menus WHERE deleted_at IS NULL ORDER BY id LIMIT 1) m
 WHERE r.code = 'super_admin' AND r.deleted_at IS NULL AND p.deleted_at IS NULL
 ON CONFLICT (role_id, permission_id, menu_id) DO UPDATE SET
   deleted_at = NULL,
-  granted = TRUE,
-  updated_at = NOW();
+  updated_at = CURRENT_TIMESTAMP;
 
+-- Rôles métiers: ORGANIZER / DESIGNER / USER
 CREATE TEMP TABLE role_permissions (role_code TEXT, permission_code TEXT);
 
--- Organizer (event, guests, tickets, payments, notifications, scans, marketplace)
 INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'events.create'),
 ('organizer', 'events.read'),
@@ -37,9 +55,7 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'events.invitations.send'),
 ('organizer', 'events.invitations.read'),
 ('organizer', 'events.invitations.delete'),
-('organizer', 'events.list'),
 ('organizer', 'manage_events'),
-
 ('organizer', 'guests.create'),
 ('organizer', 'guests.read'),
 ('organizer', 'guests.update'),
@@ -48,7 +64,6 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'guests.export'),
 ('organizer', 'guests.checkin'),
 ('organizer', 'guests.stats.read'),
-
 ('organizer', 'tickets.create'),
 ('organizer', 'tickets.read'),
 ('organizer', 'tickets.update'),
@@ -74,7 +89,41 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'tickets.templates.update'),
 ('organizer', 'tickets.templates.delete'),
 ('organizer', 'tickets.templates.validate'),
-
+('organizer', 'scans.validate'),
+('organizer', 'scans.validate.offline'),
+('organizer', 'scans.history.read'),
+('organizer', 'scans.stats.read'),
+('organizer', 'scans.qr.decode'),
+('organizer', 'scans.offline.sync'),
+('organizer', 'scans.offline.read'),
+('organizer', 'scans.offline.cleanup'),
+('organizer', 'scans.sessions.create'),
+('organizer', 'scans.sessions.read'),
+('organizer', 'scans.sessions.update'),
+('organizer', 'scans.operators.create'),
+('organizer', 'scans.operators.read'),
+('organizer', 'scans.devices.create'),
+('organizer', 'scans.devices.read'),
+('organizer', 'scans.fraud.analyze'),
+('organizer', 'scans.fraud.read'),
+('organizer', 'scans.reports.generate'),
+('organizer', 'scans.qr.generate'),
+('organizer', 'scans.qr.batch'),
+('organizer', 'scans.qr.test'),
+('organizer', 'notifications.email.send'),
+('organizer', 'notifications.sms.send'),
+('organizer', 'notifications.email.queue'),
+('organizer', 'notifications.sms.queue'),
+('organizer', 'notifications.email.bulk'),
+('organizer', 'notifications.sms.bulk'),
+('organizer', 'notifications.bulk.mixed'),
+('organizer', 'notifications.jobs.read'),
+('organizer', 'notifications.jobs.cancel'),
+('organizer', 'notifications.stats.read'),
+('organizer', 'notifications.welcome.send'),
+('organizer', 'notifications.password-reset.send'),
+('organizer', 'notifications.event-confirmation.send'),
+('organizer', 'notifications.otp.send'),
 ('organizer', 'payments.create'),
 ('organizer', 'payments.read'),
 ('organizer', 'payments.update'),
@@ -99,51 +148,13 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'refunds.read'),
 ('organizer', 'invoices.create'),
 ('organizer', 'invoices.read'),
-
-('organizer', 'notifications.email.send'),
-('organizer', 'notifications.sms.send'),
-('organizer', 'notifications.email.queue'),
-('organizer', 'notifications.sms.queue'),
-('organizer', 'notifications.email.bulk'),
-('organizer', 'notifications.sms.bulk'),
-('organizer', 'notifications.bulk.mixed'),
-('organizer', 'notifications.jobs.read'),
-('organizer', 'notifications.jobs.cancel'),
-('organizer', 'notifications.stats.read'),
-('organizer', 'notifications.welcome.send'),
-('organizer', 'notifications.event-confirmation.send'),
-('organizer', 'notifications.organizer.send'),
-
-('organizer', 'scans.validate'),
-('organizer', 'scans.validate.offline'),
-('organizer', 'scans.history.read'),
-('organizer', 'scans.stats.read'),
-('organizer', 'scans.qr.decode'),
-('organizer', 'scans.offline.sync'),
-('organizer', 'scans.offline.read'),
-('organizer', 'scans.offline.cleanup'),
-('organizer', 'scans.sessions.create'),
-('organizer', 'scans.sessions.read'),
-('organizer', 'scans.sessions.update'),
-('organizer', 'scans.operators.create'),
-('organizer', 'scans.operators.read'),
-('organizer', 'scans.devices.create'),
-('organizer', 'scans.devices.read'),
-('organizer', 'scans.fraud.analyze'),
-('organizer', 'scans.fraud.read'),
-('organizer', 'scans.reports.generate'),
-('organizer', 'scans.qr.generate'),
-('organizer', 'scans.qr.batch'),
-('organizer', 'scans.qr.test'),
-
-('organizer', 'marketplace.read'),
-('organizer', 'marketplace.purchase'),
 ('organizer', 'marketplace.templates.read'),
 ('organizer', 'marketplace.templates.purchase'),
-('organizer', 'marketplace.purchases.read');
-
--- Designer
-INSERT INTO role_permissions (role_code, permission_code) VALUES
+('organizer', 'marketplace.purchases.read'),
+('organizer', 'marketplace.reviews.read'),
+('organizer', 'marketplace.reviews.create'),
+('organizer', 'marketplace.read'),
+('organizer', 'marketplace.purchase'),
 ('designer', 'templates.design'),
 ('designer', 'templates.publish'),
 ('designer', 'templates.sell'),
@@ -164,14 +175,6 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('designer', 'tickets.pdf.batch'),
 ('designer', 'events.read'),
 ('designer', 'events.list'),
-('designer', 'notifications.designer.send'),
-('designer', 'users.read'),
-('designer', 'users.update');
-
--- User
-INSERT INTO role_permissions (role_code, permission_code) VALUES
-('user', 'users.read'),
-('user', 'users.update'),
 ('user', 'events.read'),
 ('user', 'events.list'),
 ('user', 'tickets.read'),
@@ -179,15 +182,19 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('user', 'payments.read'),
 ('user', 'scans.qr.decode');
 
-INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at, granted)
-SELECT r.id, p.id, m.id, NOW(), NOW(), TRUE
+INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
+SELECT r.id, p.id, m.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM role_permissions rp
-JOIN roles r ON r.code = rp.role_code AND r.deleted_at IS NULL
-JOIN permissions p ON p.code = rp.permission_code AND p.deleted_at IS NULL
+INNER JOIN roles r ON r.code = rp.role_code AND r.deleted_at IS NULL
+INNER JOIN permissions p ON p.code = rp.permission_code AND p.deleted_at IS NULL
 CROSS JOIN LATERAL (SELECT id FROM menus WHERE deleted_at IS NULL ORDER BY id LIMIT 1) m
 ON CONFLICT (role_id, permission_id, menu_id) DO UPDATE SET
   deleted_at = NULL,
-  granted = TRUE,
-  updated_at = NOW();
+  updated_at = CURRENT_TIMESTAMP;
 
 DROP TABLE role_permissions;
+
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Autorisations normalisées: % associations actives', (SELECT COUNT(*) FROM authorizations WHERE deleted_at IS NULL);
+END $$;

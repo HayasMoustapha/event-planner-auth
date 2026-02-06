@@ -1,30 +1,32 @@
 -- ========================================
--- SEED DES RÔLES SYSTÈME RBAC (POSTGRESQL)
+-- SEED ROLES (4 roles stricts)
 -- ========================================
--- Nettoyage + normalisation : 4 rôles uniques
--- Compatible avec le schéma PostgreSQL actuel
+DELETE FROM roles WHERE code NOT IN ('super_admin', 'organizer', 'designer', 'user');
 
--- Supprimer tous les rôles hors modèle cible (cascade sur authorizations/accesses)
-DELETE FROM roles
-WHERE code NOT IN ('super_admin', 'organizer', 'designer', 'user');
+-- Insertion idempotente sans ON CONFLICT (index partiel)
+INSERT INTO roles (code, label, description, is_system, level, created_at, updated_at)
+SELECT * FROM (VALUES
+('super_admin', '{"fr": "Super Administrateur", "en": "Super Administrator"}'::jsonb, '{"fr": "Tous les droits", "en": "All permissions"}'::jsonb, TRUE, 1, NOW(), NOW()),
+('organizer', '{"fr": "Organisateur", "en": "Organizer"}'::jsonb, '{"fr": "Gestion d''evenements et billets", "en": "Event organizer"}'::jsonb, FALSE, 3, NOW(), NOW()),
+('designer', '{"fr": "Designer", "en": "Designer"}'::jsonb, '{"fr": "Creation de templates", "en": "Template creator"}'::jsonb, FALSE, 3, NOW(), NOW()),
+('user', '{"fr": "Utilisateur", "en": "User"}'::jsonb, '{"fr": "Participant standard", "en": "Standard user"}'::jsonb, TRUE, 4, NOW(), NOW())
+) AS v(code, label, description, is_system, level, created_at, updated_at)
+WHERE NOT EXISTS (
+  SELECT 1 FROM roles r WHERE r.code = v.code AND r.deleted_at IS NULL
+);
 
--- Insertion / mise à jour des rôles cibles (IDEMPOTENT)
-INSERT INTO roles (code, label, description, is_system, level, created_at, updated_at) VALUES
-('super_admin', '{"fr": "Super Administrateur", "en": "Super Administrator"}'::jsonb, '{"fr": "Super administrateur avec tous les droits absolus", "en": "Super administrator with absolute rights"}'::jsonb, true, 1, NOW(), NOW()),
-('organizer', '{"fr": "Organisateur", "en": "Organizer"}'::jsonb, '{"fr": "Organisateur d''événements et gestionnaire de participants", "en": "Event organizer and participant manager"}'::jsonb, false, 3, NOW(), NOW()),
-('designer', '{"fr": "Designer", "en": "Designer"}'::jsonb, '{"fr": "Créateur de templates et designs visuels", "en": "Template creator and visual designer"}'::jsonb, false, 3, NOW(), NOW()),
-('user', '{"fr": "Utilisateur", "en": "User"}'::jsonb, '{"fr": "Utilisateur standard avec droits de base", "en": "Standard user with basic rights"}'::jsonb, true, 4, NOW(), NOW())
-ON CONFLICT (code) DO UPDATE SET
-  label = EXCLUDED.label,
-  description = EXCLUDED.description,
-  is_system = EXCLUDED.is_system,
-  level = EXCLUDED.level,
-  deleted_at = NULL,
-  updated_at = NOW();
-
--- Afficher confirmation
-DO $$
-BEGIN
-    RAISE NOTICE '✅ Rôles normalisés avec succès: % rôles actifs', 
-        (SELECT COUNT(*) FROM roles WHERE deleted_at IS NULL);
-END $$;
+-- Réactivation / mise à jour des rôles existants
+UPDATE roles r
+SET label = v.label,
+    description = v.description,
+    is_system = v.is_system,
+    level = v.level,
+    deleted_at = NULL,
+    updated_at = NOW()
+FROM (VALUES
+('super_admin', '{"fr": "Super Administrateur", "en": "Super Administrator"}'::jsonb, '{"fr": "Tous les droits", "en": "All permissions"}'::jsonb, TRUE, 1),
+('organizer', '{"fr": "Organisateur", "en": "Organizer"}'::jsonb, '{"fr": "Gestion d''evenements et billets", "en": "Event organizer"}'::jsonb, FALSE, 3),
+('designer', '{"fr": "Designer", "en": "Designer"}'::jsonb, '{"fr": "Creation de templates", "en": "Template creator"}'::jsonb, FALSE, 3),
+('user', '{"fr": "Utilisateur", "en": "User"}'::jsonb, '{"fr": "Participant standard", "en": "Standard user"}'::jsonb, TRUE, 4)
+) AS v(code, label, description, is_system, level)
+WHERE r.code = v.code;

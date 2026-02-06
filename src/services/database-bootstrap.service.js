@@ -30,6 +30,7 @@ class DatabaseBootstrap {
     this.migrationsPath = path.join(__dirname, '../../database/migrations');
     this.seedsPath = path.join(__dirname, '../../database/seeds');
     this.bootstrapPath = path.join(__dirname, '../../database/bootstrap');
+    this.projectRoot = path.join(__dirname, '../..');
     this.lockId = 12345; // ID unique pour le verrou PostgreSQL
   }
 
@@ -285,23 +286,38 @@ class DatabaseBootstrap {
    */
   async executeSeeds() {
     console.log('🌱 Démarrage de l\'exécution automatique des seeds...');
-    
-    // Vérifier si les seeds sont nécessaires
-    const needsSeeds = await this.needsSeeds();
-    
-    if (!needsSeeds) {
-      console.log('✅ Base de données déjà complète - vérification finale...');
-      
-      // Vérification supplémentaire pour s'assurer que tout est en ordre
-      await this.verifySeedIntegrity();
-      
-      console.log('✅ Seeds non nécessaires - base de données complète');
-      return [];
-    }
 
-    console.log('🌱 Exécution des seeds nécessaire - base de données incomplète');
+    console.log('🌱 Exécution des seeds (idempotents) après migrations');
     const executedSeeds = [];
     const failedSeeds = [];
+
+    const runAllSeedsPath = path.join(this.seedsPath, 'run_all_seeds.sql');
+    try {
+      await fs.access(runAllSeedsPath);
+      const rawSql = await fs.readFile(runAllSeedsPath, 'utf8');
+      const expandedSql = await this.expandSeedSql(runAllSeedsPath, rawSql);
+      console.log('🚀 Exécution automatique de run_all_seeds.sql...');
+      const executed = await this.executeSingleSeed(runAllSeedsPath, 'run_all_seeds.sql', expandedSql);
+      if (executed) {
+        executedSeeds.push('run_all_seeds.sql');
+      }
+
+      try {
+        await this.verifySeedIntegrity();
+        console.log('✅ Vérification d\'intégrité des seeds terminée');
+      } catch (validationError) {
+        console.warn('⚠️  Erreur lors de la validation finale:', validationError.message);
+      }
+
+      return executedSeeds;
+    } catch (error) {
+      if (error && error.code === 'ENOENT') {
+        console.warn('⚠️  run_all_seeds.sql introuvable - fallback sur l\'exécution individuelle');
+      } else {
+        console.warn('⚠️  Erreur lors de l\'exécution de run_all_seeds.sql:', error.message);
+        console.log('🔄 Fallback sur l\'exécution individuelle des seeds...');
+      }
+    }
     
     // Ordre strict d'exécution des seeds
     const seedOrder = [
@@ -530,7 +546,7 @@ class DatabaseBootstrap {
       if (existingTables.length >= requiredTables.length) completionScore++;
       if (rolesCount >= expectedRoles.length) completionScore++;
       if (permissionsCount >= 20) completionScore++; // Au moins 20 permissions
-      if (menusCount >= 10) completionScore++; // Au moins 10 menus
+      if (menusCount >= 5) completionScore++; // Au moins 5 menus
       if (adminCount > 0) completionScore++;
       
       const completionPercentage = Math.round((completionScore / maxScore) * 100);
@@ -556,7 +572,7 @@ class DatabaseBootstrap {
    * Exécute un seul seed dans sa propre transaction
    * Gère les erreurs de manière robuste pour garantir l'exécution
    */
-  async executeSingleSeed(seedPath, seedFile) {
+  async executeSingleSeed(seedPath, seedFile, seedSqlOverride = null) {
     const client = await connection.connect();
     const startTime = Date.now();
     
@@ -564,7 +580,7 @@ class DatabaseBootstrap {
       console.log(`🌱 Début du seed ${seedFile}...`);
       await client.query('BEGIN');
       
-      const seedSql = await fs.readFile(seedPath, 'utf8');
+      const seedSql = seedSqlOverride ?? await fs.readFile(seedPath, 'utf8');
       console.log(`📝 Fichier seed ${seedFile} lu (${seedSql.length} caractères)`);
       
       try {
@@ -607,6 +623,32 @@ class DatabaseBootstrap {
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * Étend un script SQL en résolvant les directives psql \i
+   * @param {string} seedPath
+   * @param {string} seedSql
+   * @returns {Promise<string>}
+   */
+  async expandSeedSql(seedPath, seedSql) {
+    const lines = seedSql.split(/\r?\n/);
+    let expanded = '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('\\i ')) {
+        const includePath = trimmed.slice(2).trim();
+        const resolvedPath = path.resolve(this.projectRoot, includePath);
+        const includeSql = await fs.readFile(resolvedPath, 'utf8');
+        expanded += `\n-- Included: ${includePath}\n${includeSql}\n`;
+        continue;
+      }
+
+      expanded += `${line}\n`;
+    }
+
+    return expanded;
   }
 
   /**

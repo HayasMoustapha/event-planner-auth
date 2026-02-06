@@ -1,13 +1,10 @@
 -- Migration 014: Attribuer tous les rôles à super_admin (version sans accents)
 
--- Créer tous les rôles manquants s'ils n'existent pas
+-- Créer uniquement les rôles cibles s'ils n'existent pas
 INSERT INTO roles (code, label, description, is_system, level, created_at, updated_at) VALUES 
-('admin', '{"en": "Administrator", "fr": "Administrateur"}', '{"en": "System administrator", "fr": "Administrateur systeme"}', TRUE, 90, NOW(), NOW()),
-('organizer', '{"en": "Organizer", "fr": "Organisateur"}', '{"en": "Event organizer", "fr": "Organisateur d evenements"}', TRUE, 80, NOW(), NOW()),
-('event_manager', '{"en": "Event Manager", "fr": "Gestionnaire evenements"}', '{"en": "Event manager", "fr": "Gestionnaire d evenements"}', TRUE, 75, NOW(), NOW()),
-('designer', '{"en": "Designer", "fr": "Designer"}', '{"en": "Template designer", "fr": "Designer de modeles"}', TRUE, 70, NOW(), NOW()),
-('participant', '{"en": "Participant", "fr": "Participant"}', '{"en": "Event participant", "fr": "Participant aux evenements"}', TRUE, 50, NOW(), NOW()),
-('staff', '{"en": "Staff", "fr": "Staff"}', '{"en": "Event staff", "fr": "Staff d evenements"}', TRUE, 60, NOW(), NOW()),
+('super_admin', '{"en": "Super Administrator", "fr": "Super Administrateur"}', '{"en": "Super administrator", "fr": "Super administrateur"}', TRUE, 10, NOW(), NOW()),
+('organizer', '{"en": "Organizer", "fr": "Organisateur"}', '{"en": "Event organizer", "fr": "Organisateur d evenements"}', TRUE, 20, NOW(), NOW()),
+('designer', '{"en": "Designer", "fr": "Designer"}', '{"en": "Template designer", "fr": "Designer de modeles"}', TRUE, 30, NOW(), NOW()),
 ('user', '{"en": "User", "fr": "Utilisateur"}', '{"en": "Regular user", "fr": "Utilisateur standard"}', TRUE, 40, NOW(), NOW())
 ON CONFLICT (code) DO NOTHING;
 
@@ -28,7 +25,7 @@ WHERE u.id IN (
     INNER JOIN roles r ON a.role_id = r.id
     WHERE r.code = 'super_admin' AND a.status = 'active'
 )
-AND r.code IN ('admin', 'organizer', 'event_manager', 'designer', 'participant', 'staff', 'user')
+AND r.code IN ('organizer', 'designer', 'user')
 AND NOT EXISTS (
     SELECT 1 FROM accesses a2 
     WHERE a2.user_id = u.id AND a2.role_id = r.id AND a2.status = 'active'

@@ -36,17 +36,6 @@ END $$;
 -- Exécuter le seed des permissions
 \i database/seeds/seeds/permissions.seed.sql
 
--- ========================================
--- ÉTAPE 2.5: CRÉATION DES PERMISSIONS MODULES
--- ========================================
-DO $$
-BEGIN
-    RAISE NOTICE '';
-    RAISE NOTICE '🔑 ÉTAPE 2.5/6: Création des permissions modules (authorizations/accesses)...';
-END $$;
-
--- Exécuter le seed des permissions modules
-\i database/seeds/permissions_new_modules.seed.sql
 
 -- ========================================
 -- ÉTAPE 3: CRÉATION DES MENUS
