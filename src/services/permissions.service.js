@@ -257,7 +257,7 @@ class PermissionsService {
 
     try {
       const query = `
-        SELECT p.code, p.label, p."group", p.description
+        SELECT p.id, p.code, p.label, p."group", p.description
         FROM permissions p
         WHERE p.deleted_at IS NULL
         ORDER BY p."group" ASC, p.code ASC
@@ -296,7 +296,7 @@ class PermissionsService {
 
     try {
       const query = `
-        SELECT r.id, r.code, r.label, r.description, r."group"
+        SELECT r.id, r.code, r.label, r.description, r.is_system, r.level
         FROM roles r
         WHERE r.deleted_at IS NULL
         ORDER BY r.code ASC

@@ -13,43 +13,29 @@ class RbacSeeder {
         code: 'super_admin',
         label: { en: 'Super Administrator', fr: 'Super Administrateur' },
         description: { en: 'Full system access', fr: 'Accès complet au système' },
-        group: 'administration'
-      },
-      {
-        code: 'admin',
-        label: { en: 'Administrator', fr: 'Administrateur' },
-        description: { en: 'System administration', fr: 'Administration du système' },
-        group: 'administration'
+        is_system: true,
+        level: 1
       },
       {
         code: 'organizer',
-        label: { en: 'Event Organizer', fr: 'Organisateur d\'événements' },
-        description: { en: 'Event management and organization', fr: 'Gestion et organisation des événements' },
-        group: 'events'
-      },
-      {
-        code: 'event_manager',
-        label: { en: 'Event Manager', fr: 'Gestionnaire d\'événements' },
-        description: { en: 'Event coordination and management', fr: 'Coordination et gestion des événements' },
-        group: 'events'
-      },
-      {
-        code: 'ticket_manager',
-        label: { en: 'Ticket Manager', fr: 'Gestionnaire de billets' },
-        description: { en: 'Ticket generation and validation', fr: 'Génération et validation des billets' },
-        group: 'tickets'
+        label: { en: 'Organizer', fr: 'Organisateur' },
+        description: { en: 'Event management and operations', fr: 'Gestion et opérations des événements' },
+        is_system: false,
+        level: 3
       },
       {
         code: 'designer',
         label: { en: 'Designer', fr: 'Designer' },
-        description: { en: 'Marketplace and design management', fr: 'Gestion du marketplace et design' },
-        group: 'marketplace'
+        description: { en: 'Template design and marketplace', fr: 'Design des templates et marketplace' },
+        is_system: false,
+        level: 3
       },
       {
-        code: 'guest',
-        label: { en: 'Guest', fr: 'Invité' },
-        description: { en: 'Basic guest access', fr: 'Accès invité de base' },
-        group: 'users'
+        code: 'user',
+        label: { en: 'User', fr: 'Utilisateur' },
+        description: { en: 'End user access', fr: 'Accès utilisateur final' },
+        is_system: true,
+        level: 4
       }
     ];
 
@@ -106,32 +92,19 @@ class RbacSeeder {
     ];
 
     this.rolePermissions = {
-      'super_admin': this.defaultPermissions.map(p => p.code), // All permissions
-      'admin': [
-        'admin.access', 'users.create', 'users.read', 'users.update', 'users.delete',
-        'roles.manage', 'permissions.manage', 'events.create', 'events.read', 'events.update', 'events.delete',
-        'tickets.generate', 'tickets.validate', 'tickets.read', 'notifications.email.send', 'notifications.sms.send',
-        'payments.process', 'payments.read', 'guests.manage', 'guests.read', 'marketplace.read',
-        'system.health', 'system.logs'
-      ],
+      'super_admin': this.defaultPermissions.map(p => p.code),
       'organizer': [
         'events.create', 'events.read', 'events.update', 'events.delete', 'events.publish', 'events.analytics',
-        'tickets.generate', 'tickets.validate', 'tickets.read', 'guests.manage', 'guests.read', 'guests.checkin',
-        'notifications.email.send', 'notifications.sms.send', 'payments.read'
-      ],
-      'event_manager': [
-        'events.create', 'events.read', 'events.update', 'events.publish', 'events.analytics',
-        'tickets.generate', 'tickets.validate', 'tickets.read', 'guests.manage', 'guests.read',
-        'notifications.email.send', 'notifications.sms.send'
-      ],
-      'ticket_manager': [
         'tickets.generate', 'tickets.validate', 'tickets.read', 'tickets.cancel', 'tickets.refund',
-        'guests.read', 'guests.checkin'
+        'guests.manage', 'guests.read', 'guests.checkin',
+        'notifications.email.send', 'notifications.sms.send', 'notifications.manage',
+        'payments.process', 'payments.read', 'payments.refund',
+        'marketplace.read', 'marketplace.create'
       ],
       'designer': [
         'marketplace.create', 'marketplace.read', 'marketplace.update', 'marketplace.delete'
       ],
-      'guest': [
+      'user': [
         'events.read', 'tickets.read', 'guests.read'
       ]
     };
@@ -164,12 +137,13 @@ class RbacSeeder {
     
     for (const role of this.defaultRoles) {
       const query = `
-        INSERT INTO roles (code, label, "group", description, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        INSERT INTO roles (code, label, description, is_system, level, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ON CONFLICT (code) DO UPDATE SET
           label = EXCLUDED.label,
-          "group" = EXCLUDED."group",
           description = EXCLUDED.description,
+          is_system = EXCLUDED.is_system,
+          level = EXCLUDED.level,
           updated_at = CURRENT_TIMESTAMP
         RETURNING id, code
       `;
@@ -177,8 +151,9 @@ class RbacSeeder {
       await connection.query(query, [
         role.code,
         JSON.stringify(role.label),
-        role.group,
-        JSON.stringify(role.description)
+        JSON.stringify(role.description),
+        role.is_system,
+        role.level
       ]);
     }
     
@@ -251,8 +226,15 @@ class RbacSeeder {
         // Insérer l'autorisation
         await connection.query(`
           INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
-          VALUES ($1, $2, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          ON CONFLICT ON CONSTRAINT authorizations_unique_role_permission_menu DO NOTHING
+          SELECT $1, $2, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM authorizations
+            WHERE role_id = $1
+              AND permission_id = $2
+              AND menu_id IS NULL
+              AND deleted_at IS NULL
+          )
         `, [roleId, permissionId]);
       }
     }
@@ -436,10 +418,16 @@ class RbacSeeder {
       for (const permission of allPermissions) {
         try {
           await connection.query(`
-            INSERT INTO authorizations (role_id, permission_id, created_at, updated_at)
-            VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            ON CONFLICT (role_id, permission_id) DO UPDATE SET
-              updated_at = CURRENT_TIMESTAMP
+            INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
+            SELECT $1, $2, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM authorizations
+              WHERE role_id = $1
+                AND permission_id = $2
+                AND menu_id IS NULL
+                AND deleted_at IS NULL
+            )
           `, [superAdminRoleId, permission.id]);
           
           assignedCount++;

@@ -45,7 +45,7 @@ class AdminController {
           seeded: status,
           totalRoles: allRoles.length,
           totalPermissions: allPermissions.length,
-          roles: allRoles.map(r => ({ id: r.id, code: r.code, group: r.group })),
+          roles: allRoles.map(r => ({ id: r.id, code: r.code, is_system: r.is_system, level: r.level })),
           permissions: allPermissions.map(p => ({ id: p.id, code: p.code, group: p.group }))
         }
       ));
@@ -260,8 +260,15 @@ class AdminController {
       // Ajouter la permission au rôle
       await permissionsService.connection.query(`
         INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at)
-        VALUES ($1, $2, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT ON CONSTRAINT authorizations_unique_role_permission_menu DO NOTHING
+        SELECT $1, $2, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM authorizations
+          WHERE role_id = $1
+            AND permission_id = $2
+            AND menu_id IS NULL
+            AND deleted_at IS NULL
+        )
       `, [roleId, permissionId]);
       
       // Vider les caches
