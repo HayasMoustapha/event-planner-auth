@@ -24,8 +24,9 @@ ON CONFLICT (role_id, permission_id, menu_id) DO UPDATE SET
 
 CREATE TEMP TABLE role_permissions (role_code TEXT, permission_code TEXT);
 
--- Organizer (event, guests, tickets, payments, notifications, scans, marketplace)
+-- Organizer (business core: events, tickets, guests, invitations, purchases, template consultation)
 INSERT INTO role_permissions (role_code, permission_code) VALUES
+-- Events management
 ('organizer', 'events.create'),
 ('organizer', 'events.read'),
 ('organizer', 'events.update'),
@@ -34,12 +35,15 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'events.archive'),
 ('organizer', 'events.manage'),
 ('organizer', 'events.stats.read'),
-('organizer', 'events.invitations.send'),
-('organizer', 'events.invitations.read'),
-('organizer', 'events.invitations.delete'),
 ('organizer', 'events.list'),
 ('organizer', 'manage_events'),
 
+-- Invitations
+('organizer', 'events.invitations.send'),
+('organizer', 'events.invitations.read'),
+('organizer', 'events.invitations.delete'),
+
+-- Guests management
 ('organizer', 'guests.create'),
 ('organizer', 'guests.read'),
 ('organizer', 'guests.update'),
@@ -49,6 +53,7 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'guests.checkin'),
 ('organizer', 'guests.stats.read'),
 
+-- Tickets management
 ('organizer', 'tickets.create'),
 ('organizer', 'tickets.read'),
 ('organizer', 'tickets.update'),
@@ -59,8 +64,6 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'tickets.stats.read'),
 ('organizer', 'tickets.batch.create'),
 ('organizer', 'tickets.full.batch'),
-('organizer', 'tickets.pdf.create'),
-('organizer', 'tickets.pdf.batch'),
 ('organizer', 'tickets.jobs.create'),
 ('organizer', 'tickets.jobs.process'),
 ('organizer', 'tickets.jobs.read'),
@@ -75,6 +78,7 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'tickets.templates.delete'),
 ('organizer', 'tickets.templates.validate'),
 
+-- Payments and purchases
 ('organizer', 'payments.create'),
 ('organizer', 'payments.read'),
 ('organizer', 'payments.update'),
@@ -100,6 +104,14 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'invoices.create'),
 ('organizer', 'invoices.read'),
 
+-- Template consultation
+('organizer', 'marketplace.read'),
+('organizer', 'marketplace.purchase'),
+('organizer', 'marketplace.templates.read'),
+('organizer', 'marketplace.templates.purchase'),
+('organizer', 'marketplace.purchases.read'),
+
+-- Notifications (business notifications)
 ('organizer', 'notifications.email.send'),
 ('organizer', 'notifications.sms.send'),
 ('organizer', 'notifications.email.queue'),
@@ -114,6 +126,7 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'notifications.event-confirmation.send'),
 ('organizer', 'notifications.organizer.send'),
 
+-- Scans (ticket validation)
 ('organizer', 'scans.validate'),
 ('organizer', 'scans.validate.offline'),
 ('organizer', 'scans.history.read'),
@@ -134,20 +147,18 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'scans.reports.generate'),
 ('organizer', 'scans.qr.generate'),
 ('organizer', 'scans.qr.batch'),
-('organizer', 'scans.qr.test'),
+('organizer', 'scans.qr.test');
 
-('organizer', 'marketplace.read'),
-('organizer', 'marketplace.purchase'),
-('organizer', 'marketplace.templates.read'),
-('organizer', 'marketplace.templates.purchase'),
-('organizer', 'marketplace.purchases.read');
-
--- Designer
+-- Designer (design creation, marketplace, templates, sales tracking)
 INSERT INTO role_permissions (role_code, permission_code) VALUES
+-- Template design and management
 ('designer', 'templates.design'),
 ('designer', 'templates.publish'),
 ('designer', 'templates.sell'),
 ('designer', 'templates.analytics'),
+
+-- Marketplace management
+('designer', 'marketplace.design'),
 ('designer', 'marketplace.designer.read'),
 ('designer', 'marketplace.designer.upload'),
 ('designer', 'marketplace.designers.create'),
@@ -159,24 +170,39 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('designer', 'marketplace.reviews.read'),
 ('designer', 'marketplace.reviews.create'),
 ('designer', 'marketplace.stats.read'),
-('designer', 'marketplace.design'),
+('designer', 'marketplace.purchases.read'),
+
+-- PDF generation for designs
 ('designer', 'tickets.pdf.create'),
 ('designer', 'tickets.pdf.batch'),
+
+-- Basic event consultation
 ('designer', 'events.read'),
 ('designer', 'events.list'),
+
+-- Designer notifications
 ('designer', 'notifications.designer.send'),
+
+-- User management (basic profile updates)
 ('designer', 'users.read'),
 ('designer', 'users.update');
 
--- User
+-- User (basic consultation and purchasing)
 INSERT INTO role_permissions (role_code, permission_code) VALUES
+-- Profile management
 ('user', 'users.read'),
 ('user', 'users.update'),
+
+-- Event consultation (public access)
 ('user', 'events.read'),
 ('user', 'events.list'),
+
+-- Ticket consultation and purchasing
 ('user', 'tickets.read'),
 ('user', 'payments.create'),
 ('user', 'payments.read'),
+
+-- QR code scanning for validation
 ('user', 'scans.qr.decode');
 
 INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at, granted)
