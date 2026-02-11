@@ -24,15 +24,11 @@ WHERE role_id IN (SELECT id FROM roles WHERE code IN ('super_admin', 'organizer'
 -- ========================================
 
 INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at, granted)
-SELECT r.id, p.id, m.id, NOW(), NOW(), TRUE
+SELECT r.id, p.id, NULL, NOW(), NOW(), TRUE
 FROM roles r
 CROSS JOIN permissions p
-CROSS JOIN LATERAL (SELECT id FROM menus WHERE deleted_at IS NULL ORDER BY id LIMIT 1) m
 WHERE r.code = 'super_admin' AND r.deleted_at IS NULL AND p.deleted_at IS NULL
-ON CONFLICT (role_id, permission_id, menu_id) DO UPDATE SET
-  deleted_at = NULL,
-  granted = TRUE,
-  updated_at = NOW();
+;
 
 -- ========================================
 -- 3. BUSINESS ROLES (temp table approach)
@@ -108,31 +104,12 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('organizer', 'tickets.templates.delete'),
 ('organizer', 'tickets.templates.validate'),
 
--- === PAYMENTS (full management for event payments) ===
+-- === PAYMENTS (suivi achat billets + achats templates) ===
 ('organizer', 'payments.create'),
 ('organizer', 'payments.read'),
 ('organizer', 'payments.update'),
 ('organizer', 'payments.cancel'),
-('organizer', 'payments.refunds.create'),
-('organizer', 'payments.refunds.read'),
 ('organizer', 'payments.stats.read'),
-('organizer', 'payments.invoices.create'),
-('organizer', 'payments.invoices.read'),
-('organizer', 'payments.stripe.create'),
-('organizer', 'payments.paypal.create'),
-('organizer', 'payments.paypal.capture'),
-('organizer', 'payments.payment-methods.create'),
-('organizer', 'payments.payment-methods.read'),
-('organizer', 'payments.customers.create'),
-('organizer', 'payments.customers.read'),
-('organizer', 'payment-methods.create'),
-('organizer', 'payment-methods.read'),
-('organizer', 'payment-methods.update'),
-('organizer', 'payment-methods.delete'),
-('organizer', 'refunds.create'),
-('organizer', 'refunds.read'),
-('organizer', 'invoices.create'),
-('organizer', 'invoices.read'),
 
 -- === MARKETPLACE (consultation + purchase ONLY, NOT design/creation) ===
 ('organizer', 'marketplace.read'),
@@ -282,14 +259,10 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 -- ========================================
 
 INSERT INTO authorizations (role_id, permission_id, menu_id, created_at, updated_at, granted)
-SELECT r.id, p.id, m.id, NOW(), NOW(), TRUE
+SELECT r.id, p.id, NULL, NOW(), NOW(), TRUE
 FROM role_permissions rp
 JOIN roles r ON r.code = rp.role_code AND r.deleted_at IS NULL
 JOIN permissions p ON p.code = rp.permission_code AND p.deleted_at IS NULL
-CROSS JOIN LATERAL (SELECT id FROM menus WHERE deleted_at IS NULL ORDER BY id LIMIT 1) m
-ON CONFLICT (role_id, permission_id, menu_id) DO UPDATE SET
-  deleted_at = NULL,
-  granted = TRUE,
-  updated_at = NOW();
+;
 
 DROP TABLE role_permissions;

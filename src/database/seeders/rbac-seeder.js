@@ -5,6 +5,8 @@
 
 const { connection } = require('../../config/database');
 const logger = require('../../utils/logger');
+const fs = require('fs').promises;
+const path = require('path');
 
 class RbacSeeder {
   constructor() {
@@ -116,17 +118,54 @@ class RbacSeeder {
   async seed() {
     try {
       logger.info('🌱 Starting RBAC seeding...');
-      
-      await this.seedRoles();
-      await this.seedPermissions();
-      await this.seedAuthorizations();
-      
+
+      // Utiliser les seeds SQL comme source de vérité (roles/permissions/menus/authorizations/admin)
+      const result = await this.seedFromSqlFiles();
+
       logger.info('✅ RBAC seeding completed successfully');
-      return { success: true, message: 'RBAC seeding completed' };
+      return { success: true, message: 'RBAC seeding completed', ...result };
     } catch (error) {
       logger.error('❌ RBAC seeding failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * Exécute les seeds SQL officiels (source de vérité)
+   */
+  async seedFromSqlFiles() {
+    const seedDir = path.join(__dirname, '../../../database/seeds/seeds');
+    const seedFiles = [
+      'roles.seed.sql',
+      'permissions.seed.sql',
+      'menus.seed.sql',
+      'authorizations.seed.sql',
+      'admin.seed.sql'
+    ];
+
+    const executed = [];
+
+    for (const file of seedFiles) {
+      const filePath = path.join(seedDir, file);
+      const sql = await fs.readFile(filePath, 'utf8');
+
+      const client = await connection.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(sql);
+        await client.query('COMMIT');
+        executed.push(file);
+        logger.info(`✅ Seed SQL exécuté: ${file}`);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        logger.error(`❌ Seed SQL failed: ${file}`, error);
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+
+    return { executed };
   }
 
   /**

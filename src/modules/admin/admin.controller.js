@@ -17,6 +17,7 @@ class AdminController {
       logger.info('🌱 Admin requesting RBAC seeding...');
       
       const result = await rbacSeeder.seed();
+      permissionsService.clearCache('all');
       
       res.status(200).json(createResponse(
         true,
