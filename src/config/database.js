@@ -7,9 +7,9 @@ const dbConfig = {
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'event_planner_auth',
-    max: 20,
+    max: 30,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 10000,
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
   }
 };
