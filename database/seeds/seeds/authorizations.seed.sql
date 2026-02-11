@@ -212,6 +212,7 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 ('designer', 'marketplace.templates.create'),
 ('designer', 'marketplace.templates.read'),
 ('designer', 'marketplace.templates.update'),
+('designer', 'marketplace.templates.delete'),
 ('designer', 'marketplace.reviews.read'),
 ('designer', 'marketplace.reviews.create'),
 ('designer', 'marketplace.stats.read'),
