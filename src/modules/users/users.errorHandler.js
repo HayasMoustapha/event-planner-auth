@@ -210,7 +210,7 @@ const validateOperation = (req, res, next) => {
     const id = parseInt(req.params.id);
     
     // Empêcher la modification du mot de passe d'un autre utilisateur
-    if (req.user && req.user.id !== id && !req.user.roles?.includes('admin')) {
+    if (req.user && req.user.id !== id && !req.user.roles?.includes('super_admin')) {
       return res.status(403).json({
         success: false,
         message: 'Seul un administrateur peut modifier le mot de passe d\'un autre utilisateur',

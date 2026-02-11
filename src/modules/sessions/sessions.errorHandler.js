@@ -273,10 +273,10 @@ const validateSessionOperation = (req, res, next) => {
     // Empêcher la déconnexion des sessions d'un autre utilisateur sans permission
     if (currentUserId && userId && currentUserId !== parseInt(userId)) {
       const userRole = req.user?.role;
-      if (userRole !== 'admin') {
+      if (userRole !== 'super_admin') {
         return res.status(403).json({
           success: false,
-          message: 'Seul un administrateur peut déconnecter les sessions d\'un autre utilisateur',
+          message: 'Seul un super administrateur peut déconnecter les sessions d\'un autre utilisateur',
           code: 'SESSION_LOGOUT_FORBIDDEN',
           timestamp: new Date().toISOString()
         });

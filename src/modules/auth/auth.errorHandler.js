@@ -331,10 +331,10 @@ const validateAuthOperation = (req, res, next) => {
     // Empêcher le changement du mot de passe d'un autre utilisateur sans permission
     if (currentUserId && userId && currentUserId !== parseInt(userId)) {
       const userRole = req.user?.role;
-      if (userRole !== 'admin') {
+      if (userRole !== 'super_admin') {
         return res.status(403).json({
           success: false,
-          message: 'Seul un administrateur peut modifier le mot de passe d\'un autre utilisateur',
+          message: 'Seul un super administrateur peut modifier le mot de passe d\'un autre utilisateur',
           code: 'PASSWORD_CHANGE_FORBIDDEN',
           timestamp: new Date().toISOString()
         });

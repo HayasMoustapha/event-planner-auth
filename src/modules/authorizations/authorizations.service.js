@@ -345,12 +345,12 @@ class AuthorizationService {
   }
 
   /**
-   * Vérifie si un utilisateur est administrateur
+   * Vérifie si un utilisateur est super administrateur
    * @param {number} userId - ID de l'utilisateur
-   * @returns {Promise<boolean>} True si administrateur
+   * @returns {Promise<boolean>} True si super administrateur
    */
   async isAdmin(userId) {
-    return await this.hasAnyRole(userId, ['admin', 'super_admin']);
+    return await this.hasAnyRole(userId, ['super_admin']);
   }
 
   /**
@@ -1066,8 +1066,6 @@ class AuthorizationService {
     return {
       hierarchy: {
         'super_admin': 100,
-        'admin': 80,
-        'manager': 60,
         'organizer': 40,
         'designer': 30,
         'user': 10

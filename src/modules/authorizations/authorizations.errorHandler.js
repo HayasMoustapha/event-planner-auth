@@ -173,7 +173,7 @@ const validateAuthorizationOperation = (req, res, next) => {
   // Validation pour les opérations de cache
   if (req.originalUrl.includes('/cache')) {
     // Seuls les administrateurs peuvent gérer le cache
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+    if (req.user?.role !== 'super_admin') {
       return res.status(403).json({
         success: false,
         message: 'Seul un administrateur peut gérer le cache des autorisations',
@@ -186,7 +186,7 @@ const validateAuthorizationOperation = (req, res, next) => {
   // Validation pour les opérations de politique complexe
   if (req.body && req.body.policy && req.body.policy.type === 'complex') {
     // Les politiques complexes nécessitent des permissions élevées
-    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+    if (!req.user || req.user.role !== 'super_admin') {
       return res.status(403).json({
         success: false,
         message: 'Permissions insuffisantes pour les politiques complexes',

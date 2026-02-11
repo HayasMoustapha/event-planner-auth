@@ -195,7 +195,7 @@ const requireOwnership = (paramName = 'userId') => {
     const currentUserId = req.user.id;
 
     // Les administrateurs peuvent accéder à toutes les ressources
-    if (req.user.role === 'admin') {
+    if (req.user.role === 'super_admin') {
       return next();
     }
 

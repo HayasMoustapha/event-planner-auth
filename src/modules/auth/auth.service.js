@@ -193,8 +193,8 @@ class AuthService {
    */
   getUserRolesSync(user) {
     // Fallback basé sur l'email ou le rôle simple pour éviter les erreurs
-    if (user.email === 'admin@eventplanner.com' || user.role === 'admin') {
-      return ['admin', 'super_admin', 'organizer', 'event_manager', 'designer'];
+    if (user.email === 'admin@eventplanner.com' || user.role === 'super_admin') {
+      return ['super_admin', 'organizer', 'designer', 'user'];
     }
     
     // Fallback pour les autres rôles
@@ -203,7 +203,7 @@ class AuthService {
     }
     
     // Rôle par défaut
-    return ['guest'];
+    return ['user'];
   }
 
   /**
@@ -225,42 +225,21 @@ class AuthService {
     // Permissions basées sur les rôles (fallback)
     roles.forEach(role => {
       switch (role) {
-        case 'admin':
-          permissions.add('admin.access');
-          permissions.add('users.create');
-          permissions.add('users.read');
-          permissions.add('users.update');
-          permissions.add('users.delete');
-          permissions.add('roles.manage');
-          permissions.add('permissions.manage');
-          // Ajouter toutes les autres permissions
+        case 'organizer':
           permissions.add('events.create');
           permissions.add('events.read');
           permissions.add('events.update');
           permissions.add('events.delete');
           permissions.add('tickets.generate');
+          permissions.add('tickets.read');
           permissions.add('tickets.validate');
+          permissions.add('guests.manage');
+          permissions.add('guests.read');
           permissions.add('notifications.email.send');
           permissions.add('notifications.sms.send');
           permissions.add('payments.process');
-          break;
-          
-        case 'organizer':
-        case 'event_manager':
-          permissions.add('events.create');
-          permissions.add('events.read');
-          permissions.add('events.update');
-          permissions.add('events.delete');
-          permissions.add('tickets.generate');
-          permissions.add('guests.manage');
-          permissions.add('notifications.email.send');
-          permissions.add('notifications.sms.send');
-          break;
-          
-        case 'ticket_manager':
-          permissions.add('tickets.generate');
-          permissions.add('tickets.validate');
-          permissions.add('tickets.read');
+          permissions.add('marketplace.read');
+          permissions.add('marketplace.purchase');
           break;
           
         case 'designer':
@@ -269,7 +248,8 @@ class AuthService {
           permissions.add('marketplace.update');
           break;
           
-        case 'guest':
+        case 'user':
+          permissions.add('events.read');
           permissions.add('guests.read');
           permissions.add('tickets.read');
           break;
@@ -290,7 +270,7 @@ class AuthService {
     } catch (error) {
       logger.error(`Error loading roles from database for user ${userId}:`, error);
       // Fallback vers une méthode synchrone simple
-      return ['guest'];
+      return ['user'];
     }
   }
 
