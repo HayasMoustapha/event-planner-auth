@@ -30,6 +30,8 @@ INSERT INTO permissions (code, label, "group", description, created_at, updated_
 ('admin.analytics.events', '{"fr":"Analytics événements","en":"Event analytics"}'::jsonb, 'admin', NULL, NOW(), NOW()),
 ('admin.export', '{"fr":"Exporter données","en":"Export data"}'::jsonb, 'admin', NULL, NOW(), NOW()),
 ('admin.backup.create', '{"fr":"Créer backup","en":"Create backup"}'::jsonb, 'admin', NULL, NOW(), NOW()),
+('admin.access', '{"fr":"Accès admin","en":"Admin access"}'::jsonb, 'admin', NULL, NOW(), NOW()),
+('permissions.manage', '{"fr":"Gérer permissions","en":"Manage permissions"}'::jsonb, 'admin', NULL, NOW(), NOW()),
 ('authorizations.create', '{"fr":"Créer authorization","en":"Create authorization"}'::jsonb, 'authorizations', NULL, NOW(), NOW()),
 ('authorizations.delete', '{"fr":"Supprimer authorization","en":"Delete authorization"}'::jsonb, 'authorizations', NULL, NOW(), NOW()),
 ('authorizations.hard_delete', '{"fr":"Hard delete authorization","en":"Hard delete authorization"}'::jsonb, 'authorizations', NULL, NOW(), NOW()),
