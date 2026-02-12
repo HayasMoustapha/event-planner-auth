@@ -1,5 +1,10 @@
 const { body, param } = require('express-validator');
 
+const isOAuthMockEnabled = () => (
+  process.env.OAUTH_MOCK === 'true' ||
+  (process.env.NODE_ENV !== 'production' && process.env.OAUTH_MOCK !== 'false')
+);
+
 /**
  * Validation pour l'authentification Google Sign-In
  */
@@ -9,7 +14,12 @@ const validateGoogleLogin = [
     .withMessage('Le token Google est requis')
     .isString()
     .withMessage('Le token Google doit être une chaîne de caractères')
-    .isLength({ min: 100, max: 2000 })
+    .custom((value) => {
+      if (isOAuthMockEnabled()) {
+        return true;
+      }
+      return typeof value === 'string' && value.length >= 100 && value.length <= 2000;
+    })
     .withMessage('Le token Google doit avoir une longueur valide')
 ];
 
@@ -22,7 +32,12 @@ const validateAppleLogin = [
     .withMessage('Le token d\'identité Apple est requis')
     .isString()
     .withMessage('Le token d\'identité Apple doit être une chaîne de caractères')
-    .isLength({ min: 100, max: 2000 })
+    .custom((value) => {
+      if (isOAuthMockEnabled()) {
+        return true;
+      }
+      return typeof value === 'string' && value.length >= 100 && value.length <= 2000;
+    })
     .withMessage('Le token d\'identité Apple doit avoir une longueur valide'),
   
   body('user')
@@ -42,7 +57,12 @@ const validateLinkGoogle = [
     .withMessage('Le token Google est requis')
     .isString()
     .withMessage('Le token Google doit être une chaîne de caractères')
-    .isLength({ min: 100, max: 2000 })
+    .custom((value) => {
+      if (isOAuthMockEnabled()) {
+        return true;
+      }
+      return typeof value === 'string' && value.length >= 100 && value.length <= 2000;
+    })
     .withMessage('Le token Google doit avoir une longueur valide')
 ];
 
@@ -55,7 +75,12 @@ const validateLinkApple = [
     .withMessage('Le token d\'identité Apple est requis')
     .isString()
     .withMessage('Le token d\'identité Apple doit être une chaîne de caractères')
-    .isLength({ min: 100, max: 2000 })
+    .custom((value) => {
+      if (isOAuthMockEnabled()) {
+        return true;
+      }
+      return typeof value === 'string' && value.length >= 100 && value.length <= 2000;
+    })
     .withMessage('Le token d\'identité Apple doit avoir une longueur valide'),
   
   body('user')

@@ -200,6 +200,12 @@ router.get('/check-username/:username',
 );
 
 /**
+ * Routes OAuth pour Google Sign-In et Apple Sign-In
+ * Intégrées dans le module auth pour l'URL /api/auth/oauth
+ */
+router.use('/oauth', oauthRoutes);
+
+/**
  * Routes protégées - authentification requise
  */
 router.use(authMiddleware.authenticate);
@@ -265,11 +271,5 @@ router.get('/otp/stats',
   rbacMiddleware.requirePermission('otp.stats'),
   authController.getOtpStats
 );
-
-/**
- * Routes OAuth pour Google Sign-In et Apple Sign-In
- * Intégrées dans le module auth pour l'URL /api/auth/oauth
- */
-router.use('/oauth', oauthRoutes);
 
 module.exports = router;

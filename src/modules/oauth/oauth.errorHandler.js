@@ -165,7 +165,7 @@ class OAuthErrorHandler {
     }
 
     // Gérer l'erreur avec le gestionnaire OAuth
-    this.handle(error, req, res, next);
+    OAuthErrorHandler.handle(error, req, res, next);
   }
 
   /**

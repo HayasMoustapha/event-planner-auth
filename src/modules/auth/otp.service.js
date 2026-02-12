@@ -153,6 +153,25 @@ class OtpService {
     // Normaliser le contact
     const normalizedContact = contactInfo.toLowerCase().trim();
 
+    // Résoudre la personne si l'ID n'est pas fourni
+    if (!personId) {
+      if (purpose === 'email') {
+        const person = await peopleRepository.findByEmail(normalizedContact);
+        if (person) {
+          personId = person.id;
+        }
+      } else if (purpose === 'phone') {
+        const person = await peopleRepository.findByPhone(normalizedContact);
+        if (person) {
+          personId = person.id;
+        }
+      }
+    }
+
+    if (!personId) {
+      throw new Error('Aucun compte trouvé pour ce contact');
+    }
+
     // Debug logs
     console.log('🔍 Debug OTP Validation:', {
       otpCode,

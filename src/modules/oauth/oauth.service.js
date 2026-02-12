@@ -22,12 +22,42 @@ class OAuthService {
   }
 
   /**
+   * Détermine si le mode mock OAuth est activé
+   * Permet de simuler OAuth en environnement dev/sandbox
+   */
+  isMockEnabled() {
+    return process.env.OAUTH_MOCK === 'true' || (
+      process.env.NODE_ENV !== 'production' && process.env.OAUTH_MOCK !== 'false'
+    );
+  }
+
+  /**
    * Vérifie un token Google ID et extrait les informations utilisateur
    * @param {string} idToken - Token ID Google
    * @returns {Promise<Object>} Informations utilisateur validées
    */
   async verifyGoogleToken(idToken) {
     try {
+      if (this.isMockEnabled()) {
+        const email = typeof idToken === 'string' && idToken.includes('@')
+          ? idToken
+          : `mock_google_${Date.now()}@example.com`;
+        const userData = {
+          provider: 'google',
+          provider_user_id: `mock-google-${Date.now()}`,
+          email: email.toLowerCase().trim(),
+          first_name: 'Google',
+          last_name: 'Mock',
+          picture: null,
+          locale: 'en',
+          provider_data: {
+            mock: true
+          }
+        };
+        logger.auth('Google token verified (mock)', { email: userData.email });
+        return userData;
+      }
+
       if (!idToken || typeof idToken !== 'string') {
         throw new Error('Token Google invalide');
       }
@@ -102,6 +132,24 @@ class OAuthService {
    */
   async verifyAppleToken(appleData) {
     try {
+      if (this.isMockEnabled()) {
+        const email = appleData?.email || `mock_apple_${Date.now()}@example.com`;
+        const userData = {
+          provider: 'apple',
+          provider_user_id: `mock-apple-${Date.now()}`,
+          email: email.toLowerCase().trim(),
+          first_name: 'Apple',
+          last_name: 'Mock',
+          email_verified: true,
+          is_private_email: false,
+          provider_data: {
+            mock: true
+          }
+        };
+        logger.auth('Apple token verified (mock)', { email: userData.email });
+        return userData;
+      }
+
       const { identityToken, user: appleUserId } = appleData;
 
       if (!identityToken) {
@@ -362,6 +410,7 @@ class OAuthService {
    */
   checkConfiguration() {
     const config = {
+      mockEnabled: this.isMockEnabled(),
       google: {
         clientId: !!process.env.GOOGLE_CLIENT_ID,
         clientSecret: !!process.env.GOOGLE_CLIENT_SECRET,

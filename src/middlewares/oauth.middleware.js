@@ -88,6 +88,11 @@ class OAuthMiddleware {
    * Empêche les tokens malformés ou trop volumineux
    */
   static validateTokenFormat(req, res, next) {
+    const oauthService = require('../modules/oauth/oauth.service');
+    const config = oauthService.checkConfiguration();
+    if (config.mockEnabled) {
+      return next();
+    }
     const { idToken, identityToken } = req.body;
     const token = idToken || identityToken;
 
@@ -240,6 +245,9 @@ class OAuthMiddleware {
   static validateOAuthConfig(req, res, next) {
     const oauthService = require('../modules/oauth/oauth.service');
     const config = oauthService.checkConfiguration();
+    if (config.mockEnabled) {
+      return next();
+    }
     const errors = OAuthErrorHandler.validateConfiguration(config);
 
     if (errors.length > 0) {

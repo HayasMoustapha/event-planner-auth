@@ -309,6 +309,8 @@ class AuthController {
   async generatePhoneOtp(req, res, next) {
     try {
       const { phone, personId, expiresInMinutes = 15 } = req.body;
+      const mockEnabled = process.env.AUTH_MOCKS === 'true' || process.env.NODE_ENV !== 'production';
+      const includeOtpCode = process.env.AUTH_MOCKS === 'true' || process.env.NODE_ENV !== 'production';
 
       if (!phone && !personId) {
         return res.status(400).json(createResponse(
@@ -324,12 +326,19 @@ class AuthController {
         const peopleRepository = require('../people/people.repository');
         const person = await peopleRepository.findByPhone(phone);
         if (!person) {
-          return res.status(404).json(createResponse(
-            false,
-            'Personne non trouvée pour ce numéro de téléphone'
-          ));
+          // Fallback: récupérer l'utilisateur par téléphone si la personne n'est pas trouvée
+          const usersRepository = require('../users/users.repository');
+          const user = await usersRepository.findByPhone(phone);
+          if (!user || !user.person_id) {
+            return res.status(404).json(createResponse(
+              false,
+              'Personne non trouvée pour ce numéro de téléphone'
+            ));
+          }
+          targetPersonId = user.person_id;
+        } else {
+          targetPersonId = person.id;
         }
-        targetPersonId = person.id;
       }
 
       const otp = await otpService.generatePhoneOtp(targetPersonId, phone, expiresInMinutes, req.user?.id);
@@ -360,7 +369,21 @@ class AuthController {
           ip: req.ip
         });
 
-        // Supprimer l'OTP généré si l'envoi échoue
+        // En dev/test, on ne bloque pas le flux si le SMS n'est pas configuré
+        if (mockEnabled) {
+          return res.status(201).json(createResponse(
+            true,
+            'OTP généré avec succès (SMS non envoyé en dev)',
+            {
+              contactInfo: phone,
+              expiresAt: otp.expires_at,
+              expiresInMinutes,
+              ...(includeOtpCode ? { otpCode: otp.code } : {})
+            }
+          ));
+        }
+
+        // Supprimer l'OTP généré si l'envoi échoue en production
         await otpService.invalidateOtp(otp.id);
 
         throw new Error(`Échec d'envoi de l'OTP par SMS: ${smsError.message}`);
@@ -372,7 +395,8 @@ class AuthController {
         {
           contactInfo: phone,
           expiresAt: otp.expires_at,
-          expiresInMinutes
+          expiresInMinutes,
+          ...(includeOtpCode ? { otpCode: otp.code } : {})
         }
       ));
     } catch (error) {
@@ -572,9 +596,10 @@ class AuthController {
    */
   async loginWithOtp(req, res, next) {
     try {
-      const { contactInfo, code, type = 'email' } = req.body;
+      const { contactInfo, code, otpCode, type = 'email' } = req.body;
+      const finalCode = code || otpCode;
 
-      if (!contactInfo || !code) {
+      if (!contactInfo || !finalCode) {
         return res.status(400).json(createResponse(
           false,
           'Contact et code OTP requis'
@@ -582,7 +607,7 @@ class AuthController {
       }
 
       // Vérifier l'OTP
-      const otpResult = await otpService.verifyOtp(code, contactInfo, type);
+      const otpResult = await otpService.verifyOtp(finalCode, contactInfo, type);
 
       // Récupérer l'utilisateur
       const usersRepository = require('../users/users.repository');
