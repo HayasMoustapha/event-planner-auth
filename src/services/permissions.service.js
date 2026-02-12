@@ -66,10 +66,10 @@ class PermissionsService {
         FROM permissions p
         INNER JOIN authorizations a ON p.id = a.permission_id
         INNER JOIN accesses ur ON a.role_id = ur.role_id
-        WHERE ur.user_id = $1 
-          AND p.deleted_at IS NULL 
-          AND ur.deleted_at IS NULL 
+        WHERE ur.user_id = $1
+          AND p.deleted_at IS NULL
           AND a.deleted_at IS NULL
+          AND (ur.status = 'active' OR ur.status IS NULL)
         ORDER BY p."group" ASC, p.code ASC
       `;
 
@@ -117,9 +117,9 @@ class PermissionsService {
         SELECT r.id, r.code, r.label, r.description
         FROM roles r
         INNER JOIN accesses ur ON r.id = ur.role_id
-        WHERE ur.user_id = $1 
-          AND r.deleted_at IS NULL 
-          AND ur.deleted_at IS NULL
+        WHERE ur.user_id = $1
+          AND r.deleted_at IS NULL
+          AND (ur.status = 'active' OR ur.status IS NULL)
         ORDER BY r.code ASC
       `;
 
