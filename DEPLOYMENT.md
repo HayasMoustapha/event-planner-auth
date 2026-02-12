@@ -21,6 +21,7 @@
    - `JWT_SECRET`
    - `AUTH_MOCKS` (dev)
    - OAuth (Google/Apple) si activé
+3. Vérifier la connexion DB via `psql` avant de démarrer
 
 ---
 
@@ -40,7 +41,16 @@ npm run start
 
 ---
 
-## 5. Healthcheck
+## 5. Migrations / Seeds
+
+Le service applique les migrations + seeds au bootstrap si activé dans `.env`.
+En production, vérifier que :
+1. La base est vide ou en bon état.
+2. Les seeds RBAC sont corrects.
+
+---
+
+## 6. Healthcheck
 
 ```
 GET http://localhost:3000/api/health
@@ -52,4 +62,3 @@ GET http://localhost:3000/api/health
 
 1. Le bootstrap DB est automatique si activé.
 2. Les seeds RBAC sont appliqués lors du bootstrap.
-
