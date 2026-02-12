@@ -310,7 +310,7 @@ class AuthController {
     try {
       const { phone, personId, expiresInMinutes = 15 } = req.body;
       const mockEnabled = process.env.AUTH_MOCKS === 'true' || process.env.NODE_ENV !== 'production';
-      const includeOtpCode = process.env.AUTH_MOCKS === 'true' || process.env.NODE_ENV !== 'production';
+      const includeOtpCode = process.env.AUTH_MOCKS !== 'false';
 
       if (!phone && !personId) {
         return res.status(400).json(createResponse(
@@ -342,10 +342,11 @@ class AuthController {
       }
 
       const otp = await otpService.generatePhoneOtp(targetPersonId, phone, expiresInMinutes, req.user?.id);
+      const otpCode = otp?.otp_code || otp?.code;
 
       // Envoyer l'OTP par SMS
       try {
-        const smsSent = await smsService.sendOTP(phone, otp.code, 'login', {
+        const smsSent = await smsService.sendOTP(phone, otpCode, 'login', {
           expiresIn: expiresInMinutes,
           ip: req.ip
         });
@@ -378,7 +379,7 @@ class AuthController {
               contactInfo: phone,
               expiresAt: otp.expires_at,
               expiresInMinutes,
-              ...(includeOtpCode ? { otpCode: otp.code } : {})
+              ...(includeOtpCode && otpCode ? { otpCode } : {})
             }
           ));
         }
@@ -396,7 +397,7 @@ class AuthController {
           contactInfo: phone,
           expiresAt: otp.expires_at,
           expiresInMinutes,
-          ...(includeOtpCode ? { otpCode: otp.code } : {})
+          ...(includeOtpCode && otpCode ? { otpCode } : {})
         }
       ));
     } catch (error) {

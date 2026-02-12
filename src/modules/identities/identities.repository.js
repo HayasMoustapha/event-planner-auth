@@ -1,4 +1,4 @@
-const { getDatabase } = require('../../config/database');
+const { connection } = require('../../config/database');
 
 /**
  * Repository pour la gestion des identités OAuth
@@ -39,8 +39,7 @@ class IdentitiesRepository {
     ];
 
     try {
-      const db = getDatabase();
-      const result = await db.query(query, values);
+      const result = await connection.query(query, values);
       return result.rows[0];
     } catch (error) {
       if (error.code === '23505') {
@@ -65,12 +64,10 @@ class IdentitiesRepository {
              provider_data, last_used_at, created_at, updated_at, uid
       FROM user_identities
       WHERE provider = $1 AND provider_user_id = $2
-      AND deleted_at IS NULL
     `;
 
     try {
-      const db = getDatabase();
-      const result = await db.query(query, [provider, providerUserId]);
+      const result = await connection.query(query, [provider, providerUserId]);
       return result.rows[0] || null;
     } catch (error) {
       throw new Error(`Erreur recherche identité OAuth: ${error.message}`);
@@ -89,7 +86,6 @@ class IdentitiesRepository {
              provider_data, last_used_at, created_at, updated_at, uid
       FROM user_identities
       WHERE user_id = $1
-      AND deleted_at IS NULL
     `;
     let params = [userId];
 
@@ -101,8 +97,7 @@ class IdentitiesRepository {
     query += ' ORDER BY created_at DESC';
 
     try {
-      const db = getDatabase();
-      const result = await db.query(query, params);
+      const result = await connection.query(query, params);
       return result.rows;
     } catch (error) {
       throw new Error(`Erreur recherche identités utilisateur: ${error.message}`);
@@ -121,12 +116,10 @@ class IdentitiesRepository {
              provider_data, last_used_at, created_at, updated_at, uid
       FROM user_identities
       WHERE email = $1 AND provider = $2
-      AND deleted_at IS NULL
     `;
 
     try {
-      const db = getDatabase();
-      const result = await db.query(query, [email.toLowerCase().trim(), provider]);
+      const result = await connection.query(query, [email.toLowerCase().trim(), provider]);
       return result.rows[0] || null;
     } catch (error) {
       throw new Error(`Erreur recherche identité par email: ${error.message}`);
@@ -147,8 +140,7 @@ class IdentitiesRepository {
     `;
 
     try {
-      const db = getDatabase();
-      const result = await db.query(query, [identityId]);
+      const result = await connection.query(query, [identityId]);
       return result.rows.length > 0;
     } catch (error) {
       throw new Error(`Erreur mise à jour dernière utilisation: ${error.message}`);
@@ -170,8 +162,7 @@ class IdentitiesRepository {
     `;
 
     try {
-      const db = getDatabase();
-      const result = await db.query(query, [
+      const result = await connection.query(query, [
         providerData ? JSON.stringify(providerData) : null,
         identityId
       ]);
@@ -190,14 +181,13 @@ class IdentitiesRepository {
   async softDelete(identityId, deletedBy = null) {
     const query = `
       UPDATE user_identities 
-      SET deleted_at = CURRENT_TIMESTAMP, updated_by = $2
-      WHERE id = $1 AND deleted_at IS NULL
+      SET updated_at = CURRENT_TIMESTAMP, updated_by = $2
+      WHERE id = $1
       RETURNING id
     `;
 
     try {
-      const db = getDatabase();
-      const result = await db.query(query, [identityId, deletedBy]);
+      const result = await connection.query(query, [identityId, deletedBy]);
       return result.rows.length > 0;
     } catch (error) {
       throw new Error(`Erreur suppression identité: ${error.message}`);

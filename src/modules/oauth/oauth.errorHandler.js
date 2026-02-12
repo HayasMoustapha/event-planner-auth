@@ -141,13 +141,17 @@ class OAuthErrorHandler {
     }
 
     // Erreur par défaut
+    const details = { 
+      code: 'OAUTH_GENERIC_ERROR',
+      timestamp: new Date().toISOString()
+    };
+    if (process.env.NODE_ENV !== 'production') {
+      details.debug = error.message;
+    }
     return res.status(500).json(createResponse(
       false,
       'Erreur lors de l\'authentification OAuth',
-      { 
-        code: 'OAUTH_GENERIC_ERROR',
-        timestamp: new Date().toISOString()
-      }
+      details
     ));
   }
 
