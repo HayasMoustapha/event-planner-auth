@@ -1,4 +1,5 @@
 const express = require('express');
+const yaml = require('js-yaml');
 const { specs, uiOptions, swaggerUi, postmanSpecs } = require('../config/swagger');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { requirePermission } = require('../middlewares/rbac.middleware');
@@ -21,7 +22,6 @@ router.get('/json', (req, res) => {
 
 // Documentation OpenAPI YAML (publique)
 router.get('/yaml', (req, res) => {
-  const yaml = require('js-yaml');
   const yamlSpec = yaml.dump(specs, {
     indent: 2,
     lineWidth: 120,
@@ -41,7 +41,6 @@ router.get('/full', swaggerUi.setup(postmanSpecs || specs, {
 
 // Spec Postman en YAML brut
 router.get('/full/yaml', (req, res) => {
-  const yaml = require('js-yaml');
   const specToServe = postmanSpecs || specs;
   res.setHeader('Content-Type', 'application/x-yaml');
   res.send(yaml.dump(specToServe, { indent: 2, lineWidth: 120, noRefs: true }));
