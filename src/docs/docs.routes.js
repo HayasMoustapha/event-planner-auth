@@ -1,5 +1,5 @@
 const express = require('express');
-const { specs, uiOptions, swaggerUi } = require('../config/swagger');
+const { specs, uiOptions, swaggerUi, postmanSpecs } = require('../config/swagger');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { requirePermission } = require('../middlewares/rbac.middleware');
 
@@ -32,8 +32,23 @@ router.get('/yaml', (req, res) => {
   res.send(yamlSpec);
 });
 
+// Documentation enrichie par Postman (spec convertie depuis la collection Postman)
+router.use('/full', swaggerUi.serve);
+router.get('/full', swaggerUi.setup(postmanSpecs || specs, {
+  ...uiOptions,
+  customSiteTitle: 'Event Planner Auth API — Vue complète (Postman)'
+}));
+
+// Spec Postman en YAML brut
+router.get('/full/yaml', (req, res) => {
+  const yaml = require('js-yaml');
+  const specToServe = postmanSpecs || specs;
+  res.setHeader('Content-Type', 'application/x-yaml');
+  res.send(yaml.dump(specToServe, { indent: 2, lineWidth: 120, noRefs: true }));
+});
+
 // Documentation pour les développeurs (protégée)
-router.get('/developer', 
+router.get('/developer',
   authenticate, 
   requirePermission('developer.docs.read'),
   (req, res) => {

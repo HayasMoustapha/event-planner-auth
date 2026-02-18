@@ -1,5 +1,8 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
+const fs = require('fs');
+const yaml = require('js-yaml');
 
 /**
  * Configuration Swagger/OpenAPI pour la documentation de l'API
@@ -361,6 +364,17 @@ const swaggerOptions = {
  */
 const specs = swaggerJsdoc(swaggerOptions);
 
+// Postman-derived spec (enriched from Postman collection)
+let postmanSpecs = null;
+try {
+  const postmanSpecPath = path.join(__dirname, '../../../shared/docs/specs/auth-service.yaml');
+  if (fs.existsSync(postmanSpecPath)) {
+    postmanSpecs = yaml.load(fs.readFileSync(postmanSpecPath, 'utf8'));
+  }
+} catch (err) {
+  console.warn('[swagger] Could not load Postman-derived spec for auth service:', err.message);
+}
+
 /**
  * Options pour l'interface Swagger UI
  */
@@ -423,5 +437,6 @@ const uiOptions = {
 module.exports = {
   specs,
   uiOptions,
-  swaggerUi
+  swaggerUi,
+  postmanSpecs
 };
