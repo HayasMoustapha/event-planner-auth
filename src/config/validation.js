@@ -1,6 +1,34 @@
 const Joi = require('joi');
 const logger = require('../utils/logger');
 
+function validateCorsOrigins(value, helpers) {
+  if (!value) {
+    return value;
+  }
+
+  if (value === '*') {
+    return value;
+  }
+
+  const origins = value
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+  if (origins.length === 0) {
+    return helpers.error('any.invalid');
+  }
+
+  for (const origin of origins) {
+    const { error } = Joi.string().uri().validate(origin);
+    if (error) {
+      return helpers.error('string.uri', { value: origin });
+    }
+  }
+
+  return origins.join(',');
+}
+
 /**
  * Service de validation de la configuration de l'application
  * Utilise Joi pour valider toutes les variables d'environnement requises
@@ -81,7 +109,7 @@ class ConfigValidationService {
         .description('Nombre de rounds pour bcrypt'),
       
       CORS_ORIGIN: Joi.string()
-        .uri()
+        .custom(validateCorsOrigins, 'CORS origins validation')
         .default('http://localhost:3000')
         .description('Origine autorisée pour CORS'),
 

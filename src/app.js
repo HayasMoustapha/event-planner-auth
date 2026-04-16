@@ -45,6 +45,13 @@ const realtimeRoutes = require('./modules/realtime/realtime.routes');
 
 const app = express();
 
+const allowedCorsOrigins = env.CORS_ORIGIN === '*'
+  ? ['*']
+  : env.CORS_ORIGIN
+      .split(',')
+      .map(origin => origin.trim())
+      .filter(Boolean);
+
 // TEST: Route absolue avant tout middleware
 app.post('/api/authorizations/check/permission/test', (req, res) => {
   res.json({
@@ -73,7 +80,7 @@ app.use(helmet({
 
 // CORS
 app.use(cors({
-  origin: [env.CORS_ORIGIN, 'http://localhost:3099'],
+  origin: Array.from(new Set([...allowedCorsOrigins, 'http://localhost:3099'])),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
