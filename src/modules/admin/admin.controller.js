@@ -8,6 +8,26 @@ const logger = require('../../utils/logger');
 const rbacSeeder = require('../../database/seeders/rbac-seeder');
 const permissionsService = require('../../services/permissions.service');
 
+function normalizeLocalizedText(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return value;
+  }
+
+  const normalizedValue = String(value).trim();
+  if (!normalizedValue) {
+    return null;
+  }
+
+  return {
+    en: normalizedValue,
+    fr: normalizedValue
+  };
+}
+
 class AdminController {
   /**
    * Initialise/peuple la base de données RBAC
@@ -344,7 +364,7 @@ class AdminController {
    */
   async createRole(req, res, next) {
     try {
-      const { code, label, description, group } = req.body;
+      const { code, label, description, level } = req.body;
       
       if (!code || !label) {
         return res.status(400).json(createResponse(
@@ -354,15 +374,30 @@ class AdminController {
         ));
       }
       
+      const normalizedLabel = normalizeLocalizedText(label);
+      const normalizedDescription = normalizeLocalizedText(description);
+      const normalizedLevel = Number.isFinite(Number(level)) ? Number(level) : 0;
+
       const result = await permissionsService.connection.query(`
-        INSERT INTO roles (code, label, description, "group", created_at, updated_at)
-        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        RETURNING id, code, label, "group", description
+        INSERT INTO roles (
+          code,
+          label,
+          description,
+          level,
+          is_system,
+          created_by,
+          created_at,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING id, code, label, description, level, is_system, created_by
       `, [
         code.trim(),
-        JSON.stringify(label),
-        JSON.stringify(description || {}),
-        group || 'custom'
+        JSON.stringify(normalizedLabel),
+        normalizedDescription ? JSON.stringify(normalizedDescription) : null,
+        normalizedLevel,
+        false,
+        req.user?.id ?? null
       ]);
       
       // Vider le cache des rôles

@@ -2,6 +2,7 @@ const accessesRepository = require('./accesses.repository');
 const usersRepository = require('../users/users.repository');
 const rolesRepository = require('../roles/roles.repository');
 const authService = require('../auth/auth.service');
+const { connection } = require('../../config/database');
 
 /**
  * Service pour la gestion des accès (associations utilisateur-rôle)
@@ -357,21 +358,31 @@ class AccessesService {
     }
 
     // Récupérer les rôles métier disponibles
-    const rolesResult = await accessesRepository.getClient().then(client => {
-      return client.query(`
+    const [rolesResult, businessRoleLookup] = await Promise.all([
+      connection.query(`
         SELECT r.id, r.code, r.label, r.description
         FROM roles r
         WHERE r.code IN ('designer', 'organizer', 'user')
         AND (r.is_system = false OR r.code = 'user')
         AND r.deleted_at IS NULL
         ORDER BY r.code
-      `);
-    });
+      `),
+      connection.query(`
+        SELECT r.id, r.code, r.label
+        FROM accesses a
+        JOIN roles r ON a.role_id = r.id
+        WHERE a.user_id = $1 
+        AND r.code IN ('designer', 'organizer', 'user')
+        AND a.status = 'active'
+        AND a.deleted_at IS NULL
+      `, [userId]),
+    ]);
 
     const roles = rolesResult.rows;
 
     // Vérifier si l'utilisateur a déjà un rôle métier
-    const existingRoleResult = await accessesRepository.getClient().then(client => {
+    if (false) {
+      const existingRoleResult = await accessesRepository.getClient().then(client => {
       return client.query(`
         SELECT r.id, r.code, r.label
         FROM accesses a
@@ -381,9 +392,10 @@ class AccessesService {
         AND a.status = 'active'
         AND a.deleted_at IS NULL
       `, [userId]);
-    });
+      });
+    }
 
-    const existingRole = existingRoleResult.rows.length > 0 ? existingRoleResult.rows[0] : null;
+    const existingRole = businessRoleLookup.rows.length > 0 ? businessRoleLookup.rows[0] : null;
 
     return {
       roles: roles.map(role => ({
@@ -432,24 +444,7 @@ class AccessesService {
         throw new Error('Utilisateur non trouvé');
       }
 
-      // 2. Vérifier que l'utilisateur n'a pas déjà de rôle métier
-      const existingBusinessRoleResult = await client.query(`
-        SELECT r.code, r.id 
-        FROM accesses a
-        JOIN roles r ON a.role_id = r.id
-        WHERE a.user_id = $1 
-        AND r.code IN ('designer', 'organizer', 'user')
-        AND a.status = 'active'
-        AND a.deleted_at IS NULL
-        FOR UPDATE
-      `, [userId]);
-
-      if (existingBusinessRoleResult.rows.length > 0) {
-        const existingRole = existingBusinessRoleResult.rows[0].code;
-        throw new Error(`L'utilisateur a déjà un rôle métier: ${existingRole}`);
-      }
-
-      // 3. Récupérer et valider le rôle demandé
+      // 2. Récupérer et valider le rôle demandé
       const roleResult = await client.query(
         'SELECT id, code, label FROM roles WHERE id = $1 AND code IN (\'designer\', \'organizer\', \'user\') AND deleted_at IS NULL',
         [roleId]
@@ -461,17 +456,49 @@ class AccessesService {
 
       const role = roleResult.rows[0];
 
-      // 4. Créer l'association utilisateur-rôle
-      const accessResult = await client.query(`
-        INSERT INTO accesses (user_id, role_id, status, created_at, updated_at)
-        VALUES ($1, $2, 'active', NOW(), NOW())
-        ON CONFLICT (user_id, role_id) DO UPDATE SET
-          status = EXCLUDED.status,
-          updated_at = NOW()
-        RETURNING id, user_id, role_id, status, created_at
-      `, [userId, role.id]);
+      // 3. Vérifier si l'utilisateur a déjà un rôle métier actif.
+      // Un refresh idempotent du même rôle doit rester autorisé afin de
+      // réémettre un token aligné sur le rôle métier courant au login.
+      const existingBusinessRoleResult = await client.query(`
+        SELECT a.id, a.user_id, a.role_id, a.status, a.created_at, r.code, r.id
+        FROM accesses a
+        JOIN roles r ON a.role_id = r.id
+        WHERE a.user_id = $1 
+        AND r.code IN ('designer', 'organizer', 'user')
+        AND a.status = 'active'
+        AND a.deleted_at IS NULL
+        FOR UPDATE
+      `, [userId]);
 
-      const access = accessResult.rows[0];
+      let access = null;
+
+      if (existingBusinessRoleResult.rows.length > 0) {
+        const existingRole = existingBusinessRoleResult.rows[0];
+
+        if (Number(existingRole.id) !== Number(role.id)) {
+          throw new Error(`L'utilisateur a déjà un rôle métier: ${existingRole.code}`);
+        }
+
+        access = {
+          id: existingRole.id,
+          user_id: existingRole.user_id,
+          role_id: existingRole.role_id,
+          status: existingRole.status,
+          created_at: existingRole.created_at
+        };
+      } else {
+        // 4. Créer l'association utilisateur-rôle
+        const accessResult = await client.query(`
+          INSERT INTO accesses (user_id, role_id, status, created_at, updated_at)
+          VALUES ($1, $2, 'active', NOW(), NOW())
+          ON CONFLICT (user_id, role_id) DO UPDATE SET
+            status = EXCLUDED.status,
+            updated_at = NOW()
+          RETURNING id, user_id, role_id, status, created_at
+        `, [userId, role.id]);
+
+        access = accessResult.rows[0];
+      }
 
       // 5. Récupérer toutes les permissions associées à ce rôle
       const permissionsResult = await client.query(`

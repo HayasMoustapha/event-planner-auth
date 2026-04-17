@@ -219,6 +219,7 @@ router.post('/logout', authController.logout);
 
 // Récupérer le profil utilisateur
 router.get('/profile', authController.getProfile);
+router.delete('/profile', authController.deleteProfile);
 
 // Alias pour profil (selon AUTH_FLOWS.md)
 router.get('/me', authController.getProfile);

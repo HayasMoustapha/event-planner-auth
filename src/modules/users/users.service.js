@@ -414,10 +414,6 @@ class UsersService {
     }
 
     // Empêcher l'auto-suppression
-    if (deletedBy && deletedBy === id) {
-      throw new Error('Impossible de supprimer votre propre compte');
-    }
-
     return await usersRepository.softDelete(id, deletedBy);
   }
 

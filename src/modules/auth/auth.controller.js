@@ -208,10 +208,11 @@ class AuthController {
       });
 
       const otp = await otpService.generateEmailOtp(targetPersonId, email, expiresInMinutes, req.user?.id || null);
+      const otpCode = otp?.otp_code || otp?.code;
 
       // Envoyer l'OTP par email
       try {
-        const emailSent = await emailService.sendOTP(email, otp.code, 'login', {
+        const emailSent = await emailService.sendOTP(email, otpCode, 'login', {
           ip: req.ip,
           userAgent: req.get('User-Agent')
         });
@@ -244,7 +245,7 @@ class AuthController {
               contactInfo: email,
               expiresAt: otp.expires_at,
               expiresInMinutes,
-              otpCode: otp.code
+              otpCode
             }
           ));
         }
@@ -262,7 +263,7 @@ class AuthController {
           contactInfo: email,
           expiresAt: otp.expires_at,
           expiresInMinutes,
-          ...(process.env.NODE_ENV !== 'production' ? { otpCode: otp.code } : {})
+          ...(process.env.NODE_ENV !== 'production' ? { otpCode } : {})
         }
       ));
     } catch (error) {
@@ -616,6 +617,13 @@ class AuthController {
 
       if (type === 'email') {
         user = await usersRepository.findByEmail(contactInfo);
+        if (!user) {
+          const peopleRepository = require('../people/people.repository');
+          const person = await peopleRepository.findByEmail(contactInfo);
+          if (person) {
+            user = await usersRepository.findByPersonId(person.id);
+          }
+        }
       } else if (type === 'phone') {
         user = await usersRepository.findByPhone(contactInfo);
       }
@@ -695,15 +703,18 @@ class AuthController {
       }
 
       const otp = await otpService.generatePasswordResetOtp(person.id, email);
+      const otpCode = otp?.otp_code || otp?.code;
 
       // Récupérer l'utilisateur pour la notification
       const usersRepository = require('../users/users.repository');
-      const user = await usersRepository.findByEmail(email);
+      const user =
+        await usersRepository.findByEmail(email) ||
+        await usersRepository.findByPersonId(person.id);
 
       if (user) {
         // Envoyer la notification de réinitialisation de mot de passe
         try {
-          await authService.sendPasswordResetNotification(user, otp.code, otp.expires_at);
+          await authService.sendPasswordResetNotification(user, otpCode, otp.expires_at);
         } catch (notifyError) {
           logger.error('Failed to send password reset notification', {
             email,
@@ -728,7 +739,7 @@ class AuthController {
         {
           contactInfo: email,
           expiresAt: otp.expires_at,
-          ...(process.env.NODE_ENV !== 'production' ? { otpCode: otp.code } : {})
+          ...(process.env.NODE_ENV !== 'production' ? { otpCode } : {})
         }
       ));
     } catch (error) {
@@ -770,7 +781,9 @@ class AuthController {
 
       // Récupérer l'utilisateur associé
       const usersRepository = require('../users/users.repository');
-      const user = await usersRepository.findByEmail(email);
+      const user =
+        await usersRepository.findByEmail(email) ||
+        await usersRepository.findByPersonId(person.id);
 
       if (!user) {
         return res.status(404).json(createResponse(
@@ -1026,6 +1039,42 @@ class AuthController {
         true,
         'Profil utilisateur récupéré',
         userResponse
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Supprime logiquement le compte de l'utilisateur connecte
+   * @param {Object} req - Requete Express
+   * @param {Object} res - Reponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async deleteProfile(req, res, next) {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json(createResponse(
+          false,
+          'Non authentifie'
+        ));
+      }
+
+      const usersService = require('../users/users.service');
+      const success = await usersService.delete(Number(userId), Number(userId));
+
+      if (!success) {
+        return res.status(400).json(createResponse(
+          false,
+          'Echec de la suppression du compte'
+        ));
+      }
+
+      res.status(200).json(createResponse(
+        true,
+        'Compte supprime avec succes'
       ));
     } catch (error) {
       next(error);

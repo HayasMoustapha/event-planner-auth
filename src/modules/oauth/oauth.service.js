@@ -133,7 +133,12 @@ class OAuthService {
   async verifyAppleToken(appleData) {
     try {
       if (this.isMockEnabled()) {
-        const email = appleData?.email || `mock_apple_${Date.now()}@example.com`;
+        const mockIdentityValue = typeof appleData?.identityToken === 'string'
+          ? appleData.identityToken.trim()
+          : '';
+        const email = appleData?.email
+          || (mockIdentityValue.includes('@') ? mockIdentityValue : null)
+          || `mock_apple_${Date.now()}@example.com`;
         const userData = {
           provider: 'apple',
           provider_user_id: `mock-apple-${Date.now()}`,
@@ -413,11 +418,13 @@ class OAuthService {
       mockEnabled: this.isMockEnabled(),
       google: {
         clientId: !!process.env.GOOGLE_CLIENT_ID,
+        clientIdValue: process.env.GOOGLE_CLIENT_ID || null,
         clientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
         configured: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
       },
       apple: {
         clientId: !!process.env.APPLE_CLIENT_ID,
+        clientIdValue: process.env.APPLE_CLIENT_ID || null,
         teamId: !!process.env.APPLE_TEAM_ID,
         keyId: !!process.env.APPLE_KEY_ID,
         privateKey: !!process.env.APPLE_PRIVATE_KEY,

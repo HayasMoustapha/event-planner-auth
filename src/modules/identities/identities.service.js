@@ -124,7 +124,7 @@ class IdentitiesService {
       username: this.generateUsernameFromEmail(email),
       email,
       password: tempPassword,
-      user_code: userCode,
+      userCode,
       status: 'active',
       person_id: person.id,
       email_verified_at: new Date() // Les emails OAuth sont pré-vérifiés

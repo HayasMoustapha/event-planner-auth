@@ -447,6 +447,28 @@ class RegistrationService {
         };
         
       } catch (emailError) {
+        logger.error('Failed to resend OTP email', {
+          personId: person.id,
+          email: person.email,
+          otpId: otpResult.id,
+          error: emailError.message
+        });
+
+        if (process.env.NODE_ENV !== 'production') {
+          return {
+            success: true,
+            message: 'Un nouveau code de vérification a été généré (email non envoyé en dev).',
+            data: {
+              otp: {
+                id: otpResult.id,
+                purpose: otpResult.purpose,
+                expires_at: otpResult.expires_at,
+                ...(process.env.NODE_ENV === 'development' && { code: otpResult.otp_code })
+              }
+            }
+          };
+        }
+
         // Supprimer l'OTP généré si l'envoi échoue
         await otpService.invalidateOtp(otpResult.id);
         
