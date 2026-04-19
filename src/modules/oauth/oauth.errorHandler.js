@@ -225,7 +225,7 @@ class OAuthErrorHandler {
     const errors = [];
 
     // Validation Google
-    if (!config.google.clientId) {
+    if (config.google && !config.google.clientId) {
       errors.push({
         provider: 'google',
         field: 'GOOGLE_CLIENT_ID',
@@ -233,7 +233,7 @@ class OAuthErrorHandler {
       });
     }
 
-    if (!config.google.clientSecret) {
+    if (config.google && !config.google.clientSecret) {
       errors.push({
         provider: 'google',
         field: 'GOOGLE_CLIENT_SECRET',
@@ -242,7 +242,7 @@ class OAuthErrorHandler {
     }
 
     // Validation Apple
-    if (!config.apple.clientId) {
+    if (config.apple && !config.apple.clientId) {
       errors.push({
         provider: 'apple',
         field: 'APPLE_CLIENT_ID',
@@ -250,7 +250,7 @@ class OAuthErrorHandler {
       });
     }
 
-    if (!config.apple.teamId) {
+    if (config.apple && !config.apple.teamId) {
       errors.push({
         provider: 'apple',
         field: 'APPLE_TEAM_ID',
@@ -258,7 +258,7 @@ class OAuthErrorHandler {
       });
     }
 
-    if (!config.apple.keyId) {
+    if (config.apple && !config.apple.keyId) {
       errors.push({
         provider: 'apple',
         field: 'APPLE_KEY_ID',
@@ -266,7 +266,7 @@ class OAuthErrorHandler {
       });
     }
 
-    if (!config.apple.privateKey) {
+    if (config.apple && !config.apple.privateKey) {
       errors.push({
         provider: 'apple',
         field: 'APPLE_PRIVATE_KEY',

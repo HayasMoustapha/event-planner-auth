@@ -9,6 +9,48 @@ const oauthRoutes = require('../oauth/oauth.routes');
 
 const router = express.Router();
 
+function normalizeAuthPayloadAliases(req, res, next) {
+  if (req.body && typeof req.body === 'object') {
+    if (req.body.remember_me === undefined && typeof req.body.rememberMe === 'boolean') {
+      req.body.remember_me = req.body.rememberMe;
+      delete req.body.rememberMe;
+    }
+
+    if (!req.body.first_name && req.body.firstName) {
+      req.body.first_name = req.body.firstName;
+      delete req.body.firstName;
+    }
+
+    if (!req.body.last_name && req.body.lastName) {
+      req.body.last_name = req.body.lastName;
+      delete req.body.lastName;
+    }
+
+    if (!req.body.first_name && typeof req.body.fullName === 'string') {
+      const [firstName, ...rest] = req.body.fullName.trim().split(/\s+/).filter(Boolean);
+      if (firstName) {
+        req.body.first_name = firstName;
+        if (!req.body.last_name && rest.length > 0) {
+          req.body.last_name = rest.join(' ');
+        }
+      }
+      delete req.body.fullName;
+    }
+
+    if (!req.body.otpCode && req.body.otp) {
+      req.body.otpCode = req.body.otp;
+      delete req.body.otp;
+    }
+
+    if (!req.body.newPassword && req.body.new_password) {
+      req.body.newPassword = req.body.new_password;
+      delete req.body.new_password;
+    }
+  }
+
+  next();
+}
+
 /**
  * Routes publiques d'authentification
  * Ces routes ne nécessitent pas d'authentification préalable
@@ -16,6 +58,7 @@ const router = express.Router();
 
 // Connexion classique avec email et mot de passe
 router.post('/login',
+  normalizeAuthPayloadAliases,
   authValidation.validateLogin,
   authController.login
 );
@@ -33,6 +76,7 @@ router.post('/login-remember',
 
 // Connexion avec OTP
 router.post('/login-otp',
+  normalizeAuthPayloadAliases,
   authValidation.validateLoginWithOtp,
   authController.loginWithOtp
 );
@@ -96,12 +140,14 @@ router.post('/forgot-password',
 
 // Réinitialiser le mot de passe avec OTP
 router.post('/otp/password-reset/verify',
+  normalizeAuthPayloadAliases,
   authValidation.validateResetPasswordWithOtp,
   authController.resetPasswordWithOtp
 );
 
 // Alias pour réinitialisation de mot de passe (selon AUTH_FLOWS.md)
 router.post('/reset-password',
+  normalizeAuthPayloadAliases,
   authValidation.validateResetPasswordWithOtp,
   authController.resetPasswordWithOtp
 );
@@ -165,12 +211,14 @@ router.get('/reset-password',
 
 // Inscription d'un nouvel utilisateur
 router.post('/register',
+  normalizeAuthPayloadAliases,
   authValidation.validateRegister,
   registrationController.register
 );
 
 // Vérification d'email avec OTP
 router.post('/verify-email',
+  normalizeAuthPayloadAliases,
   authValidation.validateVerifyEmail,
   registrationController.verifyEmail
 );

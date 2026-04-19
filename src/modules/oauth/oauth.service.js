@@ -31,6 +31,63 @@ class OAuthService {
     );
   }
 
+  isProviderMockEnabled(provider) {
+    const normalizedProvider = typeof provider === 'string' ? provider.trim().toLowerCase() : '';
+    if (!normalizedProvider) {
+      return this.isMockEnabled();
+    }
+
+    const providerOverride = process.env[`${normalizedProvider.toUpperCase()}_OAUTH_MOCK`];
+    if (providerOverride === 'true') {
+      return true;
+    }
+
+    if (providerOverride === 'false') {
+      return false;
+    }
+
+    return this.isMockEnabled();
+  }
+
+  normalizeConfigValue(value) {
+    return typeof value === 'string' ? value.trim() : '';
+  }
+
+  isPlaceholderConfigValue(value) {
+    const normalized = this.normalizeConfigValue(value).toLowerCase();
+    if (!normalized) {
+      return true;
+    }
+
+    const placeholderPatterns = [
+      'your_',
+      'your-',
+      'change_me',
+      'changeme',
+      'example.com',
+      'example.org',
+      'example.net',
+      'placeholder',
+      'dummy',
+      'sample',
+      'test_key',
+      'test-secret',
+      'your_google_client_id',
+      'your_google_client_secret',
+      'com.yourapp.service',
+      'your_apple_team_id',
+      'your_apple_key_id',
+      'your_apple_private_key_content'
+    ];
+
+    return placeholderPatterns.some((pattern) => normalized.includes(pattern));
+  }
+
+  hasRealConfigValue(value) {
+    const normalized = this.normalizeConfigValue(value);
+    return normalized.length > 0 && !this.isPlaceholderConfigValue(normalized);
+  }
+
   /**
    * Vérifie un token Google ID et extrait les informations utilisateur
    * @param {string} idToken - Token ID Google
@@ -38,7 +95,7 @@ class OAuthService {
    */
   async verifyGoogleToken(idToken) {
     try {
-      if (this.isMockEnabled()) {
+      if (this.isProviderMockEnabled('google')) {
         const email = typeof idToken === 'string' && idToken.includes('@')
           ? idToken
           : `mock_google_${Date.now()}@example.com`;
@@ -132,7 +189,7 @@ class OAuthService {
    */
   async verifyAppleToken(appleData) {
     try {
-      if (this.isMockEnabled()) {
+      if (this.isProviderMockEnabled('apple')) {
         const mockIdentityValue = typeof appleData?.identityToken === 'string'
           ? appleData.identityToken.trim()
           : '';
@@ -414,26 +471,34 @@ class OAuthService {
    * @returns {Object} État de la configuration
    */
   checkConfiguration() {
+    const googleClientId = this.normalizeConfigValue(process.env.GOOGLE_CLIENT_ID);
+    const googleClientSecret = this.normalizeConfigValue(process.env.GOOGLE_CLIENT_SECRET);
+    const appleClientId = this.normalizeConfigValue(process.env.APPLE_CLIENT_ID);
+    const appleTeamId = this.normalizeConfigValue(process.env.APPLE_TEAM_ID);
+    const appleKeyId = this.normalizeConfigValue(process.env.APPLE_KEY_ID);
+    const applePrivateKey = this.normalizeConfigValue(process.env.APPLE_PRIVATE_KEY);
+
     const config = {
       mockEnabled: this.isMockEnabled(),
       google: {
-        clientId: !!process.env.GOOGLE_CLIENT_ID,
-        clientIdValue: process.env.GOOGLE_CLIENT_ID || null,
-        clientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-        configured: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+        mockEnabled: this.isProviderMockEnabled('google'),
+        clientId: this.hasRealConfigValue(googleClientId),
+        clientIdValue: googleClientId || null,
+        clientSecret: this.hasRealConfigValue(googleClientSecret),
+        configured: this.hasRealConfigValue(googleClientId) && this.hasRealConfigValue(googleClientSecret)
       },
       apple: {
-        clientId: !!process.env.APPLE_CLIENT_ID,
-        clientIdValue: process.env.APPLE_CLIENT_ID || null,
-        teamId: !!process.env.APPLE_TEAM_ID,
-        keyId: !!process.env.APPLE_KEY_ID,
-        privateKey: !!process.env.APPLE_PRIVATE_KEY,
-        configured: !!(
-          process.env.APPLE_CLIENT_ID &&
-          process.env.APPLE_TEAM_ID &&
-          process.env.APPLE_KEY_ID &&
-          process.env.APPLE_PRIVATE_KEY
-        )
+        mockEnabled: this.isProviderMockEnabled('apple'),
+        clientId: this.hasRealConfigValue(appleClientId),
+        clientIdValue: appleClientId || null,
+        teamId: this.hasRealConfigValue(appleTeamId),
+        keyId: this.hasRealConfigValue(appleKeyId),
+        privateKey: this.hasRealConfigValue(applePrivateKey),
+        configured:
+          this.hasRealConfigValue(appleClientId) &&
+          this.hasRealConfigValue(appleTeamId) &&
+          this.hasRealConfigValue(appleKeyId) &&
+          this.hasRealConfigValue(applePrivateKey)
       }
     };
 

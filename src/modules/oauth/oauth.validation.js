@@ -1,9 +1,5 @@
 const { body, param } = require('express-validator');
-
-const isOAuthMockEnabled = () => (
-  process.env.OAUTH_MOCK === 'true' ||
-  (process.env.NODE_ENV !== 'production' && process.env.OAUTH_MOCK !== 'false')
-);
+const oauthService = require('./oauth.service');
 
 /**
  * Validation pour l'authentification Google Sign-In
@@ -13,9 +9,9 @@ const validateGoogleLogin = [
     .notEmpty()
     .withMessage('Le token Google est requis')
     .isString()
-    .withMessage('Le token Google doit être une chaîne de caractères')
+    .withMessage('Le token Google doit etre une chaine de caracteres')
     .custom((value) => {
-      if (isOAuthMockEnabled()) {
+      if (oauthService.isProviderMockEnabled('google')) {
         return true;
       }
       return typeof value === 'string' && value.length >= 100 && value.length <= 2000;
@@ -29,23 +25,23 @@ const validateGoogleLogin = [
 const validateAppleLogin = [
   body('identityToken')
     .notEmpty()
-    .withMessage('Le token d\'identité Apple est requis')
+    .withMessage("Le token d'identite Apple est requis")
     .isString()
-    .withMessage('Le token d\'identité Apple doit être une chaîne de caractères')
+    .withMessage("Le token d'identite Apple doit etre une chaine de caracteres")
     .custom((value) => {
-      if (isOAuthMockEnabled()) {
+      if (oauthService.isProviderMockEnabled('apple')) {
         return true;
       }
       return typeof value === 'string' && value.length >= 100 && value.length <= 2000;
     })
-    .withMessage('Le token d\'identité Apple doit avoir une longueur valide'),
-  
+    .withMessage("Le token d'identite Apple doit avoir une longueur valide"),
+
   body('user')
     .optional()
     .isString()
-    .withMessage('L\'ID utilisateur Apple doit être une chaîne de caractères')
+    .withMessage("L'ID utilisateur Apple doit etre une chaine de caracteres")
     .isLength({ min: 1, max: 255 })
-    .withMessage('L\'ID utilisateur Apple doit avoir une longueur valide')
+    .withMessage("L'ID utilisateur Apple doit avoir une longueur valide")
 ];
 
 /**
@@ -56,9 +52,9 @@ const validateLinkGoogle = [
     .notEmpty()
     .withMessage('Le token Google est requis')
     .isString()
-    .withMessage('Le token Google doit être une chaîne de caractères')
+    .withMessage('Le token Google doit etre une chaine de caracteres')
     .custom((value) => {
-      if (isOAuthMockEnabled()) {
+      if (oauthService.isProviderMockEnabled('google')) {
         return true;
       }
       return typeof value === 'string' && value.length >= 100 && value.length <= 2000;
@@ -72,34 +68,34 @@ const validateLinkGoogle = [
 const validateLinkApple = [
   body('identityToken')
     .notEmpty()
-    .withMessage('Le token d\'identité Apple est requis')
+    .withMessage("Le token d'identite Apple est requis")
     .isString()
-    .withMessage('Le token d\'identité Apple doit être une chaîne de caractères')
+    .withMessage("Le token d'identite Apple doit etre une chaine de caracteres")
     .custom((value) => {
-      if (isOAuthMockEnabled()) {
+      if (oauthService.isProviderMockEnabled('apple')) {
         return true;
       }
       return typeof value === 'string' && value.length >= 100 && value.length <= 2000;
     })
-    .withMessage('Le token d\'identité Apple doit avoir une longueur valide'),
-  
+    .withMessage("Le token d'identite Apple doit avoir une longueur valide"),
+
   body('user')
     .optional()
     .isString()
-    .withMessage('L\'ID utilisateur Apple doit être une chaîne de caractères')
+    .withMessage("L'ID utilisateur Apple doit etre une chaine de caracteres")
     .isLength({ min: 1, max: 255 })
-    .withMessage('L\'ID utilisateur Apple doit avoir une longueur valide')
+    .withMessage("L'ID utilisateur Apple doit avoir une longueur valide")
 ];
 
 /**
- * Validation pour détacher une identité
+ * Validation pour detacher une identite
  */
 const validateUnlinkIdentity = [
   param('provider')
     .notEmpty()
     .withMessage('Le fournisseur est requis')
     .isIn(['google', 'apple'])
-    .withMessage('Le fournisseur doit être google ou apple')
+    .withMessage('Le fournisseur doit etre google ou apple')
 ];
 
 module.exports = {

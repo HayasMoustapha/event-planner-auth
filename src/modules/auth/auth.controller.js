@@ -598,10 +598,11 @@ class AuthController {
    */
   async loginWithOtp(req, res, next) {
     try {
-      const { contactInfo, code, otpCode, type = 'email' } = req.body;
-      const finalCode = code || otpCode;
+      const { contactInfo, email, code, otpCode, otp, type = 'email' } = req.body;
+      const finalContact = contactInfo || email;
+      const finalCode = code || otpCode || otp;
 
-      if (!contactInfo || !finalCode) {
+      if (!finalContact || !finalCode) {
         return res.status(400).json(createResponse(
           false,
           'Contact et code OTP requis'
@@ -609,23 +610,23 @@ class AuthController {
       }
 
       // Vérifier l'OTP
-      const otpResult = await otpService.verifyOtp(finalCode, contactInfo, type);
+      const otpResult = await otpService.verifyOtp(finalCode, finalContact, type);
 
       // Récupérer l'utilisateur
       const usersRepository = require('../users/users.repository');
       let user;
 
       if (type === 'email') {
-        user = await usersRepository.findByEmail(contactInfo);
+        user = await usersRepository.findByEmail(finalContact);
         if (!user) {
           const peopleRepository = require('../people/people.repository');
-          const person = await peopleRepository.findByEmail(contactInfo);
+          const person = await peopleRepository.findByEmail(finalContact);
           if (person) {
             user = await usersRepository.findByPersonId(person.id);
           }
         }
       } else if (type === 'phone') {
-        user = await usersRepository.findByPhone(contactInfo);
+        user = await usersRepository.findByPhone(finalContact);
       }
 
       if (!user) {
@@ -755,10 +756,11 @@ class AuthController {
    */
   async resetPasswordWithOtp(req, res, next) {
     try {
-      const { email, otpCode, code, token, newPassword } = req.body;
-      const finalCode = otpCode || code || token;
+      const { email, otpCode, otp, code, token, newPassword, new_password } = req.body;
+      const finalCode = otpCode || otp || code || token;
+      const finalPassword = newPassword || new_password;
 
-      if (!email || !finalCode || !newPassword) {
+      if (!email || !finalCode || !finalPassword) {
         return res.status(400).json(createResponse(
           false,
           'Email, code OTP et nouveau mot de passe requis'
@@ -793,7 +795,7 @@ class AuthController {
       }
 
       // Mettre à jour le mot de passe
-      const updatedUser = await usersRepository.updatePassword(user.id, newPassword, user.id);
+      const updatedUser = await usersRepository.updatePassword(user.id, finalPassword, user.id);
 
       // Envoyer une notification de changement de mot de passe
       await authService.sendPasswordChangeNotification(updatedUser);

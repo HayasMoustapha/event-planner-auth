@@ -394,11 +394,7 @@ class ConfigValidationService {
       case 'sms':
         return !!(config.TWILIO_ACCOUNT_SID && config.TWILIO_AUTH_TOKEN && config.TWILIO_PHONE_NUMBER);
       case 'redis':
-        // En développement, désactiver Redis sauf si explicitement configuré
-        if (config.NODE_ENV === 'development') {
-          return !!(config.REDIS_HOST && config.REDIS_PASSWORD && config.REDIS_PASSWORD !== 'your_redis_password');
-        }
-        return !!(config.REDIS_HOST);
+        return !!(config.REDIS_HOST && config.REDIS_PORT);
       default:
         return false;
     }

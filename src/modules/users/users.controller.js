@@ -203,7 +203,7 @@ class UsersController {
       }
       
       // Valider manuellement les champs autorisés
-      const allowedFields = ['username', 'email', 'password', 'firstName', 'lastName', 'first_name', 'last_name', 'phone', 'status', 'personId', 'person_id'];
+      const allowedFields = ['username', 'email', 'password', 'firstName', 'lastName', 'first_name', 'last_name', 'phone', 'status', 'personId', 'person_id', 'ui_preferences', 'profile_metadata'];
       const invalidFields = Object.keys(updateData).filter(field => !allowedFields.includes(field));
       
       if (invalidFields.length > 0) {

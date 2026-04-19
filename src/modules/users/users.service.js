@@ -333,7 +333,13 @@ class UsersService {
       email,
       password,
       phone,
-      person_id
+      person_id,
+      firstName,
+      lastName,
+      first_name,
+      last_name,
+      ui_preferences,
+      profile_metadata
     } = updateData;
 
     // Validation des formats si fournis
@@ -358,6 +364,14 @@ class UsersService {
     if (password !== undefined) cleanData.password = password.trim();
     if (phone !== undefined) cleanData.phone = phone ? phone.trim() : null;
     if (person_id !== undefined) cleanData.person_id = person_id;
+    if (first_name !== undefined || firstName !== undefined) {
+      cleanData.first_name = String(first_name ?? firstName ?? '').trim();
+    }
+    if (last_name !== undefined || lastName !== undefined) {
+      cleanData.last_name = String(last_name ?? lastName ?? '').trim();
+    }
+    if (ui_preferences !== undefined) cleanData.ui_preferences = ui_preferences;
+    if (profile_metadata !== undefined) cleanData.profile_metadata = profile_metadata;
     cleanData.updatedBy = updatedBy;
 
     // Vérification des doublons si email/username modifié

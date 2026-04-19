@@ -70,6 +70,7 @@ class RegistrationService {
       throw new Error('Le mot de passe doit contenir au moins 8 caractères');
     }
 
+    const normalizedPhone = phone?.trim() || null;
     const client = await connection.connect();
     let person, user;
 
@@ -90,6 +91,20 @@ class RegistrationService {
         throw new Error('Cet email est déjà utilisé');
       }
 
+      if (normalizedPhone) {
+        const phoneCheckQuery = `
+          SELECT p.id as person_id, u.id as user_id
+          FROM people p
+          LEFT JOIN users u ON p.id = u.person_id
+          WHERE p.phone = $1 OR u.phone = $1
+        `;
+        const phoneCheckResult = await client.query(phoneCheckQuery, [normalizedPhone]);
+
+        if (phoneCheckResult.rows.length > 0) {
+          throw new Error('Ce numéro de téléphone est déjà utilisé');
+        }
+      }
+
       // ÉTAPE 2: Créer la personne
       const personQuery = `
         INSERT INTO people (first_name, last_name, email, phone, status, created_by, created_at, updated_at)
@@ -101,7 +116,7 @@ class RegistrationService {
         first_name.trim(),
         last_name?.trim() || null,
         email.trim().toLowerCase(),
-        phone?.trim() || null,
+        normalizedPhone,
         'active',
         null
       ]);
@@ -125,7 +140,7 @@ class RegistrationService {
         email: `${email.trim().toLowerCase()}+user`, // Email unique pour éviter la contrainte
         password: password,
         userCode: await this.generateUserCode(),
-        phone: phone?.trim() || null,
+        phone: normalizedPhone,
         status: 'inactive', // Inactif jusqu'à validation OTP
         person_id: person.id
       };
@@ -281,6 +296,14 @@ class RegistrationService {
     } catch (error) {
       // Annuler la transaction en cas d'erreur
       await client.query('ROLLBACK');
+
+      if (error?.code === '23505') {
+        if (typeof error.constraint === 'string' && error.constraint.includes('phone')) {
+          error.message = 'Ce numéro de téléphone est déjà utilisé';
+        } else if (typeof error.constraint === 'string' && error.constraint.includes('email')) {
+          error.message = 'Cet email est déjà utilisé';
+        }
+      }
       
       logger.error('Erreur lors de l\'inscription', {
         error: error.message,

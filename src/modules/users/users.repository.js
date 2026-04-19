@@ -1,16 +1,16 @@
-const { connection } = require('../../config/database');
+﻿const { connection } = require('../../config/database');
 const bcrypt = require('bcrypt');
 const { validatePaginationOptions, validateOptionalId, validateEmail, validatePhone } = require('../../utils/repository-validator');
 
 /**
  * Repository pour la gestion des utilisateurs
- * Implémente le CRUD complet avec hashage de mot de passe et historique
+ * ImplÃ©mente le CRUD complet avec hashage de mot de passe et historique
  */
 class UsersRepository {
   /**
-   * Récupère tous les utilisateurs avec pagination et filtres
+   * RÃ©cupÃ¨re tous les utilisateurs avec pagination et filtres
    * @param {Object} options - Options de pagination et recherche
-   * @returns {Promise<Object>} Données paginées
+   * @returns {Promise<Object>} DonnÃ©es paginÃ©es
    */
   async findAll(options = {}) {
     // Valider les options
@@ -18,10 +18,10 @@ class UsersRepository {
     const { page = 1, limit = 10, search, status, userAccess } = validatedOptions;
     const offset = (page - 1) * limit;
 
-    // Colonnes selon schéma SQL : id, person_id, user_code, username, phone, email, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
+    // Colonnes selon schÃ©ma SQL : id, person_id, user_code, username, phone, email, status, email_verified_at, password, remember_token, created_by, updated_by, deleted_by, uid, created_at, updated_at, deleted_at
     let query = `
       SELECT u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at,
-             p.first_name, p.last_name, p.phone as person_phone
+             u.ui_preferences, u.profile_metadata, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email, p.photo
       FROM users u
       LEFT JOIN people p ON u.person_id = p.id
       WHERE u.deleted_at IS NULL
@@ -70,20 +70,20 @@ class UsersRepository {
         }
       };
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération des utilisateurs: ${error.message}`);
+      throw new Error(`Erreur lors de la rÃ©cupÃ©ration des utilisateurs: ${error.message}`);
     }
   }
 
   /**
-   * Récupère un utilisateur par son ID
+   * RÃ©cupÃ¨re un utilisateur par son ID
    * @param {number} id - ID de l'utilisateur
    * @param {boolean} includePassword - Inclure le mot de passe
-   * @returns {Promise<Object|null>} Données de l'utilisateur
+   * @returns {Promise<Object|null>} DonnÃ©es de l'utilisateur
    */
   async findById(id, includePassword = false) {
     const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email';
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email, p.photo'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, u.ui_preferences, u.profile_metadata, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email, p.photo';
     
     const query = `
       SELECT ${fields}
@@ -96,21 +96,21 @@ class UsersRepository {
       const result = await connection.query(query, [id]);
       return result.rows[0] || null;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération de l'utilisateur par ID ${id}: ${error.message}`);
+      throw new Error(`Erreur lors de la rÃ©cupÃ©ration de l'utilisateur par ID ${id}: ${error.message}`);
     }
   }
 
   /**
-   * Récupère un utilisateur par son email (optimisé avec index)
+   * RÃ©cupÃ¨re un utilisateur par son email (optimisÃ© avec index)
    * @param {string} email - Email de l'utilisateur
    * @param {boolean} includePassword - Inclure le mot de passe
-   * @returns {Promise<Object>} Données de l'utilisateur
+   * @returns {Promise<Object>} DonnÃ©es de l'utilisateur
    */
   async findByEmail(email, includePassword = false) {
     // CORRECTION: Utilisation de l'index users_email_unique
     const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email, p.photo'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, u.ui_preferences, u.profile_metadata, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email, p.photo';
     
     const query = `
       SELECT ${fields}
@@ -123,21 +123,21 @@ class UsersRepository {
       const result = await connection.query(query, [email]);
       return result.rows[0] || null;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération de l'utilisateur par email ${email}: ${error.message}`);
+      throw new Error(`Erreur lors de la rÃ©cupÃ©ration de l'utilisateur par email ${email}: ${error.message}`);
     }
   }
 
   /**
-   * Récupère un utilisateur par son username (optimisé avec index)
+   * RÃ©cupÃ¨re un utilisateur par son username (optimisÃ© avec index)
    * @param {string} username - Username de l'utilisateur
    * @param {boolean} includePassword - Inclure le mot de passe
-   * @returns {Promise<Object>} Données de l'utilisateur
+   * @returns {Promise<Object>} DonnÃ©es de l'utilisateur
    */
   async findByUsername(username, includePassword = false) {
     // CORRECTION: Utilisation de l'index users_username_unique
     const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email, p.photo'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, u.ui_preferences, u.profile_metadata, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email, p.photo';
     
     const query = `
       SELECT ${fields}
@@ -150,14 +150,14 @@ class UsersRepository {
       const result = await connection.query(query, [username]);
       return result.rows[0] || null;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération de l'utilisateur par username ${username}: ${error.message}`);
+      throw new Error(`Erreur lors de la rÃ©cupÃ©ration de l'utilisateur par username ${username}: ${error.message}`);
     }
   }
 
   /**
-   * Trouve un utilisateur par son téléphone
-   * @param {string} phone - Téléphone de l'utilisateur
-   * @returns {Promise<Object|null>} Données de l'utilisateur
+   * Trouve un utilisateur par son tÃ©lÃ©phone
+   * @param {string} phone - TÃ©lÃ©phone de l'utilisateur
+   * @returns {Promise<Object|null>} DonnÃ©es de l'utilisateur
    */
   async findByPhone(phone) {
     const query = 'SELECT * FROM users WHERE phone = $1 AND deleted_at IS NULL';
@@ -166,22 +166,22 @@ class UsersRepository {
       const result = await connection.query(query, [phone]);
       return result.rows.length > 0 ? result.rows[0] : null;
     } catch (error) {
-      console.error('Erreur lors de la recherche de l\'utilisateur par téléphone:', error);
+      console.error('Erreur lors de la recherche de l\'utilisateur par tÃ©lÃ©phone:', error);
       throw error;
     }
   }
 
   
   /**
-   * Récupère un utilisateur par son ID de personne
+   * RÃ©cupÃ¨re un utilisateur par son ID de personne
    * @param {number} personId - ID de la personne
    * @param {boolean} includePassword - Inclure le mot de passe
-   * @returns {Promise<Object|null>} Données de l'utilisateur
+   * @returns {Promise<Object|null>} DonnÃ©es de l'utilisateur
    */
   async findByPersonId(personId, includePassword = false) {
     const fields = includePassword 
-      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email'
-      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone as person_phone';
+      ? 'u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email, p.photo'
+      : 'u.id, u.username, u.email, u.status, u.user_code, u.phone, u.email_verified_at, u.created_at, u.updated_at, u.ui_preferences, u.profile_metadata, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email, p.photo';
     
     const query = `
       SELECT ${fields}
@@ -199,9 +199,9 @@ class UsersRepository {
   }
 
   /**
-   * Crée un nouvel utilisateur avec mot de passe hashé
-   * @param {Object} userData - Données de l'utilisateur
-   * @returns {Promise<Object>} Utilisateur créé
+   * CrÃ©e un nouvel utilisateur avec mot de passe hashÃ©
+   * @param {Object} userData - DonnÃ©es de l'utilisateur
+   * @returns {Promise<Object>} Utilisateur crÃ©Ã©
    */
   async create(userData) {
     const {
@@ -216,7 +216,7 @@ class UsersRepository {
     } = userData;
 
     if (!person_id) {
-      throw new Error('person_id est requis pour créer un utilisateur');
+      throw new Error('person_id est requis pour crÃ©er un utilisateur');
     }
 
     // Hasher le mot de passe
@@ -240,7 +240,7 @@ class UsersRepository {
         createdBy
       ]);
 
-      // Ajouter à l'historique des mots de passe
+      // Ajouter Ã  l'historique des mots de passe
       await this.addPasswordHistory(result.rows[0].id, hashedPassword);
 
       return result.rows[0];
@@ -248,21 +248,21 @@ class UsersRepository {
       // Gestion des erreurs de contrainte unique
       if (error.code === '23505') {
         if (error.constraint.includes('email')) {
-          throw new Error('Cet email est déjà utilisé');
+          throw new Error('Cet email est dÃ©jÃ  utilisÃ©');
         }
         if (error.constraint.includes('username')) {
-          throw new Error('Ce nom d\'utilisateur est déjà utilisé');
+          throw new Error('Ce nom d\'utilisateur est dÃ©jÃ  utilisÃ©');
         }
       }
-      throw new Error(`Erreur lors de la création de l'utilisateur: ${error.message}, person_id: ${userData.person_id}`);
+      throw new Error(`Erreur lors de la crÃ©ation de l'utilisateur: ${error.message}, person_id: ${userData.person_id}`);
     }
   }
 
   /**
-   * Met à jour un utilisateur
+   * Met Ã  jour un utilisateur
    * @param {number} id - ID de l'utilisateur
-   * @param {Object} updateData - Données à mettre à jour
-   * @returns {Promise<Object>} Utilisateur mis à jour
+   * @param {Object} updateData - DonnÃ©es Ã  mettre Ã  jour
+   * @returns {Promise<Object>} Utilisateur mis Ã  jour
    */
   async update(id, updateData) {
     const {
@@ -274,101 +274,184 @@ class UsersRepository {
       phone,
       status,
       emailVerifiedAt,
+      first_name,
+      last_name,
+      ui_preferences,
+      profile_metadata,
       updatedBy = null
     } = updateData;
 
-    // Construction dynamique de la requête
-    const updates = [];
-    const values = [];
-    let paramIndex = 1;
-
-    if (person_id !== undefined) {
-      updates.push(`person_id = $${paramIndex++}`);
-      values.push(person_id);
-    }
-
-    if (username !== undefined) {
-      updates.push(`username = $${paramIndex++}`);
-      values.push(username);
-    }
-    if (email !== undefined) {
-      updates.push(`email = $${paramIndex++}`);
-      values.push(email);
-    }
-    if (password !== undefined) {
-      const hashedPassword = await bcrypt.hash(password, 12);
-      updates.push(`password = $${paramIndex++}`);
-      values.push(hashedPassword);
-      
-      // Ajouter à l'historique des mots de passe
-      await this.addPasswordHistory(id, hashedPassword);
-    }
-    if (userCode !== undefined) {
-      updates.push(`user_code = $${paramIndex++}`);
-      values.push(userCode);
-    }
-    if (phone !== undefined) {
-      updates.push(`phone = $${paramIndex++}`);
-      values.push(phone);
-    }
-    if (status !== undefined) {
-      updates.push(`status = $${paramIndex++}`);
-      values.push(status);
-    }
-    if (emailVerifiedAt !== undefined) {
-      updates.push(`email_verified_at = $${paramIndex++}`);
-      values.push(emailVerifiedAt);
-    }
-
-    if (updates.length === 0) {
-      throw new Error('Aucune donnée à mettre à jour');
-    }
-
-    updates.push(`updated_by = $${paramIndex++}`);
-    updates.push('updated_at = CURRENT_TIMESTAMP');
-    values.push(updatedBy);
-
-    const query = `
-      UPDATE users 
-      SET ${updates.join(', ')}
-      WHERE id = $${paramIndex} AND deleted_at IS NULL
-      RETURNING id, person_id, username, email, user_code, phone, status, created_at, updated_at
-    `;
-    values.push(id);
+    const client = await connection.connect();
 
     try {
-      const result = await connection.query(query, values);
-      
+      await client.query('BEGIN');
+
+      const existingResult = await client.query(
+        `
+          SELECT u.person_id, u.profile_metadata
+          FROM users u
+          WHERE u.id = $1 AND u.deleted_at IS NULL
+        `,
+        [id]
+      );
+
+      if (existingResult.rows.length === 0) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      const existingUser = existingResult.rows[0];
+      const effectivePersonId = person_id !== undefined ? person_id : existingUser.person_id;
+      const nextProfileMetadata =
+        profile_metadata !== undefined
+          ? {
+              ...(existingUser.profile_metadata || {}),
+              ...profile_metadata,
+            }
+          : existingUser.profile_metadata || {};
+
+      if (
+        effectivePersonId &&
+        (
+          first_name !== undefined ||
+          last_name !== undefined ||
+          email !== undefined ||
+          phone !== undefined ||
+          nextProfileMetadata.avatarDataUrl !== undefined
+        )
+      ) {
+        const personUpdates = [];
+        const personValues = [];
+        let personParamIndex = 1;
+
+        if (first_name !== undefined) {
+          personUpdates.push(`first_name = $${personParamIndex++}`);
+          personValues.push(first_name);
+        }
+        if (last_name !== undefined) {
+          personUpdates.push(`last_name = $${personParamIndex++}`);
+          personValues.push(last_name);
+        }
+        if (email !== undefined) {
+          personUpdates.push(`email = $${personParamIndex++}`);
+          personValues.push(email);
+        }
+        if (phone !== undefined) {
+          personUpdates.push(`phone = $${personParamIndex++}`);
+          personValues.push(phone);
+        }
+        if (nextProfileMetadata.avatarDataUrl !== undefined) {
+          personUpdates.push(`photo = $${personParamIndex++}`);
+          personValues.push(nextProfileMetadata.avatarDataUrl || null);
+        }
+
+        if (personUpdates.length > 0) {
+          personUpdates.push('updated_at = CURRENT_TIMESTAMP');
+          personValues.push(effectivePersonId);
+          await client.query(
+            `
+              UPDATE people
+              SET ${personUpdates.join(', ')}
+              WHERE id = $${personParamIndex}
+            `,
+            personValues
+          );
+        }
+      }
+
+      const updates = [];
+      const values = [];
+      let paramIndex = 1;
+
+      if (person_id !== undefined) {
+        updates.push(`person_id = $${paramIndex++}`);
+        values.push(person_id);
+      }
+      if (username !== undefined) {
+        updates.push(`username = $${paramIndex++}`);
+        values.push(username);
+      }
+      if (email !== undefined) {
+        updates.push(`email = $${paramIndex++}`);
+        values.push(email);
+      }
+      if (password !== undefined) {
+        const hashedPassword = await bcrypt.hash(password, 12);
+        updates.push(`password = $${paramIndex++}`);
+        values.push(hashedPassword);
+
+        await this.addPasswordHistory(id, hashedPassword);
+      }
+      if (userCode !== undefined) {
+        updates.push(`user_code = $${paramIndex++}`);
+        values.push(userCode);
+      }
+      if (phone !== undefined) {
+        updates.push(`phone = $${paramIndex++}`);
+        values.push(phone);
+      }
+      if (status !== undefined) {
+        updates.push(`status = $${paramIndex++}`);
+        values.push(status);
+      }
+      if (emailVerifiedAt !== undefined) {
+        updates.push(`email_verified_at = $${paramIndex++}`);
+        values.push(emailVerifiedAt);
+      }
+      if (ui_preferences !== undefined) {
+        updates.push(`ui_preferences = $${paramIndex++}::jsonb`);
+        values.push(JSON.stringify(ui_preferences || {}));
+      }
+      if (profile_metadata !== undefined) {
+        updates.push(`profile_metadata = $${paramIndex++}::jsonb`);
+        values.push(JSON.stringify(nextProfileMetadata));
+      }
+
+      if (updates.length === 0) {
+        throw new Error('Aucune donnée à mettre à jour');
+      }
+
+      updates.push(`updated_by = $${paramIndex++}`);
+      updates.push('updated_at = CURRENT_TIMESTAMP');
+      values.push(updatedBy);
+
+      const query = `
+        UPDATE users 
+        SET ${updates.join(', ')}
+        WHERE id = $${paramIndex} AND deleted_at IS NULL
+        RETURNING id, person_id, username, email, user_code, phone, status, email_verified_at, created_at, updated_at, ui_preferences, profile_metadata
+      `;
+      values.push(id);
+
+      const result = await client.query(query, values);
+
       if (result.rows.length === 0) {
         throw new Error('Utilisateur non trouvé');
       }
 
+      await client.query('COMMIT');
       return result.rows[0];
     } catch (error) {
+      await client.query('ROLLBACK');
       if (error.code === '23505') {
         if (error.constraint.includes('email')) {
           throw new Error('Cet email est déjà utilisé par un autre utilisateur');
         }
         if (error.constraint.includes('username')) {
-          throw new Error('Ce nom d\'utilisateur est déjà utilisé par un autre utilisateur');
+          throw new Error("Ce nom d'utilisateur est déjà utilisé par un autre utilisateur");
+        }
+        if (error.constraint.includes('phone')) {
+          throw new Error('Ce numéro de téléphone est déjà utilisé par un autre utilisateur');
         }
       }
       throw new Error(`Erreur lors de la mise à jour de l'utilisateur: ${error.message}`);
+    } finally {
+      client.release();
     }
   }
-
-  /**
-   * Met à jour le mot de passe d'un utilisateur (sans vérifier le mot de passe actuel)
-   * Utilisé pour la réinitialisation de mot de passe
-   * @param {number} id - ID de l'utilisateur
-   * @param {string} newPassword - Nouveau mot de passe en clair
-   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
-   * @returns {Promise<Object>} Utilisateur mis à jour
-   */
   async updatePasswordDirect(id, newPassword, updatedBy = null) {
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-    // Ajouter à l'historique avant la mise à jour
+    // Ajouter Ã  l'historique avant la mise Ã  jour
     await this.addPasswordHistory(id, hashedPassword);
 
     const query = `
@@ -382,21 +465,21 @@ class UsersRepository {
       const result = await connection.query(query, [id, hashedPassword, updatedBy]);
       return result.rows[0];
     } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour du mot de passe: ${error.message}`);
+      throw new Error(`Erreur lors de la mise Ã  jour du mot de passe: ${error.message}`);
     }
   }
 
   /**
-   * Met à jour le mot de passe d'un utilisateur
+   * Met Ã  jour le mot de passe d'un utilisateur
    * @param {number} id - ID de l'utilisateur
    * @param {string} newPassword - Nouveau mot de passe
-   * @param {number} updatedBy - ID de l'utilisateur qui met à jour
-   * @returns {Promise<Object>} Utilisateur mis à jour
+   * @param {number} updatedBy - ID de l'utilisateur qui met Ã  jour
+   * @returns {Promise<Object>} Utilisateur mis Ã  jour
    */
   async updatePassword(id, newPassword, updatedBy = null) {
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-    // Ajouter à l'historique avant la mise à jour
+    // Ajouter Ã  l'historique avant la mise Ã  jour
     await this.addPasswordHistory(id, hashedPassword);
 
     const query = `
@@ -410,7 +493,7 @@ class UsersRepository {
       const result = await connection.query(query, [id, hashedPassword, updatedBy]);
       return result.rows[0];
     } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour du mot de passe: ${error.message}`);
+      throw new Error(`Erreur lors de la mise Ã  jour du mot de passe: ${error.message}`);
     }
   }
 
@@ -418,7 +501,7 @@ class UsersRepository {
    * Supprime logiquement un utilisateur
    * @param {number} id - ID de l'utilisateur
    * @param {number} deletedBy - ID de l'utilisateur qui supprime
-   * @returns {Promise<boolean>} Succès de l'opération
+   * @returns {Promise<boolean>} SuccÃ¨s de l'opÃ©ration
    */
   async softDelete(id, deletedBy = null) {
     const query = `
@@ -436,19 +519,19 @@ class UsersRepository {
   }
 
   /**
-   * Vérifie si un mot de passe est correct
+   * VÃ©rifie si un mot de passe est correct
    * @param {string} email - Email de l'utilisateur
-   * @param {string} password - Mot de passe à vérifier
+   * @param {string} password - Mot de passe Ã  vÃ©rifier
    * @returns {Promise<Object|null>} Utilisateur si le mot de passe est correct
    */
   async verifyPassword(email, password) {
     // D'abord chercher par email utilisateur exact
     let user = await this.findByEmail(email, true);
     
-    // Si pas trouvé, chercher par email de personne
+    // Si pas trouvÃ©, chercher par email de personne
     if (!user) {
       const query = `
-        SELECT u.*, p.first_name, p.last_name, p.phone as person_phone
+        SELECT u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email
         FROM users u
         LEFT JOIN people p ON u.person_id = p.id
         WHERE p.email = $1 AND u.deleted_at IS NULL
@@ -478,9 +561,9 @@ class UsersRepository {
   }
 
   /**
-   * Met à jour la date de dernière connexion
+   * Met Ã  jour la date de derniÃ¨re connexion
    * @param {number} id - ID de l'utilisateur
-   * @returns {Promise<boolean>} Succès de l'opération
+   * @returns {Promise<boolean>} SuccÃ¨s de l'opÃ©ration
    */
   async updateLastLogin(id) {
     const query = `
@@ -493,12 +576,12 @@ class UsersRepository {
       const result = await connection.query(query, [id]);
       return result.rowCount > 0;
     } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour de la dernière connexion: ${error.message}`);
+      throw new Error(`Erreur lors de la mise Ã  jour de la derniÃ¨re connexion: ${error.message}`);
     }
   }
 
   /**
-   * Ajoute un mot de passe à l'historique
+   * Ajoute un mot de passe Ã  l'historique
    * @param {number} userId - ID de l'utilisateur
    * @param {string} passwordHash - Hash du mot de passe
    * @returns {Promise<void>}
@@ -512,32 +595,32 @@ class UsersRepository {
     try {
       await connection.query(query, [userId, passwordHash]);
     } catch (error) {
-      // Ne pas bloquer l'opération si l'historique échoue
-      console.warn(`Impossible d'ajouter à l'historique des mots de passe: ${error.message}`);
+      // Ne pas bloquer l'opÃ©ration si l'historique Ã©choue
+      console.warn(`Impossible d'ajouter Ã  l'historique des mots de passe: ${error.message}`);
     }
   }
 
   /**
-   * Met à jour le statut d'un utilisateur
+   * Met Ã  jour le statut d'un utilisateur
    * @param {number} id - ID de l'utilisateur
    * @param {string} status - Nouveau statut
    * @param {number} updatedBy - ID de l'utilisateur qui modifie
-   * @returns {Promise<Object>} Utilisateur mis à jour
+   * @returns {Promise<Object>} Utilisateur mis Ã  jour
    */
   async updateStatus(id, status, updatedBy = null) {
     const validStatuses = ['active', 'inactive', 'lock'];
     if (!validStatuses.includes(status)) {
-      throw new Error(`Statut invalide: ${status}. Valeurs autorisées: ${validStatuses.join(', ')}`);
+      throw new Error(`Statut invalide: ${status}. Valeurs autorisÃ©es: ${validStatuses.join(', ')}`);
     }
 
     return await this.update(id, { status, updatedBy });
   }
 
   /**
-   * Vérifie si un mot de passe a déjà été utilisé
+   * VÃ©rifie si un mot de passe a dÃ©jÃ  Ã©tÃ© utilisÃ©
    * @param {number} userId - ID de l'utilisateur
-   * @param {string} password - Mot de passe à vérifier
-   * @returns {Promise<boolean>} True si le mot de passe a déjà été utilisé
+   * @param {string} password - Mot de passe Ã  vÃ©rifier
+   * @returns {Promise<boolean>} True si le mot de passe a dÃ©jÃ  Ã©tÃ© utilisÃ©
    */
   async isPasswordAlreadyUsed(userId, password) {
     const query = `
@@ -560,13 +643,13 @@ class UsersRepository {
       
       return false;
     } catch (error) {
-      console.warn(`Erreur lors de la vérification de l'historique des mots de passe: ${error.message}`);
+      console.warn(`Erreur lors de la vÃ©rification de l'historique des mots de passe: ${error.message}`);
       return false;
     }
   }
 
   /**
-   * Vérifie si un utilisateur existe
+   * VÃ©rifie si un utilisateur existe
    * @param {number} id - ID de l'utilisateur
    * @returns {Promise<boolean>} True si l'utilisateur existe
    */
@@ -577,12 +660,12 @@ class UsersRepository {
       const result = await connection.query(query, [id]);
       return parseInt(result.rows[0].count) > 0;
     } catch (error) {
-      throw new Error(`Erreur lors de la vérification de l'existence: ${error.message}`);
+      throw new Error(`Erreur lors de la vÃ©rification de l'existence: ${error.message}`);
     }
   }
 
   /**
-   * Récupère les statistiques sur les utilisateurs
+   * RÃ©cupÃ¨re les statistiques sur les utilisateurs
    * @returns {Promise<Object>} Statistiques
    */
   async getStats() {
@@ -599,7 +682,7 @@ class UsersRepository {
         locked: parseInt(locked.rows[0].count)
       };
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);
+      throw new Error(`Erreur lors de la rÃ©cupÃ©ration des statistiques: ${error.message}`);
     }
   }
 }

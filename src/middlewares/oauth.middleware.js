@@ -8,6 +8,19 @@ const logger = require('../utils/logger');
  * Protection contre les attaques spécifiques à l'authentification OAuth
  */
 class OAuthMiddleware {
+  static resolveProviderFromRequest(req) {
+    const requestPath = `${req.baseUrl || ''}${req.path || ''}${req.url || ''}`.toLowerCase();
+    if (requestPath.includes('google')) {
+      return 'google';
+    }
+
+    if (requestPath.includes('apple')) {
+      return 'apple';
+    }
+
+    return null;
+  }
+
   /**
    * Rate limiting spécifique pour OAuth
    * Limite les tentatives d'authentification OAuth
@@ -89,8 +102,8 @@ class OAuthMiddleware {
    */
   static validateTokenFormat(req, res, next) {
     const oauthService = require('../modules/oauth/oauth.service');
-    const config = oauthService.checkConfiguration();
-    if (config.mockEnabled) {
+    const provider = OAuthMiddleware.resolveProviderFromRequest(req);
+    if (oauthService.isProviderMockEnabled(provider)) {
       return next();
     }
     const { idToken, identityToken } = req.body;
@@ -245,10 +258,17 @@ class OAuthMiddleware {
   static validateOAuthConfig(req, res, next) {
     const oauthService = require('../modules/oauth/oauth.service');
     const config = oauthService.checkConfiguration();
-    if (config.mockEnabled) {
+    const provider = OAuthMiddleware.resolveProviderFromRequest(req);
+    if (oauthService.isProviderMockEnabled(provider)) {
       return next();
     }
-    const errors = OAuthErrorHandler.validateConfiguration(config);
+    const filteredConfig = provider && config[provider]
+      ? {
+          mockEnabled: config.mockEnabled,
+          [provider]: config[provider]
+        }
+      : config;
+    const errors = OAuthErrorHandler.validateConfiguration(filteredConfig);
 
     if (errors.length > 0) {
       logger.error('OAuth configuration validation failed', { errors });
