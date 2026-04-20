@@ -2,7 +2,6 @@ const bcrypt = require('bcrypt');
 const { connection } = require('../../config/database');
 const otpService = require('./otp.service');
 const authService = require('./auth.service');
-const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
 const serviceContainer = require('../../services/index');
 const notificationClient = require('../../../../shared/clients/notification-client');
@@ -12,6 +11,31 @@ const notificationClient = require('../../../../shared/clients/notification-clie
  * Gère la création people + users + génération OTP de manière robuste
  */
 class RegistrationService {
+  async sendVerificationOtpEmail(person, otpCode, expiresAt, options = {}) {
+    const expiryDate = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
+    const expiresInMinutes = Math.max(
+      1,
+      Math.ceil((expiryDate.getTime() - Date.now()) / 60000)
+    );
+
+    const result = await notificationClient.sendEmailVerificationEmail(person.email, {
+      firstName: person.first_name || '',
+      lastName: person.last_name || '',
+      otpCode,
+      expiresAt: expiryDate.toISOString(),
+      expiresInMinutes,
+      purpose: 'verification',
+      ip: options.ip,
+      userAgent: options.userAgent
+    });
+
+    if (!result.success) {
+      throw new Error(result.error || 'Echec d envoi de l email de verification');
+    }
+
+    return result;
+  }
+
   constructor() {
     // Injection paresseuse pour éviter le cercle vicieux d'initialisation
     this._services = null;
@@ -197,14 +221,11 @@ class RegistrationService {
       
       // ÉTAPE 5: Envoyer l'OTP par email
       try {
-        const emailSent = await this.services.emailService.sendOTP(person.email, otpCode, 'verification', {
+        await this.sendVerificationOtpEmail(person, otpCode, expiresAt, {
           ip: options.ip,
           userAgent: options.userAgent
         });
         
-        if (!emailSent) {
-          throw new Error('Échec d\'envoi de l\'email de vérification');
-        }
         
         logger.info('OTP email sent successfully during registration', {
           personId: person.id,
@@ -442,14 +463,10 @@ class RegistrationService {
       
       // Envoyer l'OTP par email
       try {
-        const emailSent = await this.services.emailService.sendOTP(person.email, otpResult.otp_code, 'verification', {
+        await this.sendVerificationOtpEmail(person, otpResult.otp_code, otpResult.expires_at, {
           ip: options.ip,
           userAgent: options.userAgent
         });
-        
-        if (!emailSent) {
-          throw new Error('Échec d\'envoi de l\'email de vérification');
-        }
         
         logger.info('OTP email resent successfully', {
           personId: person.id,
