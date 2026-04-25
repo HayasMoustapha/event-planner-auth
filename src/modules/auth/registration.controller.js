@@ -4,6 +4,21 @@ const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
 const { mapFields } = require('../../utils/field-mapper');
 
+function buildResponse(result) {
+  const response = createResponse(
+    true,
+    result.message,
+    result.data,
+    result.timestamp
+  );
+
+  if (result?.debug) {
+    response.debug = result.debug;
+  }
+
+  return response;
+}
+
 /**
  * Controller pour gérer les routes d'inscription
  * Gère l'inscription, la vérification OTP et l'authentification post-inscription
@@ -24,12 +39,7 @@ class RegistrationController {
 
       const result = await registrationService.register(registrationData);
 
-      res.status(201).json(createResponse(
-        true,
-        result.message,
-        result.data,
-        result.timestamp
-      ));
+      res.status(201).json(buildResponse(result));
     } catch (error) {
       logger.error(`Erreur inscription controller: ${error.message}`);
       next(error);
@@ -51,12 +61,7 @@ class RegistrationController {
 
       const result = await registrationService.verifyEmail(email, code);
 
-      res.status(200).json(createResponse(
-        true,
-        result.message,
-        result.data,
-        result.timestamp
-      ));
+      res.status(200).json(buildResponse(result));
     } catch (error) {
       logger.error(`Erreur vérification email controller: ${error.message}`);
       next(error);

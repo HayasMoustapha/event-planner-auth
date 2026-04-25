@@ -11,6 +11,21 @@ const notificationClient = require('../../../../shared/clients/notification-clie
  * Gère la création people + users + génération OTP de manière robuste
  */
 class RegistrationService {
+  shouldExposeOtpCodes() {
+    return process.env.NODE_ENV !== 'production' ||
+      String(process.env.AUTH_EXPOSE_OTP_CODES || '').trim().toLowerCase() === 'true';
+  }
+
+  buildPublicUserPayload(user, personEmail) {
+    return {
+      id: user.id,
+      username: user.username,
+      email: personEmail || user.email,
+      person_email: personEmail || user.email,
+      status: user.status
+    };
+  }
+
   async sendVerificationOtpEmail(person, otpCode, expiresAt, options = {}) {
     const expiryDate = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
     const expiresInMinutes = Math.max(
@@ -254,19 +269,14 @@ class RegistrationService {
                 first_name: person.first_name,
                 last_name: person.last_name
               },
-              user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                status: user.status
-              },
+              user: this.buildPublicUserPayload(user, person.email),
               otp: {
                 id: otp.id,
                 purpose: otp.purpose,
-                expires_at: otp.expires_at,
-                ...(process.env.NODE_ENV === 'development' && { code: otpCode })
+                expires_at: otp.expires_at
               }
-            }
+            },
+            ...(this.shouldExposeOtpCodes() ? { debug: { otpCode } } : {})
           };
         }
         
@@ -291,20 +301,14 @@ class RegistrationService {
             first_name: person.first_name,
             last_name: person.last_name
           },
-          user: {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            status: user.status
-          },
+          user: this.buildPublicUserPayload(user, person.email),
           otp: {
             id: otp.id,
             purpose: otp.purpose,
-            expires_at: otp.expires_at,
-            // En développement uniquement, inclure le code pour débogage
-            ...(process.env.NODE_ENV === 'development' && { code: otpCode })
+            expires_at: otp.expires_at
           }
-        }
+        },
+        ...(this.shouldExposeOtpCodes() ? { debug: { otpCode } } : {})
       };
 
       // Debug: Afficher l'environnement et le code OTP
@@ -380,7 +384,10 @@ class RegistrationService {
       
       const user = userUpdateResult.rows[0];
 
-      const loginToken = authService.generateToken(user);
+      const loginToken = authService.generateToken({
+        ...user,
+        person_email: person.email
+      });
       const authBaseUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:3000';
       const loginUrl = `${authBaseUrl}/api/auth/login/${loginToken}`;
 
@@ -410,12 +417,7 @@ class RegistrationService {
         success: true,
         message: 'Email vérifié avec succès. Votre compte est maintenant actif.',
         data: {
-          user: {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            status: user.status
-          },
+          user: this.buildPublicUserPayload(user, person.email),
           loginToken
         }
       };
@@ -502,10 +504,10 @@ class RegistrationService {
               otp: {
                 id: otpResult.id,
                 purpose: otpResult.purpose,
-                expires_at: otpResult.expires_at,
-                ...(process.env.NODE_ENV === 'development' && { code: otpResult.otp_code })
+                expires_at: otpResult.expires_at
               }
-            }
+            },
+            ...(this.shouldExposeOtpCodes() ? { debug: { otpCode: otpResult.otp_code } } : {})
           };
         }
 

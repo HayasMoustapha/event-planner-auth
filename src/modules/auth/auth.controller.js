@@ -18,6 +18,11 @@ const notificationClient = require('../../../../shared/clients/notification-clie
  * Gère les requêtes et réponses HTTP avec validation et gestion d'erreurs
  */
 class AuthController {
+  shouldExposeOtpCodes() {
+    return process.env.NODE_ENV !== 'production' ||
+      String(process.env.AUTH_EXPOSE_OTP_CODES || '').trim().toLowerCase() === 'true';
+  }
+
   /**
    * Authentifie un utilisateur avec email et mot de passe
    * @param {Object} req - Requête Express
@@ -245,7 +250,7 @@ class AuthController {
               contactInfo: email,
               expiresAt: otp.expires_at,
               expiresInMinutes,
-              otpCode
+              ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
             }
           ));
         }
@@ -263,7 +268,7 @@ class AuthController {
           contactInfo: email,
           expiresAt: otp.expires_at,
           expiresInMinutes,
-          ...(process.env.NODE_ENV !== 'production' ? { otpCode } : {})
+          ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
         }
       ));
     } catch (error) {
@@ -311,7 +316,6 @@ class AuthController {
     try {
       const { phone, personId, expiresInMinutes = 15 } = req.body;
       const mockEnabled = process.env.AUTH_MOCKS === 'true' || process.env.NODE_ENV !== 'production';
-      const includeOtpCode = process.env.AUTH_MOCKS !== 'false';
 
       if (!phone && !personId) {
         return res.status(400).json(createResponse(
@@ -380,7 +384,7 @@ class AuthController {
               contactInfo: phone,
               expiresAt: otp.expires_at,
               expiresInMinutes,
-              ...(includeOtpCode && otpCode ? { otpCode } : {})
+              ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
             }
           ));
         }
@@ -398,7 +402,7 @@ class AuthController {
           contactInfo: phone,
           expiresAt: otp.expires_at,
           expiresInMinutes,
-          ...(includeOtpCode && otpCode ? { otpCode } : {})
+          ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
         }
       ));
     } catch (error) {
@@ -740,7 +744,7 @@ class AuthController {
         {
           contactInfo: email,
           expiresAt: otp.expires_at,
-          ...(process.env.NODE_ENV !== 'production' ? { otpCode } : {})
+          ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
         }
       ));
     } catch (error) {

@@ -14,6 +14,18 @@ const notificationClient = require('../../../../shared/clients/notification-clie
  * Gère la connexion, la génération de tokens JWT et la validation des identifiants
  */
 class AuthService {
+  resolveCanonicalEmail(user) {
+    if (user?.person_email && String(user.person_email).trim()) {
+      return String(user.person_email).trim().toLowerCase();
+    }
+
+    if (user?.email && String(user.email).trim()) {
+      return String(user.email).trim().toLowerCase();
+    }
+
+    return user?.email || null;
+  }
+
   /**
    * Authentifie un utilisateur avec email et mot de passe
    * @param {string} email - Email de l'utilisateur
@@ -157,6 +169,7 @@ class AuthService {
    */
   generateToken(user, overrides = {}) {
     const now = Math.floor(Date.now() / 1000);
+    const canonicalEmail = this.resolveCanonicalEmail(user);
     
     // CORRECTION : Utiliser le service de permissions pour charger depuis la base de données
     const userRoles = overrides.roles || this.getUserRolesSync(user);
@@ -164,7 +177,7 @@ class AuthService {
     
     const payload = {
       id: user.id,
-      email: user.email,
+      email: canonicalEmail,
       username: user.username,
       status: user.status,
       type: 'access',
@@ -309,9 +322,10 @@ class AuthService {
    */
   generateRefreshTokenFromUser(user) {
     try {
+      const canonicalEmail = this.resolveCanonicalEmail(user);
       const payload = {
         id: user.id,
-        email: user.email,
+        email: canonicalEmail,
         username: user.username,
         type: 'refresh'
       };
