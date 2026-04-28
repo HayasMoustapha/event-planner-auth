@@ -56,7 +56,6 @@ class RbacSeeder {
       { code: 'events.read', group: 'events', label: { en: 'Read Events', fr: 'Lire Événements' } },
       { code: 'events.update', group: 'events', label: { en: 'Update Events', fr: 'Mettre à Jour Événements' } },
       { code: 'events.delete', group: 'events', label: { en: 'Delete Events', fr: 'Supprimer Événements' } },
-      { code: 'events.publish', group: 'events', label: { en: 'Publish Events', fr: 'Publier Événements' } },
       { code: 'events.analytics', group: 'events', label: { en: 'Event Analytics', fr: 'Analytiques Événements' } },
 
       // Tickets permissions
@@ -96,7 +95,7 @@ class RbacSeeder {
     this.rolePermissions = {
       'super_admin': this.defaultPermissions.map(p => p.code),
       'organizer': [
-        'events.create', 'events.read', 'events.update', 'events.delete', 'events.publish', 'events.analytics',
+        'events.create', 'events.read', 'events.update', 'events.delete', 'events.analytics',
         'tickets.generate', 'tickets.validate', 'tickets.read', 'tickets.cancel', 'tickets.refund',
         'guests.manage', 'guests.read', 'guests.checkin',
         'notifications.email.send', 'notifications.sms.send', 'notifications.manage',
