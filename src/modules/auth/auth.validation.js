@@ -1,4 +1,7 @@
 const { body, param, query, validationResult, matchedData } = require('express-validator');
+const { cleanEmail } = require('../../utils/validators');
+
+const sanitizeEmail = value => cleanEmail(value);
 
 /**
  * Middleware de validation pour les entrées du module auth
@@ -55,7 +58,7 @@ const validateLogin = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -148,7 +151,7 @@ const validateGenerateEmailOtp = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -199,7 +202,7 @@ const validateVerifyEmailOtp = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -257,7 +260,7 @@ const validateGeneratePasswordResetOtp = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -272,7 +275,7 @@ const validateResetPasswordWithOtp = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -404,7 +407,7 @@ const validateRegister = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -448,7 +451,7 @@ const validateVerifyEmail = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -479,7 +482,7 @@ const validateResendOtp = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -494,7 +497,7 @@ const validateEmailParam = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail(),
+    .customSanitizer(sanitizeEmail),
 
   handleValidationErrors
 ];

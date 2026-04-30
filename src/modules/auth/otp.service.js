@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const otpRepository = require('./otp.repository');
 const peopleRepository = require('../people/people.repository');
+const authIdentityService = require('./auth-identity.service');
 const logger = require('../../utils/logger');
 
 /**
@@ -151,12 +152,14 @@ class OtpService {
     }
 
     // Normaliser le contact
-    const normalizedContact = contactInfo.toLowerCase().trim();
+    const normalizedContact = purpose === 'email'
+      ? authIdentityService.normalizeEmail(contactInfo)
+      : contactInfo.toLowerCase().trim();
 
     // Résoudre la personne si l'ID n'est pas fourni
     if (!personId) {
       if (purpose === 'email') {
-        const person = await peopleRepository.findByEmail(normalizedContact);
+        const { person } = await authIdentityService.resolveByEmail(normalizedContact);
         if (person) {
           personId = person.id;
         }

@@ -4,6 +4,9 @@
  * Middleware de validation pour les entrÃ©es du module users
  * Utilise express-validator pour valider et nettoyer les donnÃ©es
  */
+const { cleanEmail } = require('../../utils/validators');
+
+const sanitizeEmail = value => cleanEmail(value);
 
 /**
  * GÃ¨re les erreurs de validation
@@ -67,7 +70,7 @@ const validateCreate = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dÃ©passer 254 caractÃ¨res'),
 
@@ -181,7 +184,7 @@ const validateUpdate = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dÃ©passer 254 caractÃ¨res'),
 
@@ -284,7 +287,7 @@ const validatePasswordReset = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail(),
+    .customSanitizer(sanitizeEmail),
 
   body('newPassword')
     .trim()
@@ -347,7 +350,7 @@ const validateEmailParam = [
   param('email')
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail(),
+    .customSanitizer(sanitizeEmail),
 
   handleValidationErrors
 ];

@@ -79,7 +79,7 @@ class PeopleRepository {
    * @returns {Promise<Object|null>} Données de la personne
    */
   async findByEmail(email) {
-    const query = 'SELECT * FROM people WHERE email = $1 AND deleted_at IS NULL';
+    const query = 'SELECT * FROM people WHERE LOWER(BTRIM(email)) = LOWER(BTRIM($1)) AND deleted_at IS NULL';
     
     try {
       const result = await connection.query(query, [email]);

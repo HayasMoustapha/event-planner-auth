@@ -11,7 +11,13 @@ const logger = require('../../utils/logger');
 const emailService = require('../../services/email.service');
 const smsService = require('../../services/sms.service');
 const sessionService = require('../sessions/sessions.service');
+const authIdentityService = require('./auth-identity.service');
 const notificationClient = require('../../../../shared/clients/notification-client');
+
+const shouldExposeOtpCodes = () => (
+  process.env.NODE_ENV !== 'production' ||
+  String(process.env.AUTH_EXPOSE_OTP_CODES || '').trim().toLowerCase() === 'true'
+);
 
 /**
  * Controller HTTP pour la gestion de l'authentification et des OTP
@@ -19,8 +25,7 @@ const notificationClient = require('../../../../shared/clients/notification-clie
  */
 class AuthController {
   shouldExposeOtpCodes() {
-    return process.env.NODE_ENV !== 'production' ||
-      String(process.env.AUTH_EXPOSE_OTP_CODES || '').trim().toLowerCase() === 'true';
+    return shouldExposeOtpCodes();
   }
 
   /**
@@ -182,8 +187,9 @@ class AuthController {
   async generateEmailOtp(req, res, next) {
     try {
       const { email, personId, expiresInMinutes = 15 } = req.body;
+      const normalizedEmail = authIdentityService.normalizeEmail(email);
 
-      if (!email && !personId) {
+      if (!normalizedEmail && !personId) {
         return res.status(400).json(createResponse(
           false,
           'Email ou ID personne requis'
@@ -193,9 +199,8 @@ class AuthController {
       let targetPersonId = personId;
 
       // Si seul l'email est fourni, récupérer la personne
-      if (!personId && email) {
-        const peopleRepository = require('../people/people.repository');
-        const person = await peopleRepository.findByEmail(email);
+      if (!personId && normalizedEmail) {
+        const { person } = await authIdentityService.resolveByEmail(normalizedEmail);
         if (!person) {
           return res.status(404).json(createResponse(
             false,
@@ -206,18 +211,18 @@ class AuthController {
       }
 
       logger.info('generateEmailOtp - Requête reçue', {
-        email,
+        email: normalizedEmail,
         userId: req.body?.userId,
         personId: targetPersonId,
         expiresInMinutes
       });
 
-      const otp = await otpService.generateEmailOtp(targetPersonId, email, expiresInMinutes, req.user?.id || null);
+      const otp = await otpService.generateEmailOtp(targetPersonId, normalizedEmail, expiresInMinutes, req.user?.id || null);
       const otpCode = otp?.otp_code || otp?.code;
 
       // Envoyer l'OTP par email
       try {
-        const emailSent = await emailService.sendOTP(email, otpCode, 'login', {
+        const emailSent = await emailService.sendOTP(normalizedEmail, otpCode, 'login', {
           ip: req.ip,
           userAgent: req.get('User-Agent')
         });
@@ -227,7 +232,7 @@ class AuthController {
         }
 
         logger.auth('OTP email sent successfully', {
-          email,
+          email: normalizedEmail,
           personId: targetPersonId,
           otpId: otp.id,
           expiresInMinutes,
@@ -235,7 +240,7 @@ class AuthController {
         });
       } catch (emailError) {
         logger.error('Failed to send OTP email', {
-          email,
+          email: normalizedEmail,
           personId: targetPersonId,
           error: emailError.message,
           ip: req.ip
@@ -247,10 +252,11 @@ class AuthController {
             true,
             'OTP généré avec succès (email non envoyé en dev)',
             {
-              contactInfo: email,
+              contactInfo: normalizedEmail,
+              identifier: normalizedEmail,
               expiresAt: otp.expires_at,
               expiresInMinutes,
-              ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
+              ...(shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
             }
           ));
         }
@@ -265,10 +271,11 @@ class AuthController {
         true,
         'OTP généré avec succès',
         {
-          contactInfo: email,
+          contactInfo: normalizedEmail,
+          identifier: normalizedEmail,
           expiresAt: otp.expires_at,
           expiresInMinutes,
-          ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
+          ...(shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
         }
       ));
     } catch (error) {
@@ -384,7 +391,7 @@ class AuthController {
               contactInfo: phone,
               expiresAt: otp.expires_at,
               expiresInMinutes,
-              ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
+              ...(shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
             }
           ));
         }
@@ -402,7 +409,7 @@ class AuthController {
           contactInfo: phone,
           expiresAt: otp.expires_at,
           expiresInMinutes,
-          ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
+          ...(shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
         }
       ));
     } catch (error) {
@@ -440,7 +447,7 @@ class AuthController {
           // Si personId n'est pas fourni, le récupérer depuis l'email
           let targetPersonId = personId;
           if (!targetPersonId) {
-            const person = await peopleRepository.findByEmail(email);
+            const { person } = await authIdentityService.resolveByEmail(email);
             if (person) {
               targetPersonId = person.id;
             }
@@ -621,14 +628,8 @@ class AuthController {
       let user;
 
       if (type === 'email') {
-        user = await usersRepository.findByEmail(finalContact);
-        if (!user) {
-          const peopleRepository = require('../people/people.repository');
-          const person = await peopleRepository.findByEmail(finalContact);
-          if (person) {
-            user = await usersRepository.findByPersonId(person.id);
-          }
-        }
+        const resolvedIdentity = await authIdentityService.resolveByEmail(finalContact);
+        user = resolvedIdentity.user;
       } else if (type === 'phone') {
         user = await usersRepository.findByPhone(finalContact);
       }
@@ -689,31 +690,31 @@ class AuthController {
   async generatePasswordResetOtp(req, res, next) {
     try {
       const { email } = req.body;
+      const normalizedEmail = authIdentityService.normalizeEmail(email);
 
-      if (!email) {
+      if (!normalizedEmail) {
         return res.status(400).json(createResponse(
           false,
           'Email requis'
         ));
       }
 
-      const peopleRepository = require('../people/people.repository');
-      const person = await peopleRepository.findByEmail(email);
+      const { person, user: resolvedUser } = await authIdentityService.resolveByEmail(normalizedEmail);
 
-      if (!person) {
+      if (!person || !resolvedUser) {
         return res.status(404).json(createResponse(
           false,
           'Personne non trouvée pour cet email'
         ));
       }
 
-      const otp = await otpService.generatePasswordResetOtp(person.id, email);
+      const otp = await otpService.generatePasswordResetOtp(person.id, normalizedEmail);
       const otpCode = otp?.otp_code || otp?.code;
 
       // Récupérer l'utilisateur pour la notification
       const usersRepository = require('../users/users.repository');
       const user =
-        await usersRepository.findByEmail(email) ||
+        await usersRepository.findByEmail(normalizedEmail) ||
         await usersRepository.findByPersonId(person.id);
 
       if (user) {
@@ -722,7 +723,7 @@ class AuthController {
           await authService.sendPasswordResetNotification(user, otpCode, otp.expires_at);
         } catch (notifyError) {
           logger.error('Failed to send password reset notification', {
-            email,
+            email: normalizedEmail,
             error: notifyError.message
           });
 
@@ -733,7 +734,7 @@ class AuthController {
       }
 
       logger.security('Password reset OTP generated', {
-        email,
+        email: normalizedEmail,
         personId: person.id,
         ip: req.ip
       });
@@ -742,9 +743,10 @@ class AuthController {
         true,
         'OTP de réinitialisation généré avec succès',
         {
-          contactInfo: email,
+          contactInfo: normalizedEmail,
+          identifier: normalizedEmail,
           expiresAt: otp.expires_at,
-          ...(this.shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
+          ...(shouldExposeOtpCodes() && otpCode ? { debug: { otpCode } } : {})
         }
       ));
     } catch (error) {
@@ -763,8 +765,9 @@ class AuthController {
       const { email, otpCode, otp, code, token, newPassword, new_password } = req.body;
       const finalCode = otpCode || otp || code || token;
       const finalPassword = newPassword || new_password;
+      const normalizedEmail = authIdentityService.normalizeEmail(email);
 
-      if (!email || !finalCode || !finalPassword) {
+      if (!normalizedEmail || !finalCode || !finalPassword) {
         return res.status(400).json(createResponse(
           false,
           'Email, code OTP et nouveau mot de passe requis'
@@ -772,10 +775,9 @@ class AuthController {
       }
 
       // Récupérer la personne
-      const peopleRepository = require('../people/people.repository');
-      const person = await peopleRepository.findByEmail(email);
+      const { person, user: resolvedUser } = await authIdentityService.resolveByEmail(normalizedEmail);
 
-      if (!person) {
+      if (!person || !resolvedUser) {
         return res.status(404).json(createResponse(
           false,
           'Personne non trouvée'
@@ -783,12 +785,12 @@ class AuthController {
       }
 
       // Vérifier l'OTP de réinitialisation
-      const otpResult = await otpService.verifyPasswordResetOtp(finalCode, email, person.id);
+      const otpResult = await otpService.verifyPasswordResetOtp(finalCode, normalizedEmail, person.id);
 
       // Récupérer l'utilisateur associé
       const usersRepository = require('../users/users.repository');
       const user =
-        await usersRepository.findByEmail(email) ||
+        await usersRepository.findByEmail(normalizedEmail) ||
         await usersRepository.findByPersonId(person.id);
 
       if (!user) {

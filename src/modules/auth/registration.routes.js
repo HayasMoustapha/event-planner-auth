@@ -3,6 +3,9 @@ const router = express.Router();
 const registrationController = require('./registration.controller');
 const { body, param } = require('express-validator');
 const validate = require('../../middlewares/validation.middleware');
+const { cleanEmail } = require('../../utils/validators');
+
+const sanitizeEmail = value => cleanEmail(value);
 
 /**
  * Routes pour l'inscription et la vérification des comptes
@@ -26,7 +29,7 @@ const registerValidation = [
   body('email')
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail(),
+    .customSanitizer(sanitizeEmail),
   
   body('phone')
     .optional()
@@ -58,7 +61,7 @@ const verifyEmailValidation = [
   body('email')
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail(),
+    .customSanitizer(sanitizeEmail),
   
   body('otpCode')
     .notEmpty()
@@ -73,7 +76,7 @@ const resendOTPValidation = [
   body('email')
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
 ];
 
 // Validation pour la connexion post-vérification
@@ -81,7 +84,7 @@ const loginValidation = [
   body('email')
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail(),
+    .customSanitizer(sanitizeEmail),
   
   body('password')
     .notEmpty()

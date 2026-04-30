@@ -1,4 +1,7 @@
 const { body, param, query, validationResult, matchedData } = require('express-validator');
+const { cleanEmail } = require('../../utils/validators');
+
+const sanitizeEmail = value => cleanEmail(value);
 
 /**
  * Middleware de validation pour les entrées du module people
@@ -95,7 +98,7 @@ const validateCreate = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -159,7 +162,7 @@ const validateUpdate = [
     .trim()
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .isLength({ max: 254 })
     .withMessage('L\'email ne peut pas dépasser 254 caractères'),
 
@@ -246,7 +249,7 @@ const validateEmailParam = [
   param('email')
     .isEmail()
     .withMessage('Format d\'email invalide')
-    .normalizeEmail(),
+    .customSanitizer(sanitizeEmail),
 
   handleValidationErrors
 ];

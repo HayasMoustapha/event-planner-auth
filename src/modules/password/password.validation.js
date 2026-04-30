@@ -1,4 +1,7 @@
 const { body } = require('express-validator');
+const { cleanEmail } = require('../../utils/validators');
+
+const sanitizeEmail = value => cleanEmail(value);
 
 /**
  * Validation pour la demande de réinitialisation de mot de passe
@@ -7,7 +10,7 @@ const validatePasswordResetRequest = [
   body('email')
     .isEmail()
     .withMessage('L\'email doit être valide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .withMessage('Format d\'email invalide')
 ];
 
@@ -18,7 +21,7 @@ const validatePasswordReset = [
   body('email')
     .isEmail()
     .withMessage('L\'email doit être valide')
-    .normalizeEmail()
+    .customSanitizer(sanitizeEmail)
     .withMessage('Format d\'email invalide'),
     
   body('token')

@@ -116,7 +116,7 @@ class UsersRepository {
       SELECT ${fields}
       FROM users u
       LEFT JOIN people p ON u.person_id = p.id
-      WHERE u.email = $1 AND u.deleted_at IS NULL
+      WHERE LOWER(BTRIM(u.email)) = LOWER(BTRIM($1)) AND u.deleted_at IS NULL
     `;
     
     try {
@@ -534,7 +534,7 @@ class UsersRepository {
         SELECT u.*, p.first_name, p.last_name, p.phone as person_phone, p.email as person_email
         FROM users u
         LEFT JOIN people p ON u.person_id = p.id
-        WHERE p.email = $1 AND u.deleted_at IS NULL
+        WHERE LOWER(BTRIM(p.email)) = LOWER(BTRIM($1)) AND u.deleted_at IS NULL
       `;
       
       try {
