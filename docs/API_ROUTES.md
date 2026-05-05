@@ -562,6 +562,11 @@ GET /api/auth/oauth/config
 - **Description**: Vérifier la configuration OAuth
 - **Authentification**: Non requise
 - **Permissions**: Aucune
+- **Notes de readiness**:
+  - `status=missing_live_provider_credentials`: le provider n'a pas encore toutes ses variables réelles
+  - `status=mock_only`: le provider ne peut fonctionner qu'en mock dans l'environnement courant
+  - `status=configured_not_live_proved`: les secrets semblent présents, mais aucun succès live n'est prouvé par cette route
+- **Champs utiles par provider**: `configured`, `liveProved`, `blockedByMissingLiveCredentials`, `presentFields`, `missingFields`, `placeholderFields`, `mockEnabled`
 
 ---
 

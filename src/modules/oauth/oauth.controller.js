@@ -26,7 +26,7 @@ class OAuthController {
         ));
       }
 
-      const { idToken } = req.body;
+      const { idToken, defaultRole } = req.body;
 
       if (!idToken) {
         return res.status(400).json(createResponse(
@@ -39,7 +39,8 @@ class OAuthController {
       // Options supplémentaires depuis la requête
       const options = {
         ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent'),
+        defaultRole
       };
 
       // Authentifier via OAuth
@@ -79,7 +80,7 @@ class OAuthController {
         ));
       }
 
-      const { identityToken, user } = req.body;
+      const { identityToken, user, defaultRole } = req.body;
 
       if (!identityToken) {
         return res.status(400).json(createResponse(
@@ -92,7 +93,8 @@ class OAuthController {
       // Options supplémentaires depuis la requête
       const options = {
         ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent'),
+        defaultRole
       };
 
       // Préparer les données Apple

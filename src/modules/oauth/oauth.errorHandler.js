@@ -23,6 +23,8 @@ class OAuthErrorHandler {
       userAgent: req.get('User-Agent')
     });
 
+    const normalizedMessage = OAuthErrorHandler.normalizeMessage(error.message);
+
     // Erreurs spécifiques à OAuth
     if (error.message.includes('Token Google invalide')) {
       return res.status(401).json(createResponse(
@@ -46,15 +48,18 @@ class OAuthErrorHandler {
       ));
     }
 
-    if (error.message.includes('Email déjà utilisé')) {
-      return res.status(409).json(createResponse(
-        false,
-        'Cet email est déjà utilisé. Connectez-vous et liez votre compte.',
-        { 
-          code: 'EMAIL_ALREADY_USED',
-          requiresLinking: true
-        }
-      ));
+    if (
+      error.code === 'EMAIL_ALREADY_USED' ||
+      normalizedMessage.includes('email deja utilise') ||
+      normalizedMessage.includes('un utilisateur avec cet email existe')
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: 'Cet email est déjà utilisé. Connectez-vous avec votre mot de passe puis liez votre compte Google ou Apple.',
+        code: 'EMAIL_ALREADY_USED',
+        requiresLinking: true,
+        timestamp: new Date().toISOString()
+      });
     }
 
     if (error.message.includes('Cette identité')) {
@@ -170,6 +175,13 @@ class OAuthErrorHandler {
 
     // Gérer l'erreur avec le gestionnaire OAuth
     OAuthErrorHandler.handle(error, req, res, next);
+  }
+
+  static normalizeMessage(message) {
+    return String(message || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   /**

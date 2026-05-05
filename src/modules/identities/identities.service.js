@@ -94,7 +94,12 @@ class IdentitiesService {
     // Vérifier si l'email est déjà utilisé par un utilisateur existant
     const existingUser = await usersRepository.findByEmail(email);
     if (existingUser) {
-      throw new Error('Un utilisateur avec cet email existe déjà. Veuillez vous connecter et lier votre compte.');
+      const conflictError = new Error(
+        'Un utilisateur avec cet email existe deja. Connectez-vous avec votre mot de passe puis liez votre compte Google ou Apple.',
+      );
+      conflictError.code = 'EMAIL_ALREADY_USED';
+      conflictError.requiresLinking = true;
+      throw conflictError;
     }
 
     // Vérifier si cette identité OAuth existe déjà

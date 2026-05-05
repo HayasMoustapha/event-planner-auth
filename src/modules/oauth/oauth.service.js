@@ -88,6 +88,49 @@ class OAuthService {
     return normalized.length > 0 && !this.isPlaceholderConfigValue(normalized);
   }
 
+  buildProviderConfiguration(provider, fields) {
+    const mockEnabled = this.isProviderMockEnabled(provider);
+    const missingFields = [];
+    const placeholderFields = [];
+    const presentFields = [];
+
+    Object.entries(fields).forEach(([fieldName, fieldValue]) => {
+      const normalized = this.normalizeConfigValue(fieldValue);
+
+      if (!normalized) {
+        missingFields.push(fieldName);
+        return;
+      }
+
+      if (this.isPlaceholderConfigValue(normalized)) {
+        placeholderFields.push(fieldName);
+        return;
+      }
+
+      presentFields.push(fieldName);
+    });
+
+    const configured = missingFields.length === 0 && placeholderFields.length === 0;
+
+    let status = 'missing_live_provider_credentials';
+    if (configured) {
+      status = 'configured_not_live_proved';
+    } else if (mockEnabled) {
+      status = 'mock_only';
+    }
+
+    return {
+      mockEnabled,
+      configured,
+      liveProved: false,
+      status,
+      blockedByMissingLiveCredentials: !configured,
+      presentFields,
+      missingFields,
+      placeholderFields
+    };
+  }
+
   /**
    * Vérifie un token Google ID et extrait les informations utilisateur
    * @param {string} idToken - Token ID Google
@@ -348,6 +391,10 @@ class OAuthService {
         throw new Error('Fournisseur OAuth non supporté');
       }
 
+      if (['organizer', 'designer', 'user'].includes(options.defaultRole)) {
+        userData.default_role = options.defaultRole;
+      }
+
       // Authentifier via le service des identités
       const authResult = await identitiesService.authenticateWithOAuth(userData);
 
@@ -478,27 +525,46 @@ class OAuthService {
     const appleKeyId = this.normalizeConfigValue(process.env.APPLE_KEY_ID);
     const applePrivateKey = this.normalizeConfigValue(process.env.APPLE_PRIVATE_KEY);
 
+    const googleConfig = this.buildProviderConfiguration('google', {
+      GOOGLE_CLIENT_ID: googleClientId,
+      GOOGLE_CLIENT_SECRET: googleClientSecret
+    });
+    const appleConfig = this.buildProviderConfiguration('apple', {
+      APPLE_CLIENT_ID: appleClientId,
+      APPLE_TEAM_ID: appleTeamId,
+      APPLE_KEY_ID: appleKeyId,
+      APPLE_PRIVATE_KEY: applePrivateKey
+    });
+
     const config = {
       mockEnabled: this.isMockEnabled(),
       google: {
-        mockEnabled: this.isProviderMockEnabled('google'),
         clientId: this.hasRealConfigValue(googleClientId),
         clientIdValue: googleClientId || null,
         clientSecret: this.hasRealConfigValue(googleClientSecret),
-        configured: this.hasRealConfigValue(googleClientId) && this.hasRealConfigValue(googleClientSecret)
+        configured: googleConfig.configured,
+        liveProved: googleConfig.liveProved,
+        status: googleConfig.status,
+        blockedByMissingLiveCredentials: googleConfig.blockedByMissingLiveCredentials,
+        presentFields: googleConfig.presentFields,
+        missingFields: googleConfig.missingFields,
+        placeholderFields: googleConfig.placeholderFields,
+        mockEnabled: googleConfig.mockEnabled
       },
       apple: {
-        mockEnabled: this.isProviderMockEnabled('apple'),
         clientId: this.hasRealConfigValue(appleClientId),
         clientIdValue: appleClientId || null,
         teamId: this.hasRealConfigValue(appleTeamId),
         keyId: this.hasRealConfigValue(appleKeyId),
         privateKey: this.hasRealConfigValue(applePrivateKey),
-        configured:
-          this.hasRealConfigValue(appleClientId) &&
-          this.hasRealConfigValue(appleTeamId) &&
-          this.hasRealConfigValue(appleKeyId) &&
-          this.hasRealConfigValue(applePrivateKey)
+        configured: appleConfig.configured,
+        liveProved: appleConfig.liveProved,
+        status: appleConfig.status,
+        blockedByMissingLiveCredentials: appleConfig.blockedByMissingLiveCredentials,
+        presentFields: appleConfig.presentFields,
+        missingFields: appleConfig.missingFields,
+        placeholderFields: appleConfig.placeholderFields,
+        mockEnabled: appleConfig.mockEnabled
       }
     };
 

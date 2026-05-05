@@ -16,7 +16,12 @@ const validateGoogleLogin = [
       }
       return typeof value === 'string' && value.length >= 100 && value.length <= 2000;
     })
-    .withMessage('Le token Google doit avoir une longueur valide')
+    .withMessage('Le token Google doit avoir une longueur valide'),
+
+  body('defaultRole')
+    .optional()
+    .isIn(['organizer', 'designer', 'user'])
+    .withMessage('Le role par defaut doit etre organizer, designer ou user')
 ];
 
 /**
@@ -41,7 +46,12 @@ const validateAppleLogin = [
     .isString()
     .withMessage("L'ID utilisateur Apple doit etre une chaine de caracteres")
     .isLength({ min: 1, max: 255 })
-    .withMessage("L'ID utilisateur Apple doit avoir une longueur valide")
+    .withMessage("L'ID utilisateur Apple doit avoir une longueur valide"),
+
+  body('defaultRole')
+    .optional()
+    .isIn(['organizer', 'designer', 'user'])
+    .withMessage('Le role par defaut doit etre organizer, designer ou user')
 ];
 
 /**
