@@ -51,8 +51,10 @@ router.use(validateServiceToken);
 // Route pour récupérer les utilisateurs (utilisé par event-planner-core)
 router.get('/users', usersController.getAll);
 
-// Route pour récupérer un utilisateur par ID (utilisé par event-planner-core)
-router.get('/users/:id', usersController.getById);
+// IMPORTANT (fix designer-502) : les routes LITTÉRALES doivent précéder la route
+// paramétrée /users/:id. Sinon GET /users/search (utilisé par getUsersBatch du
+// marketplace) est capturé par /users/:id avec id="search" -> parseInt("search")
+// = NaN -> usersService.getById rejette "ID d'utilisateur invalide" -> 502 core.
 
 // Route pour récupérer un utilisateur par email (utilisé par event-planner-core)
 router.get('/users/email/:email', usersController.getByEmail);
@@ -65,6 +67,9 @@ router.get('/users/search', usersController.search);
 
 // Route pour récupérer les statistiques des utilisateurs (utilisé par event-planner-core)
 router.get('/users/stats', usersController.getStats);
+
+// Route paramétrée APRÈS les littérales.
+router.get('/users/:id', usersController.getById);
 
 // Route pour vérifier l'existence d'un utilisateur (utilisé par event-planner-core)
 router.get('/users/:id/exists', usersController.exists);
