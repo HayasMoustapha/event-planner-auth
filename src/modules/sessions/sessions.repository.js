@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { connection } = require('../../config/database');
 
 /**
@@ -32,21 +33,35 @@ class SessionRepository {
     });
 
     try {
-      // Insérer dans la table sessions en utilisant l'accessToken comme ID
+      const sessionId = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + (expiresIn * 1000));
+      const normalizedDeviceInfo = deviceInfo && typeof deviceInfo === 'object'
+        ? deviceInfo
+        : (deviceInfo ? { label: deviceInfo } : {});
+      // Persister une vraie session et conserver les JWT dans des colonnes dediees.
       const sessionQuery = `
         INSERT INTO sessions (
-          id, user_id, ip_address, user_agent, payload, last_activity
-        ) VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, user_id, ip_address, user_agent, payload, last_activity
+          id, user_id, access_token, refresh_token, device_info,
+          ip_address, user_agent, payload, last_activity, expires_at,
+          created_at, updated_at, is_active
+        ) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, TRUE)
+        RETURNING
+          id, user_id, access_token, refresh_token, device_info,
+          ip_address, user_agent, payload, last_activity, expires_at,
+          created_at, updated_at, is_active
       `;
 
       const sessionValues = [
-        accessToken,                    // id = accessToken
-        userId,                          // user_id
-        ipAddress || null,               // ip_address
-        userAgent || null,              // user_agent
-        JSON.stringify({ user_id: userId, deviceInfo }), // payload
-        Date.now()                       // last_activity
+        sessionId,
+        userId,
+        accessToken || null,
+        refreshToken || null,
+        JSON.stringify(normalizedDeviceInfo),
+        ipAddress || null,
+        userAgent || null,
+        JSON.stringify({ user_id: userId, deviceInfo: normalizedDeviceInfo }),
+        Date.now(),
+        expiresAt
       ];
 
       console.log('🔍 Debug repository.create - Insertion session...');
@@ -74,14 +89,13 @@ class SessionRepository {
               updated_at = CURRENT_TIMESTAMP
           `;
 
-          const expiresAt = new Date(Date.now() + (expiresIn * 1000));
           const tokenValues = [
             accessToken,
             userId,
             'access',
             expiresAt,
             true, // is_active = true initialement
-            JSON.stringify({ deviceInfo, ipAddress, userAgent })
+            JSON.stringify({ sessionId, deviceInfo: normalizedDeviceInfo, ipAddress, userAgent })
           ];
 
           console.log('🔍 Debug repository.create - Insertion token...');
@@ -97,7 +111,7 @@ class SessionRepository {
               'refresh',
               refreshExpiresAt,
               true,
-              JSON.stringify({ deviceInfo, ipAddress, userAgent })
+              JSON.stringify({ sessionId, deviceInfo: normalizedDeviceInfo, ipAddress, userAgent })
             ];
 
             await connection.query(tokenQuery, refreshValues);
@@ -122,10 +136,13 @@ class SessionRepository {
    */
   async findByAccessToken(accessToken) {
     const query = `
-      SELECT id, user_id, 
-             ip_address, user_agent, payload, last_activity
+      SELECT id, user_id, access_token, refresh_token, device_info,
+             ip_address, user_agent, payload, last_activity, expires_at,
+             created_at, updated_at, is_active
       FROM sessions 
-      WHERE id = $1
+      WHERE access_token = $1
+        AND is_active = TRUE
+        AND expires_at > CURRENT_TIMESTAMP
     `;
 
     try {
@@ -143,10 +160,13 @@ class SessionRepository {
    */
   async findByRefreshToken(refreshToken) {
     const query = `
-      SELECT id, user_id, 
-             ip_address, user_agent, payload, last_activity
+      SELECT id, user_id, access_token, refresh_token, device_info,
+             ip_address, user_agent, payload, last_activity, expires_at,
+             created_at, updated_at, is_active
       FROM sessions 
-      WHERE id = $1
+      WHERE refresh_token = $1
+        AND is_active = TRUE
+        AND expires_at > CURRENT_TIMESTAMP
     `;
 
     try {

@@ -257,6 +257,7 @@ class SessionService {
   async createSession(sessionData) {
     const {
       accessToken,
+      refreshToken: requestedRefreshToken,
       userId,
       deviceInfo,
       ipAddress,
@@ -283,7 +284,7 @@ class SessionService {
     */
 
     // Générer un refresh token
-    const refreshToken = this.generateRefreshToken({ id: userId });
+    const refreshToken = requestedRefreshToken || this.generateRefreshToken({ id: userId });
 
     // Créer la session en base de données avec les tokens
     try {
@@ -400,6 +401,7 @@ class SessionService {
     // Créer une nouvelle session avec le nouveau token
     const newSession = await sessionRepository.create({
       accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
       userId: user.id,
       deviceInfo: 'Refreshed Session',
       ipAddress: session.ip_address,
@@ -595,21 +597,18 @@ class SessionService {
       throw new Error(tokenValidation.message);
     }
 
-    // Pour l'instant, on considère que le token valide est suffisant
-    // Pas besoin de stocker en base pour les tests
+    const session = await sessionRepository.findByAccessToken(accessToken);
+    if (!session) {
+      return null;
+    }
+
     const user = await usersRepository.findById(tokenValidation.decoded.id);
     if (!user || user.status !== 'active') {
       throw new Error('Utilisateur non trouvé ou inactif');
     }
 
     return {
-      session: {
-        id: accessToken,
-        userId: user.id,
-        deviceInfo: 'unknown',
-        ipAddress: 'unknown',
-        expiresAt: tokenValidation.expiresAt
-      },
+      session,
       user: {
         id: user.id,
         username: user.username,

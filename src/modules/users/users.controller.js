@@ -64,6 +64,32 @@ class UsersController {
   }
 
   /**
+   * Récupère le profil de l'utilisateur authentifié.
+   * Évite que `/profile` ne tombe dans la route paramétrée `/:id`.
+   * @param {Object} req - Requête Express
+   * @param {Object} res - Réponse Express
+   * @param {Function} next - Middleware suivant
+   */
+  async getProfile(req, res, next) {
+    try {
+      const userId = parseInt(req.user?.id, 10);
+      const user = await usersService.getById(userId);
+
+      if (user.password) {
+        delete user.password;
+      }
+
+      res.status(200).json(createResponse(
+        true,
+        'Profil utilisateur récupéré avec succès',
+        user
+      ));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Récupère un utilisateur par son email
    * @param {Object} req - Requête Express
    * @param {Object} res - Réponse Express

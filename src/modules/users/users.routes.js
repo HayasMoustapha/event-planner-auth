@@ -26,6 +26,7 @@ router.use(authMiddleware.authenticate);
 /**
  * Routes CRUD avec permissions RBAC
  */
+router.get('/profile', rbacMiddleware.requirePermission('users.read'), usersController.getProfile);
 router.get('/', rbacMiddleware.requirePermission('users.list'), usersController.getAll);
 router.get('/stats', rbacMiddleware.requirePermission('users.stats'), usersController.getStats);
 router.get('/:id', rbacMiddleware.requirePermission('users.read'), usersController.getById);

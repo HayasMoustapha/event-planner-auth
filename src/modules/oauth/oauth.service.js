@@ -402,27 +402,22 @@ class OAuthService {
       const token = authService.generateToken(authResult.user);
 
       // Créer la session
-      let sessionData = null;
-      try {
-        const sessionResult = await sessionService.createSession({
-          accessToken: token,
-          userId: authResult.user.id,
-          ipAddress: options.ipAddress,
-          userAgent: options.userAgent,
-          expiresIn: 24 * 60 * 60 // 24 heures
-        });
-        
-        if (sessionResult.success) {
-          sessionData = sessionResult.session;
-        }
-      } catch (sessionError) {
-        logger.warn('Failed to create OAuth session', {
-          error: sessionError.message,
+      const sessionResult = await sessionService.createSession({
+        accessToken: token,
+        userId: authResult.user.id,
+        ipAddress: options.ipAddress,
+        userAgent: options.userAgent,
+        expiresIn: 24 * 60 * 60 // 24 heures
+      });
+
+      if (!sessionResult.success || !sessionResult.session) {
+        logger.error('OAuth session persistence failed', {
           userId: authResult.user.id,
           provider
         });
-        // Continuer même si la session échoue
+        throw new Error('Session utilisateur non persist�e');
       }
+      const sessionData = sessionResult.session;
 
       // Préparer la réponse
       const responseData = {
@@ -573,3 +568,4 @@ class OAuthService {
 }
 
 module.exports = new OAuthService();
+

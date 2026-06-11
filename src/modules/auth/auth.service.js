@@ -105,28 +105,23 @@ class AuthService {
     });
 
     // Créer une session pour le token
-    let sessionData = null;
-    try {
-      const refreshToken = this.generateRefreshTokenFromUser(user);
-      const sessionResult = await sessionService.createSession({
-        accessToken: token,
-        refreshToken: refreshToken,
-        userId: user.id,
-        ipAddress: null, // Sera ajouté par le middleware
-        userAgent: null,  // Sera ajouté par le middleware
-        expiresIn: 24 * 60 * 60 // 24 heures
-      });
-      
-      if (sessionResult.success) {
-        sessionData = sessionResult.session;
-      }
-    } catch (sessionError) {
-      logger.warn('Failed to create session during login', {
-        error: sessionError.message,
+    const refreshToken = this.generateRefreshTokenFromUser(user);
+    const sessionResult = await sessionService.createSession({
+      accessToken: token,
+      refreshToken: refreshToken,
+      userId: user.id,
+      ipAddress: null, // Sera ajouté par le middleware
+      userAgent: null,  // Sera ajouté par le middleware
+      expiresIn: 24 * 60 * 60 // 24 heures
+    });
+
+    if (!sessionResult.success || !sessionResult.session) {
+      logger.error('Session persistence failed during login', {
         userId: user.id
       });
-      // Continuer même si la session échoue
+      throw new Error('Session utilisateur non persist�e');
     }
+    const sessionData = sessionResult.session;
 
     // Retourner l'utilisateur sans le mot de passe
     const userResponse = { ...user };
@@ -666,27 +661,23 @@ class AuthService {
     const jwtToken = this.generateToken(user);
 
     // Créer une session pour le token
-    let sessionData = null;
-    try {
-      const refreshToken = this.generateRefreshTokenFromUser(user);
-      const sessionResult = await sessionService.createSession({
-        accessToken: jwtToken,
-        refreshToken: refreshToken,
-        userId: user.id,
-        ipAddress: null,
-        userAgent: null,
-        expiresIn: 24 * 60 * 60 // 24 heures
-      });
-      
-      if (sessionResult.success) {
-        sessionData = sessionResult.session;
-      }
-    } catch (sessionError) {
-      logger.warn('Failed to create session during remember token login', {
-        error: sessionError.message,
+    const refreshToken = this.generateRefreshTokenFromUser(user);
+    const sessionResult = await sessionService.createSession({
+      accessToken: jwtToken,
+      refreshToken: refreshToken,
+      userId: user.id,
+      ipAddress: null,
+      userAgent: null,
+      expiresIn: 24 * 60 * 60 // 24 heures
+    });
+
+    if (!sessionResult.success || !sessionResult.session) {
+      logger.error('Session persistence failed during remember token login', {
         userId: user.id
       });
+      throw new Error('Session utilisateur non persist�e');
     }
+    const sessionData = sessionResult.session;
 
     // Retourner l'utilisateur sans le mot de passe
     const userResponse = { ...user };
@@ -1098,3 +1089,4 @@ class AuthService {
 }
 
 module.exports = new AuthService();
+
