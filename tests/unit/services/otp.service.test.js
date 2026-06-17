@@ -11,7 +11,13 @@ describe('OtpService', () => {
 
   beforeEach(() => {
     service = otpService; // Utiliser l'instance exportée
-    jest.clearAllMocks();
+    // Isolation stricte entre tests :
+    // - restoreAllMocks() rend à generateOtp sa vraie implémentation (sinon le
+    //   spy d'un test fuit et fausse "too many active OTPs").
+    // - resetAllMocks() purge les implémentations mockResolvedValue des auto-mocks
+    //   (sinon le mock validateOtp de "verify valid" fuyait vers les tests de rejet).
+    jest.restoreAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('generateEmailOtp', () => {
@@ -48,12 +54,21 @@ describe('OtpService', () => {
         .rejects.toThrow('Format d\'email invalide');
     });
 
-    it('should reject when too many active OTPs', async () => {
-      peopleRepository.findByEmail.mockResolvedValue({ id: 1 });
-      otpRepository.countActiveOtp.mockResolvedValue(3);
+    it('should reject when too many active OTPs (production)', async () => {
+      // Le rate-limit ne s'applique QU'EN production : en dev/test le service purge
+      // volontairement les OTP actifs pour ne pas bloquer les tests (otp.service L55-62).
+      // On simule donc la production pour valider le rejet.
+      const prevEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      try {
+        peopleRepository.findByEmail.mockResolvedValue({ id: 1 });
+        otpRepository.countActiveOtp.mockResolvedValue(3);
 
-      await expect(service.generateEmailOtp(1, 'test@example.com'))
-        .rejects.toThrow('Trop de codes OTP actifs pour cette personne. Veuillez patienter avant de générer un nouveau code.');
+        await expect(service.generateEmailOtp(1, 'test@example.com'))
+          .rejects.toThrow('Trop de codes OTP actifs pour cette personne. Veuillez patienter avant de générer un nouveau code.');
+      } finally {
+        process.env.NODE_ENV = prevEnv;
+      }
     });
   });
 
@@ -68,14 +83,14 @@ describe('OtpService', () => {
         expires_at: new Date(Date.now() + 15 * 60 * 1000)
       };
 
-      otpRepository.findByCodeAndPersonId.mockResolvedValue(mockOtp);
-      otpRepository.markAsUsed.mockResolvedValue(true);
+      // Le service utilise otpRepository.validateOtp(code, personId, purpose)
+      // (et non findByCodeAndPersonId/markAsUsed de l'ancienne API).
+      otpRepository.validateOtp.mockResolvedValue(mockOtp);
 
       const result = await service.verifyEmailOtp('123456', 'test@example.com', 1);
 
       expect(result).toBeDefined();
-      expect(otpRepository.findByCodeAndPersonId).toHaveBeenCalledWith('123456', 1, 'email');
-      expect(otpRepository.markAsUsed).toHaveBeenCalledWith(1);
+      expect(otpRepository.validateOtp).toHaveBeenCalledWith('123456', 1, 'email');
     });
 
     it('should reject invalid OTP code', async () => {
