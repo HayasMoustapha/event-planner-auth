@@ -4,6 +4,7 @@ const sessionRepository = require('./sessions.repository');
 const usersRepository = require('../users/users.repository');
 const { createResponse } = require('../../utils/response');
 const logger = require('../../utils/logger');
+const { ValidationError, NotFoundError, UnauthorizedError, ConflictError } = require('../../utils/app-errors');
 
 // Stockage en mémoire pour les tokens blacklistés (solution temporaire)
 const blacklistedTokens = new Map(); // token -> { timestamp, reason, userId }
@@ -379,19 +380,19 @@ class SessionService {
     // Vérifier le refresh token
     const tokenValidation = await this.verifyRefreshToken(refreshToken);
     if (!tokenValidation.valid) {
-      throw new Error(tokenValidation.message);
+      throw new UnauthorizedError(tokenValidation.message, 'REFRESH_TOKEN_INVALID');
     }
 
     // Récupérer la session associée
     const session = await sessionRepository.findByRefreshToken(refreshToken);
     if (!session) {
-      throw new Error('Session non trouvée ou expirée');
+      throw new NotFoundError('Session non trouvée ou expirée', 'SESSION_NOT_FOUND');
     }
 
     // Récupérer les informations utilisateur
     const user = await usersRepository.findById(session.user_id);
     if (!user || user.status !== 'active') {
-      throw new Error('Utilisateur non trouvé ou inactif');
+      throw new UnauthorizedError('Utilisateur non trouvé ou inactif', 'USER_NOT_FOUND_OR_INACTIVE');
     }
 
     // Générer les nouveaux tokens
@@ -432,7 +433,7 @@ class SessionService {
     const tokenValidation = await this.verifyAccessToken(accessToken);
     if (!tokenValidation.valid) {
       console.log('🔍 Debug logoutSession - Token invalide:', tokenValidation.error);
-      throw new Error('Token invalide ou expiré');
+      throw new UnauthorizedError('Token invalide ou expiré', 'TOKEN_INVALID');
     }
 
     console.log('🔍 Debug logoutSession - Token valide, user_id:', tokenValidation.decoded.id);
@@ -476,7 +477,7 @@ class SessionService {
 
     if (!session) {
       console.log('🔍 Debug logoutSession - Session toujours non trouvée après fallback');
-      throw new Error('Session non trouvée');
+      throw new NotFoundError('Session non trouvée', 'SESSION_NOT_FOUND');
     }
 
     // Désactiver la session
@@ -594,21 +595,33 @@ class SessionService {
     
     if (!tokenValidation.valid) {
       console.log('🔍 Debug validateSession - Erreur:', tokenValidation.message);
-      throw new Error(tokenValidation.message);
+      throw new UnauthorizedError(tokenValidation.message, 'TOKEN_INVALID');
     }
 
+    // The JWT is the authoritative auth signal: it is signed, has an exp, and was
+    // just checked against the blacklist in verifyAccessToken. The persisted
+    // session is supplementary metadata (device/revocation). It must NOT be
+    // required: access tokens are regenerated during the session lifecycle (e.g.
+    // on role selection the token is reissued with permissions, ~3k chars) without
+    // a matching session row, so a strict findByAccessToken lookup would 401/502
+    // every regenerated-token request (e.g. GET /api/auth/profile). Prefer the DB
+    // session when present, else authenticate from the validated token.
     const session = await sessionRepository.findByAccessToken(accessToken);
-    if (!session) {
-      return null;
-    }
 
     const user = await usersRepository.findById(tokenValidation.decoded.id);
     if (!user || user.status !== 'active') {
-      throw new Error('Utilisateur non trouvé ou inactif');
+      throw new UnauthorizedError('Utilisateur non trouvé ou inactif', 'USER_NOT_FOUND_OR_INACTIVE');
     }
 
     return {
-      session,
+      session: session || {
+        id: accessToken,
+        user_id: user.id,
+        is_active: true,
+        expires_at: tokenValidation.decoded?.exp
+          ? new Date(tokenValidation.decoded.exp * 1000)
+          : null
+      },
       user: {
         id: user.id,
         username: user.username,

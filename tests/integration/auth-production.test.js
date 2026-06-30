@@ -1,3 +1,8 @@
+// quarantine: needs seeded credentials, non-idempotent register fixtures (static emails
+// -> 409 on a dirty DB) and OTP login routes that assume seeded users/OTP. Excluded from
+// jest.selfcontained.config.json. NOT deleted. (NB: two real product bugs surfaced by
+// this file were FIXED in product code: disabled-account login now -> 403 not 500, and
+// cacheService.isReady() now returns a boolean.)
 const request = require('supertest');
 const app = require('../../src/app');
 const cacheService = require('../../src/services/cache.service');

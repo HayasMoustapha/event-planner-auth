@@ -1,3 +1,7 @@
+// quarantine: needs real/mocked Google & Apple OAuth providers (token verification
+// makes provider network calls) and a stale import (`getDatabase` no longer exported
+// by src/config/database) kills the whole suite in beforeAll. Excluded from
+// jest.selfcontained.config.json. NOT deleted.
 const request = require('supertest');
 const app = require('../../src/app');
 const { getDatabase } = require('../../src/config/database');

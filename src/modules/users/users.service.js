@@ -1,6 +1,7 @@
 const usersRepository = require('./users.repository');
 const accessesRepository = require('../accesses/accesses.repository');
 const { validateEmail, validatePassword } = require('../../utils/validators');
+const { ValidationError, NotFoundError, ConflictError, UnauthorizedError, ForbiddenError } = require('../../utils/app-errors');
 const notificationClient = require('../../../../shared/clients/notification-client');
 const authService = require('../auth/auth.service');
 
@@ -46,17 +47,17 @@ class UsersService {
     const { page = 1, limit = 10, search, status, userCode } = options;
 
     // Validation des paramètres
-    if (page < 1) throw new Error('Le numéro de page doit être supérieur à 0');
-    if (limit < 1 || limit > 100) throw new Error('La limite doit être entre 1 et 100');
+    if (page < 1) throw new ValidationError('Le numéro de page doit être supérieur à 0', 'PAGE_INVALID');
+    if (limit < 1 || limit > 100) throw new ValidationError('La limite doit être entre 1 et 100', 'LIMIT_INVALID');
 
     // Validation du statut
     if (status && !['active', 'inactive', 'lock'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
+      throw new ValidationError('Statut invalide. Valeurs autorisées: active, inactive, lock', 'STATUS_INVALID');
     }
 
     // Validation du code utilisateur
     if (userCode !== undefined && userCode !== null && typeof userCode !== 'string') {
-      throw new Error('userCode doit être une chaîne de caractères');
+      throw new ValidationError('userCode doit être une chaîne de caractères', 'USER_CODE_INVALID');
     }
 
     // Le filtre par rôle est maintenant géré via la table accesses
@@ -70,13 +71,14 @@ class UsersService {
    * @returns {Promise<Object>} Données de l'utilisateur
    */
   async getById(id, includePassword = false) {
-    if (!id || id <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId) || numericId <= 0) {
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
-    const user = await usersRepository.findById(id, includePassword);
+    const user = await usersRepository.findById(numericId, includePassword);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw new NotFoundError('Utilisateur non trouvé', 'USER_NOT_FOUND');
     }
 
     return user;
@@ -90,16 +92,16 @@ class UsersService {
    */
   async getByEmail(email, includePassword = false) {
     if (!email) {
-      throw new Error('Email requis');
+      throw new ValidationError('Email requis', 'EMAIL_REQUIRED');
     }
 
     if (!validateEmail(email)) {
-      throw new Error('Format d\'email invalide');
+      throw new ValidationError('Format d\'email invalide', 'EMAIL_INVALID');
     }
 
     const user = await usersRepository.findByEmail(email, includePassword);
     if (!user) {
-      throw new Error('Utilisateur non trouvé avec cet email');
+      throw new NotFoundError('Utilisateur non trouvé avec cet email', 'USER_NOT_FOUND');
     }
 
     return user;
@@ -113,21 +115,21 @@ class UsersService {
    */
   async getByUsername(username, includePassword = false) {
     if (!username) {
-      throw new Error('Username requis');
+      throw new ValidationError('Username requis', 'USERNAME_REQUIRED');
     }
 
     // Validation du format du username
     if (username.length < 3 || username.length > 50) {
-      throw new Error('Le username doit contenir entre 3 et 50 caractères');
+      throw new ValidationError('Le username doit contenir entre 3 et 50 caractères', 'USERNAME_INVALID');
     }
 
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
+      throw new ValidationError('Le username ne peut contenir que des lettres, chiffres et underscores', 'USERNAME_FORMAT_INVALID');
     }
 
     const user = await usersRepository.findByUsername(username, includePassword);
     if (!user) {
-      throw new Error('Utilisateur non trouvé avec ce username');
+      throw new NotFoundError('Utilisateur non trouvé avec ce username', 'USER_NOT_FOUND');
     }
 
     return user;
@@ -147,13 +149,13 @@ class UsersService {
 
     // Validation des champs obligatoires
     if (!username || !username.trim()) {
-      throw new Error('Le username est obligatoire');
+      throw new ValidationError('Le username est obligatoire', 'USERNAME_REQUIRED');
     }
     if (!email || !email.trim()) {
-      throw new Error('L\'email est obligatoire');
+      throw new ValidationError('L\'email est obligatoire', 'EMAIL_REQUIRED');
     }
     if (!password || !password.trim()) {
-      throw new Error('Le mot de passe est obligatoire');
+      throw new ValidationError('Le mot de passe est obligatoire', 'PASSWORD_REQUIRED');
     }
     // user_code est géré par le serveur (génération normalisée)
     const userCode = await this.generateUniqueUserCode();
@@ -196,33 +198,37 @@ class UsersService {
       try {
         const peopleRepository = require('../people/people.repository');
         const existingPerson = await peopleRepository.findById(person_id);
-        
+
         if (!existingPerson) {
-          throw new Error(`La personne avec ID ${person_id} n'existe pas`);
+          throw new ValidationError(`La personne avec ID ${person_id} n'existe pas`, 'PERSON_NOT_FOUND');
         }
-        
+
         console.log(' Personne existante utilisée:', person_id  );
-        
+
       } catch (error) {
         console.error(' Erreur validation personne:', error.message);
+        // Conserver les erreurs client typées (ex: PERSON_NOT_FOUND) telles quelles
+        if (error instanceof ValidationError || error instanceof NotFoundError) {
+          throw error;
+        }
         throw new Error(`Personne invalide: ${error.message}`);
       }
     }
 
     // Validation des formats
     if (!validateEmail(email)) {
-      throw new Error('Format d\'email invalide');
+      throw new ValidationError('Format d\'email invalide', 'EMAIL_INVALID');
     }
     if (!validatePassword(password)) {
-      throw new Error('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre');
+      throw new ValidationError('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre', 'PASSWORD_WEAK');
     }
 
     // Validation du username
     if (username.length < 3 || username.length > 50) {
-      throw new Error('Le username doit contenir entre 3 et 50 caractères');
+      throw new ValidationError('Le username doit contenir entre 3 et 50 caractères', 'USERNAME_INVALID');
     }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
+      throw new ValidationError('Le username ne peut contenir que des lettres, chiffres et underscores', 'USERNAME_FORMAT_INVALID');
     }
 
     // Statut géré par le serveur
@@ -243,19 +249,19 @@ class UsersService {
     // Vérification des doublons
     const existingEmail = await usersRepository.findByEmail(cleanData.email);
     if (existingEmail) {
-      throw new Error('Un utilisateur avec cet email existe déjà');
+      throw new ConflictError('Un utilisateur avec cet email existe déjà', 'EMAIL_ALREADY_EXISTS');
     }
 
     const existingUsername = await usersRepository.findByUsername(cleanData.username);
     if (existingUsername) {
-      throw new Error('Ce nom d\'utilisateur est déjà utilisé');
+      throw new ConflictError('Ce nom d\'utilisateur est déjà utilisé', 'USERNAME_ALREADY_EXISTS');
     }
 
     // Vérifier si le téléphone est déjà utilisé dans la table users
     if (cleanData.phone) {
       const existingPhone = await usersRepository.findByPhone(cleanData.phone);
       if (existingPhone) {
-        throw new Error('Ce numéro de téléphone est déjà utilisé par un autre utilisateur');
+        throw new ConflictError('Ce numéro de téléphone est déjà utilisé par un autre utilisateur', 'PHONE_ALREADY_EXISTS');
       }
     }
 
@@ -263,7 +269,7 @@ class UsersService {
     if (person_id) {
       const personExists = await this.checkPersonExists(person_id);
       if (!personExists) {
-        throw new Error('La personne spécifiée n\'existe pas');
+        throw new ValidationError('La personne spécifiée n\'existe pas', 'PERSON_NOT_FOUND');
       }
     }
 
@@ -319,13 +325,13 @@ class UsersService {
    */
   async update(id, updateData, updatedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     // Vérifier si l'utilisateur existe
     const existingUser = await usersRepository.findById(id);
     if (!existingUser) {
-      throw new Error('Utilisateur non trouvé');
+      throw new NotFoundError('Utilisateur non trouvé', 'USER_NOT_FOUND');
     }
 
     const {
@@ -344,17 +350,17 @@ class UsersService {
 
     // Validation des formats si fournis
     if (email && !validateEmail(email)) {
-      throw new Error('Format d\'email invalide');
+      throw new ValidationError('Format d\'email invalide', 'EMAIL_INVALID');
     }
     if (password && !validatePassword(password)) {
-      throw new Error('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre');
+      throw new ValidationError('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre', 'PASSWORD_WEAK');
     }
     if (username) {
       if (username.length < 3 || username.length > 50) {
-        throw new Error('Le username doit contenir entre 3 et 50 caractères');
+        throw new ValidationError('Le username doit contenir entre 3 et 50 caractères', 'USERNAME_INVALID');
       }
       if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-        throw new Error('Le username ne peut contenir que des lettres, chiffres et underscores');
+        throw new ValidationError('Le username ne peut contenir que des lettres, chiffres et underscores', 'USERNAME_FORMAT_INVALID');
       }
     }
     // Nettoyage des données
@@ -378,14 +384,14 @@ class UsersService {
     if (cleanData.email && cleanData.email !== existingUser.email) {
       const existingEmail = await usersRepository.findByEmail(cleanData.email);
       if (existingEmail) {
-        throw new Error('Un utilisateur avec cet email existe déjà');
+        throw new ConflictError('Un utilisateur avec cet email existe déjà', 'EMAIL_ALREADY_EXISTS');
       }
     }
 
     if (cleanData.username && cleanData.username !== existingUser.username) {
       const existingUsername = await usersRepository.findByUsername(cleanData.username);
       if (existingUsername) {
-        throw new Error('Ce nom d\'utilisateur est déjà utilisé');
+        throw new ConflictError('Ce nom d\'utilisateur est déjà utilisé', 'USERNAME_ALREADY_EXISTS');
       }
     }
 
@@ -394,7 +400,7 @@ class UsersService {
       if (cleanData.phone) {
         const existingPhone = await usersRepository.findByPhone(cleanData.phone);
         if (existingPhone) {
-          throw new Error('Ce numéro de téléphone est déjà utilisé par un autre utilisateur');
+          throw new ConflictError('Ce numéro de téléphone est déjà utilisé par un autre utilisateur', 'PHONE_ALREADY_EXISTS');
         }
       }
     }
@@ -403,7 +409,7 @@ class UsersService {
     if (cleanData.password) {
       const passwordAlreadyUsed = await usersRepository.isPasswordAlreadyUsed(id, cleanData.password);
       if (passwordAlreadyUsed) {
-        throw new Error('Ce mot de passe a déjà été utilisé. Veuillez en choisir un autre.');
+        throw new ConflictError('Ce mot de passe a déjà été utilisé. Veuillez en choisir un autre.', 'PASSWORD_REUSED');
       }
     }
 
@@ -418,13 +424,13 @@ class UsersService {
    */
   async delete(id, deletedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     // Vérifier si l'utilisateur existe
     const user = await usersRepository.findById(id);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw new NotFoundError('Utilisateur non trouvé', 'USER_NOT_FOUND');
     }
 
     // Empêcher l'auto-suppression
@@ -441,41 +447,41 @@ class UsersService {
    */
   async updatePassword(id, currentPassword, newPassword, updatedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
     if (!currentPassword || !currentPassword.trim()) {
-      throw new Error('Le mot de passe actuel est requis');
+      throw new ValidationError('Le mot de passe actuel est requis', 'CURRENT_PASSWORD_REQUIRED');
     }
     if (!newPassword || !newPassword.trim()) {
-      throw new Error('Le nouveau mot de passe est requis');
+      throw new ValidationError('Le nouveau mot de passe est requis', 'NEW_PASSWORD_REQUIRED');
     }
 
     // Validation du nouveau mot de passe
     if (!validatePassword(newPassword)) {
-      throw new Error('Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre');
+      throw new ValidationError('Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre', 'PASSWORD_WEAK');
     }
 
     // Vérifier que le nouveau mot de passe est différent de l'ancien
     if (currentPassword === newPassword) {
-      throw new Error('Le nouveau mot de passe doit être différent de l\'ancien');
+      throw new ValidationError('Le nouveau mot de passe doit être différent de l\'ancien', 'PASSWORD_SAME_AS_OLD');
     }
 
     // Vérifier si l'utilisateur existe
     const user = await usersRepository.findById(id);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw new NotFoundError('Utilisateur non trouvé', 'USER_NOT_FOUND');
     }
 
     // Vérifier le mot de passe actuel
     const verifiedUser = await usersRepository.verifyPassword(user.email, currentPassword);
     if (!verifiedUser) {
-      throw new Error('Mot de passe actuel incorrect');
+      throw new UnauthorizedError('Mot de passe actuel incorrect', 'CURRENT_PASSWORD_INCORRECT');
     }
 
     // Vérifier si le nouveau mot de passe a déjà été utilisé
     const passwordAlreadyUsed = await usersRepository.isPasswordAlreadyUsed(id, newPassword);
     if (passwordAlreadyUsed) {
-      throw new Error('Ce mot de passe a déjà été utilisé. Veuillez en choisir un autre.');
+      throw new ConflictError('Ce mot de passe a déjà été utilisé. Veuillez en choisir un autre.', 'PASSWORD_REUSED');
     }
 
     return await usersRepository.updatePassword(id, newPassword, updatedBy);
@@ -489,28 +495,28 @@ class UsersService {
    */
   async authenticate(email, password) {
     if (!email || !email.trim()) {
-      throw new Error('Email requis');
+      throw new ValidationError('Email requis', 'EMAIL_REQUIRED');
     }
     if (!password || !password.trim()) {
-      throw new Error('Mot de passe requis');
+      throw new ValidationError('Mot de passe requis', 'PASSWORD_REQUIRED');
     }
 
     if (!validateEmail(email)) {
-      throw new Error('Format d\'email invalide');
+      throw new ValidationError('Format d\'email invalide', 'EMAIL_INVALID');
     }
 
     const user = await usersRepository.verifyPassword(email, password);
     if (!user) {
-      throw new Error('Email ou mot de passe incorrect');
+      throw new UnauthorizedError('Email ou mot de passe incorrect', 'INVALID_CREDENTIALS');
     }
 
     // Vérifier si le compte est actif
     if (user.status !== 'active') {
       if (user.status === 'lock') {
-        throw new Error('Ce compte est verrouillé. Veuillez contacter l\'administrateur.');
+        throw new ForbiddenError('Ce compte est verrouillé. Veuillez contacter l\'administrateur.', 'ACCOUNT_LOCKED');
       }
       if (user.status === 'inactive') {
-        throw new Error('Ce compte est désactivé. Veuillez contacter l\'administrateur.');
+        throw new ForbiddenError('Ce compte est désactivé. Veuillez contacter l\'administrateur.', 'ACCOUNT_DISABLED');
       }
     }
 
@@ -529,16 +535,16 @@ class UsersService {
    */
   async updateStatus(id, status, updatedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     if (!['active', 'inactive', 'lock'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
+      throw new ValidationError('Statut invalide. Valeurs autorisées: active, inactive, lock', 'STATUS_INVALID');
     }
 
     // Empêcher de verrouiller son propre compte
     if (updatedBy && updatedBy === id && status === 'lock') {
-      throw new Error('Impossible de verrouiller votre propre compte');
+      throw new ForbiddenError('Impossible de verrouiller votre propre compte', 'CANNOT_LOCK_SELF');
     }
 
     return await usersRepository.updateStatus(id, status, updatedBy);
@@ -612,30 +618,30 @@ class UsersService {
    */
   async resetPassword(email, newPassword, updatedBy = null) {
     if (!email || !email.trim()) {
-      throw new Error('Email requis');
+      throw new ValidationError('Email requis', 'EMAIL_REQUIRED');
     }
     if (!newPassword || !newPassword.trim()) {
-      throw new Error('Le nouveau mot de passe est requis');
+      throw new ValidationError('Le nouveau mot de passe est requis', 'NEW_PASSWORD_REQUIRED');
     }
 
     if (!validateEmail(email)) {
-      throw new Error('Format d\'email invalide');
+      throw new ValidationError('Format d\'email invalide', 'EMAIL_INVALID');
     }
 
     if (!validatePassword(newPassword)) {
-      throw new Error('Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre');
+      throw new ValidationError('Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre', 'PASSWORD_WEAK');
     }
 
     // Vérifier si l'utilisateur existe
     const user = await usersRepository.findByEmail(email);
     if (!user) {
-      throw new Error('Aucun utilisateur trouvé avec cet email');
+      throw new NotFoundError('Aucun utilisateur trouvé avec cet email', 'USER_NOT_FOUND');
     }
 
     // Vérifier si le nouveau mot de passe a déjà été utilisé
     const passwordAlreadyUsed = await usersRepository.isPasswordAlreadyUsed(user.id, newPassword);
     if (passwordAlreadyUsed) {
-      throw new Error('Ce mot de passe a déjà été utilisé. Veuillez en choisir un autre.');
+      throw new ConflictError('Ce mot de passe a déjà été utilisé. Veuillez en choisir un autre.', 'PASSWORD_REUSED');
     }
 
     return await usersRepository.updatePassword(user.id, newPassword, updatedBy);
@@ -650,16 +656,16 @@ class UsersService {
    */
   async addRole(userId, roleId, createdBy = null) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
     if (!roleId || roleId <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     // Vérifier si l'utilisateur existe
     const user = await usersRepository.findById(userId);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw new NotFoundError('Utilisateur non trouvé', 'USER_NOT_FOUND');
     }
 
     // Créer l'association utilisateur-rôle
@@ -680,10 +686,10 @@ class UsersService {
    */
   async removeRole(userId, roleId, deletedBy = null) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
     if (!roleId || roleId <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     // Récupérer l'access existant
@@ -691,7 +697,7 @@ class UsersService {
     const userAccess = accesses.find(access => access.role_id === roleId);
 
     if (!userAccess) {
-      throw new Error('L\'utilisateur n\'a pas ce rôle');
+      throw new NotFoundError('L\'utilisateur n\'a pas ce rôle', 'USER_ROLE_NOT_FOUND');
     }
 
     // Supprimer l'association
@@ -706,7 +712,7 @@ class UsersService {
    */
   async getUserRoles(userId, onlyActive = true) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     return await accessesRepository.findByUserId(userId, onlyActive);
@@ -714,18 +720,18 @@ class UsersService {
 
   async updateUserCode(userId, userCode, updatedBy = null) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     // Validation du code utilisateur
     if (!userCode || !userCode.trim()) {
-      throw new Error('userCode est requis');
+      throw new ValidationError('userCode est requis', 'USER_CODE_REQUIRED');
     }
 
     // Vérifier si l'utilisateur existe
     const user = await usersRepository.findById(userId);
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw new NotFoundError('Utilisateur non trouvé', 'USER_NOT_FOUND');
     }
 
     return await usersRepository.update(userId, { userCode, updatedBy });

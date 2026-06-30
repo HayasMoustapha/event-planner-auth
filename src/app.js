@@ -216,42 +216,12 @@ app.use('/api/accesses', accessesRoutes);
 // Routes internes pour inter-services (en dehors du scope auth)
 app.use('/api/internal/auth', require('./modules/auth/internal.routes')); // Routes internes pour inter-services
 
-// Middleware d'authentification robuste pour les routes protégées
-const RobustAuthMiddleware = require('../../shared/middlewares/robust-auth-middleware');
-app.use('/api', RobustAuthMiddleware.authenticate());
-
-app.use('/api/authorizations', authorizationRoutes);
-app.use('/api/menus', menuRoutes);
-app.use('/api/permissions', permissionRoutes);
-app.use('/api/roles', roleRoutes);
-app.use('/api/sessions', sessionRoutes);
-app.use('/api/sessions/monitoring', sessionMonitoringRoutes);
-
-// Routes de test
-app.use('/api/test', testRoutes);
-
-// Routes système
-app.use('/api/system', systemRoutes);
-
-// Routes de monitoring et santé
-app.use('/health', healthRoutes);
-app.use('/metrics', metricsRoutes);
-
-// Routes API pour compatibilité Postman
+// Routes publiques de monitoring/documentation sous /api (compatibilité Postman).
+// IMPORTANT: doivent être montées AVANT le middleware d'auth global /api,
+// sinon /api/health, /api/metrics et /api/docs renvoient 401 alors qu'elles
+// sont publiques par contrat (cf. liste publicRoutes du middleware de sécurité).
 app.use('/api/health', healthRoutes);
 app.use('/api/metrics', metricsRoutes);
-
-// Routes de documentation API
-app.use('/docs', docsRoutes);
-
-// Routes du dashboard de monitoring
-app.use('/dashboard', dashboardRoutes);
-
-// Nouvelles routes RBAC avancées
-app.use('/api/admin', adminRoutes);
-app.use('/api/realtime', realtimeRoutes);
-
-// Documentation API (si disponible)
 app.get('/api/docs', (req, res) => {
   res.json({
     message: 'Documentation API',
@@ -276,6 +246,37 @@ app.get('/api/docs', (req, res) => {
     }
   });
 });
+
+// Middleware d'authentification robuste pour les routes protégées
+const RobustAuthMiddleware = require('../../shared/middlewares/robust-auth-middleware');
+app.use('/api', RobustAuthMiddleware.authenticate());
+
+app.use('/api/authorizations', authorizationRoutes);
+app.use('/api/menus', menuRoutes);
+app.use('/api/permissions', permissionRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/sessions/monitoring', sessionMonitoringRoutes);
+
+// Routes de test
+app.use('/api/test', testRoutes);
+
+// Routes système
+app.use('/api/system', systemRoutes);
+
+// Routes de monitoring et santé
+app.use('/health', healthRoutes);
+app.use('/metrics', metricsRoutes);
+
+// Routes de documentation API
+app.use('/docs', docsRoutes);
+
+// Routes du dashboard de monitoring
+app.use('/dashboard', dashboardRoutes);
+
+// Nouvelles routes RBAC avancées
+app.use('/api/admin', adminRoutes);
+app.use('/api/realtime', realtimeRoutes);
 
 // Middleware d'erreurs
 app.use(notFoundHandler);

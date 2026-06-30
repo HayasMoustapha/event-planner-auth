@@ -1,3 +1,8 @@
+// quarantine: needs seeded credentials + real OTP/email flow (login uses a fixed
+// seed password, verify-email/OTP tests hard-code '123456' and need the real OTP
+// from the DB, register tests are non-idempotent -> 409 on a dirty DB). Excluded
+// from jest.selfcontained.config.json. NOT deleted: re-enable once a per-run DB
+// fixture/seed harness and OTP-readback helper exist.
 const request = require('supertest');
 const app = require('../../src/app');
 

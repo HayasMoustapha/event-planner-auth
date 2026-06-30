@@ -119,7 +119,7 @@ class AuthService {
       logger.error('Session persistence failed during login', {
         userId: user.id
       });
-      throw new Error('Session utilisateur non persist�e');
+      throw new Error('Session utilisateur non persist�e');
     }
     const sessionData = sessionResult.session;
 
@@ -177,10 +177,17 @@ class AuthService {
       status: user.status,
       type: 'access',
       
-      // Rôles et permissions depuis la base de données
+      // Rôles et permissions depuis la base de données.
+      // Le token ne stocke que les CODES de permission (chaînes) et non les
+      // objets complets (label{en,fr}+group) : cela garde le JWT petit (sinon
+      // un super-admin dépasse la limite de cookie ~4Ko). L'autorisation
+      // recharge les permissions depuis la DB par user id ; les réponses API
+      // continuent de renvoyer les objets complets.
       roles: userRoles,
-      permissions: userPermissions,
-      
+      permissions: (userPermissions || [])
+        .map((p) => (typeof p === 'string' ? p : p && p.code))
+        .filter(Boolean),
+
       // Claims standards
       iat: now,
       exp: now + (24 * 60 * 60), // 24h
@@ -675,7 +682,7 @@ class AuthService {
       logger.error('Session persistence failed during remember token login', {
         userId: user.id
       });
-      throw new Error('Session utilisateur non persist�e');
+      throw new Error('Session utilisateur non persist�e');
     }
     const sessionData = sessionResult.session;
 

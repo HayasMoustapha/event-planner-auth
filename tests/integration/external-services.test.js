@@ -1,3 +1,7 @@
+// quarantine: needs real external services / credentials (SMTP email, Twilio/Vonage SMS,
+// and live provider readiness checks). In credential-free test mode these run the mock
+// path and several assertions expect real provider connectivity. Excluded from
+// jest.selfcontained.config.json. NOT deleted.
 const request = require('supertest');
 const app = require('../../src/app');
 const emailService = require('../../src/services/email.service');

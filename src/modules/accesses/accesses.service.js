@@ -3,6 +3,7 @@ const usersRepository = require('../users/users.repository');
 const rolesRepository = require('../roles/roles.repository');
 const authService = require('../auth/auth.service');
 const { connection } = require('../../config/database');
+const { ValidationError, NotFoundError, ConflictError } = require('../../utils/app-errors');
 
 /**
  * Service pour la gestion des accès (associations utilisateur-rôle)
@@ -24,34 +25,34 @@ class AccessesService {
 
     // Validation des IDs
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     if (!roleId || roleId <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     // Validation du statut
     if (!['active', 'inactive', 'lock'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
+      throw new ValidationError('Statut invalide. Valeurs autorisées: active, inactive, lock', 'STATUS_INVALID');
     }
 
     // Vérifier si l'utilisateur existe
     const userExists = await usersRepository.findById(userId);
     if (!userExists) {
-      throw new Error('L\'utilisateur spécifié n\'existe pas');
+      throw new NotFoundError('L\'utilisateur spécifié n\'existe pas', 'USER_NOT_FOUND');
     }
 
     // Vérifier si le rôle existe
     const roleExists = await rolesRepository.findById(roleId);
     if (!roleExists) {
-      throw new Error('Le rôle spécifié n\'existe pas');
+      throw new NotFoundError('Le rôle spécifié n\'existe pas', 'ROLE_NOT_FOUND');
     }
 
     // Vérifier si l'association existe déjà
     const existingAccess = await accessesRepository.findByUserIdAndRoleId(userId, roleId);
     if (existingAccess) {
-      throw new Error('Cet utilisateur a déjà ce rôle');
+      throw new ConflictError('Cet utilisateur a déjà ce rôle', 'ACCESS_ALREADY_EXISTS');
     }
 
     // Créer l'accès
@@ -84,24 +85,24 @@ class AccessesService {
 
     // Validation de la pagination
     if (page < 1) {
-      throw new Error('Le numéro de page doit être supérieur à 0');
+      throw new ValidationError('Le numéro de page doit être supérieur à 0', 'PAGE_INVALID');
     }
 
     if (limit < 1 || limit > 100) {
-      throw new Error('La limite doit être entre 1 et 100');
+      throw new ValidationError('La limite doit être entre 1 et 100', 'LIMIT_INVALID');
     }
 
     // Validation des filtres
     if (status && !['active', 'inactive', 'lock'].includes(status)) {
-      throw new Error('Statut de filtre invalide');
+      throw new ValidationError('Statut de filtre invalide', 'STATUS_INVALID');
     }
 
     if (userId && userId <= 0) {
-      throw new Error('ID d\'utilisateur de filtre invalide');
+      throw new ValidationError('ID d\'utilisateur de filtre invalide', 'USER_ID_INVALID');
     }
 
     if (roleId && roleId <= 0) {
-      throw new Error('ID de rôle de filtre invalide');
+      throw new ValidationError('ID de rôle de filtre invalide', 'ROLE_ID_INVALID');
     }
 
     return await accessesRepository.findAll({
@@ -123,12 +124,12 @@ class AccessesService {
    */
   async getAccessById(id) {
     if (!id || id <= 0) {
-      throw new Error('ID d\'accès invalide');
+      throw new ValidationError('ID d\'accès invalide', 'ACCESS_ID_INVALID');
     }
 
     const access = await accessesRepository.findById(id);
     if (!access) {
-      throw new Error('Accès non trouvé');
+      throw new NotFoundError('Accès non trouvé', 'ACCESS_NOT_FOUND');
     }
 
     return access;
@@ -142,13 +143,13 @@ class AccessesService {
    */
   async getUserRoles(userId, onlyActive = true) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     // Vérifier si l'utilisateur existe
     const userExists = await usersRepository.findById(userId);
     if (!userExists) {
-      throw new Error('L\'utilisateur spécifié n\'existe pas');
+      throw new NotFoundError('L\'utilisateur spécifié n\'existe pas', 'USER_NOT_FOUND');
     }
 
     return await accessesRepository.findByUserId(userId, onlyActive);
@@ -162,13 +163,13 @@ class AccessesService {
    */
   async getRoleUsers(roleId, onlyActive = true) {
     if (!roleId || roleId <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     // Vérifier si le rôle existe
     const roleExists = await rolesRepository.findById(roleId);
     if (!roleExists) {
-      throw new Error('Le rôle spécifié n\'existe pas');
+      throw new NotFoundError('Le rôle spécifié n\'existe pas', 'ROLE_NOT_FOUND');
     }
 
     return await accessesRepository.findByRoleId(roleId, onlyActive);
@@ -183,17 +184,17 @@ class AccessesService {
    */
   async updateAccessStatus(id, status, updatedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID d\'accès invalide');
+      throw new ValidationError('ID d\'accès invalide', 'ACCESS_ID_INVALID');
     }
 
     if (!['active', 'inactive', 'lock'].includes(status)) {
-      throw new Error('Statut invalide. Valeurs autorisées: active, inactive, lock');
+      throw new ValidationError('Statut invalide. Valeurs autorisées: active, inactive, lock', 'STATUS_INVALID');
     }
 
     // Vérifier si l'accès existe
     const existingAccess = await accessesRepository.findById(id);
     if (!existingAccess) {
-      throw new Error('Accès non trouvé');
+      throw new NotFoundError('Accès non trouvé', 'ACCESS_NOT_FOUND');
     }
 
     const updated = await accessesRepository.updateStatus(id, status, updatedBy);
@@ -213,13 +214,13 @@ class AccessesService {
    */
   async deleteAccess(id, deletedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID d\'accès invalide');
+      throw new ValidationError('ID d\'accès invalide', 'ACCESS_ID_INVALID');
     }
 
     // Vérifier si l'accès existe
     const existingAccess = await accessesRepository.findById(id);
     if (!existingAccess) {
-      throw new Error('Accès non trouvé');
+      throw new NotFoundError('Accès non trouvé', 'ACCESS_NOT_FOUND');
     }
 
     const deleted = await accessesRepository.softDelete(id, deletedBy);
@@ -237,13 +238,13 @@ class AccessesService {
    */
   async hardDeleteAccess(id) {
     if (!id || id <= 0) {
-      throw new Error('ID d\'accès invalide');
+      throw new ValidationError('ID d\'accès invalide', 'ACCESS_ID_INVALID');
     }
 
     // Vérifier si l'accès existe
     const existingAccess = await accessesRepository.findById(id);
     if (!existingAccess) {
-      throw new Error('Accès non trouvé');
+      throw new NotFoundError('Accès non trouvé', 'ACCESS_NOT_FOUND');
     }
 
     const deleted = await accessesRepository.delete(id);
@@ -263,11 +264,11 @@ class AccessesService {
    */
   async checkUserHasRole(userId, roleId, onlyActive = true) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     if (!roleId || roleId <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     return await accessesRepository.userHasRole(userId, roleId, onlyActive);
@@ -282,24 +283,24 @@ class AccessesService {
    */
   async assignMultipleRoles(userId, roleIds, createdBy = null) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     if (!Array.isArray(roleIds) || roleIds.length === 0) {
-      throw new Error('La liste des rôles doit être un tableau non vide');
+      throw new ValidationError('La liste des rôles doit être un tableau non vide', 'ROLE_IDS_INVALID');
     }
 
     // Validation des IDs de rôles
     for (const roleId of roleIds) {
       if (!roleId || roleId <= 0) {
-        throw new Error('ID de rôle invalide dans la liste');
+        throw new ValidationError('ID de rôle invalide dans la liste', 'ROLE_ID_INVALID');
       }
     }
 
     // Vérifier si l'utilisateur existe
     const userExists = await usersRepository.findById(userId);
     if (!userExists) {
-      throw new Error('L\'utilisateur spécifié n\'existe pas');
+      throw new NotFoundError('L\'utilisateur spécifié n\'existe pas', 'USER_NOT_FOUND');
     }
 
     // Vérifier si tous les rôles existent
@@ -309,7 +310,7 @@ class AccessesService {
 
     const nonExistingRoles = existingRoles.filter(role => !role);
     if (nonExistingRoles.length > 0) {
-      throw new Error(`${nonExistingRoles.length} rôle(s) spécifié(s) n'existent pas`);
+      throw new NotFoundError(`${nonExistingRoles.length} rôle(s) spécifié(s) n'existent pas`, 'ROLE_NOT_FOUND');
     }
 
     const results = {
@@ -354,7 +355,7 @@ class AccessesService {
    */
   async getBusinessRoles(userId) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     // Récupérer les rôles métier disponibles
@@ -421,11 +422,11 @@ class AccessesService {
    */
   async selectBusinessRole(userId, roleId) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     if (!roleId || roleId <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     // Démarrer une transaction PostgreSQL
@@ -441,7 +442,7 @@ class AccessesService {
       );
 
       if (userResult.rows.length === 0) {
-        throw new Error('Utilisateur non trouvé');
+        throw new NotFoundError('Utilisateur non trouvé', 'USER_NOT_FOUND');
       }
 
       // 2. Récupérer et valider le rôle demandé
@@ -451,7 +452,7 @@ class AccessesService {
       );
 
       if (roleResult.rows.length === 0) {
-        throw new Error('Rôle métier non trouvé ou non autorisé');
+        throw new NotFoundError('Rôle métier non trouvé ou non autorisé', 'BUSINESS_ROLE_NOT_FOUND');
       }
 
       const role = roleResult.rows[0];
@@ -476,7 +477,7 @@ class AccessesService {
         const existingRole = existingBusinessRoleResult.rows[0];
 
         if (Number(existingRole.id) !== Number(role.id)) {
-          throw new Error(`L'utilisateur a déjà un rôle métier: ${existingRole.code}`);
+          throw new ConflictError(`L'utilisateur a déjà un rôle métier: ${existingRole.code}`, 'BUSINESS_ROLE_ALREADY_SET');
         }
 
         access = {
@@ -579,11 +580,11 @@ class AccessesService {
    */
   async removeMultipleRoles(userId, roleIds, deletedBy = null) {
     if (!userId || userId <= 0) {
-      throw new Error('ID d\'utilisateur invalide');
+      throw new ValidationError('ID d\'utilisateur invalide', 'USER_ID_INVALID');
     }
 
     if (!Array.isArray(roleIds) || roleIds.length === 0) {
-      throw new Error('La liste des rôles doit être un tableau non vide');
+      throw new ValidationError('La liste des rôles doit être un tableau non vide', 'ROLE_IDS_INVALID');
     }
 
     const results = {

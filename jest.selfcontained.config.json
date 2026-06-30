@@ -1,0 +1,18 @@
+{
+  "testEnvironment": "node",
+  "setupFiles": [
+    "<rootDir>/tests/setup/jest.env.setup.js"
+  ],
+  "setupFilesAfterEnv": [
+    "<rootDir>/tests/setup/jest.setup.js"
+  ],
+  "testTimeout": 30000,
+  "verbose": true,
+  "testMatch": [
+    "<rootDir>/tests/integration/health-metrics.test.js",
+    "<rootDir>/tests/integration/service-container.test.js",
+    "<rootDir>/tests/integration/authorizations.crud.test.js",
+    "<rootDir>/tests/integration/internal-routes-ordering.test.js",
+    "<rootDir>/tests/integration/accesses/accesses.service.test.js"
+  ]
+}

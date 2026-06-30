@@ -20,7 +20,7 @@ describe('🔑 Authorizations CRUD API Tests', () => {
       .post('/api/auth/login')
       .send({
         email: 'admin@eventplanner.com',
-        password: 'admin123'
+        password: 'Admin123!'
       });
 
     if (loginResponse.status === 200 && loginResponse.body.success) {
@@ -77,8 +77,10 @@ describe('🔑 Authorizations CRUD API Tests', () => {
         expect(response.body.data).toHaveProperty('menuId', 1);
         createdAuthorizationId = response.body.data.id;
       } else {
-        // Si l'autorisation existe déjà, c'est normal
-        expect([400, 409]).toContain(response.status);
+        // Selon l'état réel de la base seedée: déjà existante (400/409) OU
+        // role/permission/menu référencé absent (404, contrat correct depuis le
+        // mapping "n'existe pas" -> 404 au lieu d'un 500 opaque).
+        expect([400, 404, 409]).toContain(response.status);
       }
     });
 
@@ -301,9 +303,9 @@ describe('🔍 Authorizations Schema Validation', () => {
       menuId: 1
     };
 
-    expect(validSchema.roleId).toBeNumber();
-    expect(validSchema.permissionId).toBeNumber();
-    expect(validSchema.menuId).toBeNumber();
+    expect(typeof validSchema.roleId).toBe('number');
+    expect(typeof validSchema.permissionId).toBe('number');
+    expect(typeof validSchema.menuId).toBe('number');
     expect(validSchema.roleId).toBeGreaterThan(0);
     expect(validSchema.permissionId).toBeGreaterThan(0);
     expect(validSchema.menuId).toBeGreaterThan(0);
@@ -316,9 +318,9 @@ describe('🔍 Authorizations Schema Validation', () => {
       menuId: 2
     };
 
-    expect(validUpdateSchema.roleId).toBeNumber();
-    expect(validUpdateSchema.permissionId).toBeNumber();
-    expect(validUpdateSchema.menuId).toBeNumber();
+    expect(typeof validUpdateSchema.roleId).toBe('number');
+    expect(typeof validUpdateSchema.permissionId).toBe('number');
+    expect(typeof validUpdateSchema.menuId).toBe('number');
   });
 });
 

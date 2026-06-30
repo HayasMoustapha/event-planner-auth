@@ -1,3 +1,7 @@
+// quarantine: needs seeded credentials + real OTP readback (admin login uses a seed
+// password; verify-email/OTP steps need the actual OTP persisted in DB) and is chained
+// (downstream tests depend on the verify/login steps). Excluded from
+// jest.selfcontained.config.json. NOT deleted.
 const request = require('supertest');
 const app = require('../../src/app');
 
