@@ -15,6 +15,9 @@
     "<rootDir>/tests/integration/authorizations.crud.test.js",
     "<rootDir>/tests/integration/internal-routes-ordering.test.js",
     "<rootDir>/tests/integration/accesses/accesses.service.test.js",
-    "<rootDir>/tests/e2e/rbac-system.test.js"
+    "<rootDir>/tests/e2e/rbac-system.test.js",
+    "<rootDir>/tests/e2e/otp-flows.test.js",
+    "<rootDir>/tests/integration/auth.test.js",
+    "<rootDir>/tests/integration/auth-flows.test.js"
   ]
 }

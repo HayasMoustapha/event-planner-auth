@@ -155,7 +155,7 @@ describe('Authentication Flows E2E', () => {
           .post('/api/auth/verify-email')
           .send({
             email: 'newuser@test.com',
-            code: otpCode
+            otpCode: otpCode
           })
           .expect(200);
 
@@ -177,7 +177,9 @@ describe('Authentication Flows E2E', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.token).toBeDefined();
-      expect(response.body.data.user.email).toBe('newuser@test.com');
+      // Le service d'inscription stocke l'email utilisateur avec un suffixe "+user"
+      // (registration.service.js:179) pour éviter la collision d'unicité avec people.email.
+      expect(response.body.data.user.email).toBe('newuser@test.com+user');
 
       authToken = response.body.data.token;
     });
@@ -216,7 +218,7 @@ describe('Authentication Flows E2E', () => {
           .post('/api/auth/otp/email/verify')
           .send({
             email: 'newuser@test.com',
-            code: currentOtpCode,
+            otpCode: currentOtpCode,
             personId: testPerson.id
           })
           .expect(200);
@@ -236,7 +238,7 @@ describe('Authentication Flows E2E', () => {
         .post('/api/auth/otp/email/verify')
         .send({
           email: 'newuser@test.com',
-          code: '999999',
+          otpCode: '999999',
           personId: testPerson.id
         })
         .expect(401);
@@ -273,7 +275,7 @@ describe('Authentication Flows E2E', () => {
           .post('/api/auth/otp/password-reset/verify')
           .send({
             email: 'newuser@test.com',
-            code: resetOtpCode,
+            otpCode: resetOtpCode,
             newPassword: 'NewPassword123!'
           })
           .expect(200);
@@ -292,7 +294,7 @@ describe('Authentication Flows E2E', () => {
         .post('/api/auth/login')
         .send({
           email: 'admin@eventplanner.com',
-          password: 'admin123'
+          password: 'Admin123!'
         });
 
       if (response.status !== 200) {
@@ -327,7 +329,8 @@ describe('Authentication Flows E2E', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.email).toBe('newuser@test.com');
+      // users.email est stocké avec le suffixe "+user" (cf. registration.service.js:179).
+      expect(response.body.data.email).toBe('newuser@test.com+user');
     });
 
     it('should reject profile access without token', async () => {
@@ -355,7 +358,7 @@ describe('Authentication Flows E2E', () => {
         .post('/api/auth/login')
         .send({
           email: 'admin@eventplanner.com',
-          password: 'admin123'
+          password: 'Admin123!'
         });
 
       const adminToken = adminLogin.body.data.token;
