@@ -72,9 +72,10 @@ describe('🔑 Authorizations CRUD API Tests', () => {
       if (response.status === 201) {
         expect(response.body).toHaveProperty('success', true);
         expect(response.body).toHaveProperty('data');
-        expect(response.body.data).toHaveProperty('roleId', 1);
-        expect(response.body.data).toHaveProperty('permissionId', 1);
-        expect(response.body.data).toHaveProperty('menuId', 1);
+        // API contract returns snake_case DB columns (ids serialized as strings by pg).
+        expect(Number(response.body.data.role_id)).toBe(1);
+        expect(Number(response.body.data.permission_id)).toBe(1);
+        expect(Number(response.body.data.menu_id)).toBe(1);
         createdAuthorizationId = response.body.data.id;
       } else {
         // Selon l'état réel de la base seedée: déjà existante (400/409) OU
@@ -161,9 +162,10 @@ describe('🔑 Authorizations CRUD API Tests', () => {
       if (response.status === 200) {
         expect(response.body).toHaveProperty('success', true);
         expect(response.body).toHaveProperty('data');
-        expect(response.body.data).toHaveProperty('roleId', 2);
-        expect(response.body.data).toHaveProperty('permissionId', 2);
-        expect(response.body.data).toHaveProperty('menuId', 2);
+        // API contract returns snake_case DB columns (ids serialized as strings by pg).
+        expect(Number(response.body.data.role_id)).toBe(2);
+        expect(Number(response.body.data.permission_id)).toBe(2);
+        expect(Number(response.body.data.menu_id)).toBe(2);
       } else {
         // Erreur attendue si l'autorisation n'existe pas
         expect([400, 404]).toContain(response.status);

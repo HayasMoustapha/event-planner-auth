@@ -13,10 +13,12 @@ jest.mock('../../src/modules/users/users.repository');
 jest.mock('../../src/modules/accesses/accesses.repository');
 jest.mock('../../src/modules/roles/roles.repository');
 jest.mock('../../src/modules/permissions/permissions.repository');
+jest.mock('../../src/modules/people/people.repository');
 jest.mock('../../src/modules/auth/auth.service');
 jest.mock('../../../shared/clients/notification-client', () => ({}), { virtual: true });
 
 const usersRepository = require('../../src/modules/users/users.repository');
+const peopleRepository = require('../../src/modules/people/people.repository');
 const accessesRepository = require('../../src/modules/accesses/accesses.repository');
 const rolesRepository = require('../../src/modules/roles/roles.repository');
 const permissionsRepository = require('../../src/modules/permissions/permissions.repository');
@@ -58,6 +60,7 @@ describe('UsersService — typed client errors', () => {
   });
 
   test('create: duplicate email -> 409 EMAIL_ALREADY_EXISTS', async () => {
+    peopleRepository.findById.mockResolvedValue({ id: 5 });
     usersRepository.findByEmail.mockResolvedValue({ id: 9 });
     await expect(usersService.create({
       username: 'validuser', email: 'dup@b.co', password: 'Secret123', person_id: 5

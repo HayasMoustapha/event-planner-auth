@@ -8,6 +8,12 @@
  */
 process.env.NODE_ENV = 'test';
 
+// Isolate the test database: point auth at event_planner_auth_test, provisioned clean each run by
+// tests/setup/global-setup.js. Set here (setupFiles, before dotenv in jest.setup.js which never
+// overrides an already-set var) so the in-process app connects to the isolated DB, not the polluted
+// dev DB. Escape hatch: DB_NAME_OVERRIDE to target a different DB explicitly.
+process.env.DB_NAME = process.env.DB_NAME_OVERRIDE || 'event_planner_auth_test';
+
 // Disable real SMS providers (Twilio / Vonage)
 process.env.TWILIO_ACCOUNT_SID = '';
 process.env.TWILIO_AUTH_TOKEN = '';
