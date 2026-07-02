@@ -1,11 +1,13 @@
 {
   "testEnvironment": "node",
   "globalSetup": "<rootDir>/tests/setup/global-setup.js",
+  "maxWorkers": 1,
   "setupFiles": [
     "<rootDir>/tests/setup/jest.env.setup.js"
   ],
   "setupFilesAfterEnv": [
-    "<rootDir>/tests/setup/jest.setup.js"
+    "<rootDir>/tests/setup/jest.setup.js",
+    "<rootDir>/tests/setup/jest.reset.js"
   ],
   "testTimeout": 30000,
   "verbose": true,
@@ -18,6 +20,8 @@
     "<rootDir>/tests/e2e/rbac-system.test.js",
     "<rootDir>/tests/e2e/otp-flows.test.js",
     "<rootDir>/tests/integration/auth.test.js",
-    "<rootDir>/tests/integration/auth-flows.test.js"
+    "<rootDir>/tests/integration/auth-flows.test.js",
+    "<rootDir>/tests/integration/auth/postman-validation.test.js",
+    "<rootDir>/tests/integration/postman-sync.test.js"
   ]
 }

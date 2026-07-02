@@ -192,6 +192,18 @@ describe('Postman Bodies Validation Unit Tests', () => {
         email: 'otp.test@example.com'
       };
 
+      // OTP generation requires a pre-registered person (else 404).
+      await request(app)
+        .post('/api/auth/register')
+        .send({
+          firstName: 'Otp',
+          lastName: 'Test',
+          email: validBody.email,
+          phone: '+33612340000',
+          password: 'OtpTest123!',
+          username: 'otptest'
+        });
+
       const response = await request(app)
         .post('/api/auth/otp/email/generate')
         .send(validBody)
@@ -228,6 +240,8 @@ describe('Postman Bodies Validation Unit Tests', () => {
     });
 
     it('should validate phone OTP generation body', async () => {
+      // Phone OTP generation requires a person registered with this phone (else 404).
+      // The '📝 Registration' complete-body test above registers +33612345678.
       const validBody = {
         phone: '+33612345678'
       };
@@ -238,7 +252,8 @@ describe('Postman Bodies Validation Unit Tests', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.identifier).toBe(validBody.phone);
+      // Phone OTP response exposes the identifier as `data.contactInfo` (not `data.identifier`).
+      expect(response.body.data.contactInfo).toBe(validBody.phone);
     });
 
     it('should reject phone OTP generation with missing phone', async () => {
@@ -301,7 +316,7 @@ describe('Postman Bodies Validation Unit Tests', () => {
 
         const validBody = {
           email: email,
-          code: otpCode
+          otpCode: otpCode
         };
 
         const response = await request(app)
@@ -438,12 +453,14 @@ describe('Postman Bodies Validation Unit Tests', () => {
         token: 'invalid-token'
       };
 
+      // validate-token returns 200 and reports the verdict in the body; an
+      // unverifiable token yields data.valid === false rather than an error status.
       const response = await request(app)
         .post('/api/auth/validate-token')
         .send(invalidBody)
-        .expect(500);
+        .expect(200);
 
-      expect(response.body.success).toBe(false);
+      expect(response.body.data.valid).toBe(false);
     });
   });
 
@@ -574,7 +591,8 @@ describe('Postman Bodies Validation Unit Tests', () => {
 
         const validBody = {
           currentPassword: userData.password,
-          newPassword: 'NewPassword456!'
+          newPassword: 'NewPassword456!',
+          confirmPassword: 'NewPassword456!'
         };
 
         const response = await request(app)
