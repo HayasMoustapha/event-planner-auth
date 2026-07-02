@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../../src/app');
-const connection = require('../../src/config/database');
+const { connection } = require('../../src/config/database');
 
 describe('🧪 E2E Tests - Flux Complets', () => {
   let testUser = null;
