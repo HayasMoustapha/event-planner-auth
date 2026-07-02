@@ -144,6 +144,17 @@ class RegistrationService {
         }
       }
 
+      // ÉTAPE 1bis: Vérifier l'unicité du username (idx_users_username n'est pas unique en base,
+      // donc l'unicité doit être garantie applicativement, comme pour l'email).
+      const finalUsername = username?.trim() || email.split('@')[0];
+      const usernameCheckResult = await client.query(
+        'SELECT id FROM users WHERE username = $1 AND deleted_at IS NULL',
+        [finalUsername]
+      );
+      if (usernameCheckResult.rows.length > 0) {
+        throw new Error('Ce nom d\'utilisateur est déjà utilisé');
+      }
+
       // ÉTAPE 2: Créer la personne
       const personQuery = `
         INSERT INTO people (first_name, last_name, email, phone, status, created_by, created_at, updated_at)

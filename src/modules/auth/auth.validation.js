@@ -19,7 +19,9 @@ const handleValidationErrors = (req, res, next) => {
 
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
-      field: error.param,
+      // express-validator v7 exposes `path` (v6 used `param`); keep both for safety so each
+      // validation error names its field instead of returning `field: undefined`.
+      field: error.path || error.param,
       message: error.msg,
       value: error.value
     }));
