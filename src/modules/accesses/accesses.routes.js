@@ -540,9 +540,11 @@ router.get('/user/:userId/role/:roleId',
  *       404:
  *         description: Utilisateur ou rôles non trouvés
  */
-router.post('/user/:userId/roles/assign', 
+router.post('/user/:userId/roles/assign',
   rbacMiddleware.requirePermission('accesses.assign'),
-  accessesValidation.validateUserId,
+  // validateAssignMultipleRoles already validates :userId AND body.roleIds. The previously-stacked
+  // validateUserId ran its own strict handleValidationErrors first, whitelisting only :userId and
+  // rejecting the roleIds body ("Champs non autorisés ... roleIds") -> every request 400'd.
   accessesValidation.validateAssignMultipleRoles,
   accessesController.assignMultipleRoles
 );
@@ -584,9 +586,10 @@ router.post('/user/:userId/roles/assign',
  *       400:
  *         description: Erreur de validation
  */
-router.post('/user/:userId/roles/remove', 
+router.post('/user/:userId/roles/remove',
   rbacMiddleware.requirePermission('accesses.remove'),
-  accessesValidation.validateUserId,
+  // validateRemoveMultipleRoles already validates :userId AND body.roleIds (see assign route above
+  // for the same fix: the stacked validateUserId whitelist rejected the roleIds body).
   accessesValidation.validateRemoveMultipleRoles,
   accessesController.removeMultipleRoles
 );
