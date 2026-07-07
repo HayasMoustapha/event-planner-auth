@@ -1,21 +1,89 @@
+// De-quarantined: OAuth provider token verification (Google/Apple) is mocked at
+// the module boundary so the real verification code path runs deterministically
+// WITHOUT any network call to Google/Apple. The stale `getDatabase` import was
+// replaced by the actual `connection` export of src/config/database.
+//
+// Provider mocking strategy:
+//   - OAUTH_MOCK / *_OAUTH_MOCK forced to 'false' so the service does NOT take its
+//     built-in dev mock shortcut and instead exercises the real verify* methods
+//     and the security/config middlewares (token-format, config validation).
+//   - google-auth-library.OAuth2Client.verifyIdToken is mocked to reject with an
+//     `invalid_token` error -> service throws "Token Google invalide ou expiré"
+//     -> OAuthErrorHandler maps to 401 GOOGLE_TOKEN_INVALID.
+//   - axios.get (used by verifyAppleToken to fetch Apple's JWKS) is mocked to
+//     reject with a `jwt`-containing message -> service throws "Token Apple
+//     invalide ou expiré" -> OAuthErrorHandler maps to 401 APPLE_TOKEN_INVALID.
+// No src/ changes; provider mocks are test-file scope.
+
+// Force real verification path (disable the service's built-in dev mock) BEFORE
+// the app / oauth.service module graph is required. This activates the real
+// token-format, config-validation and verification middlewares.
+process.env.OAUTH_MOCK = 'false';
+process.env.GOOGLE_OAUTH_MOCK = 'false';
+process.env.APPLE_OAUTH_MOCK = 'false';
+
+// With mock OFF, the `validateOAuthConfig` middleware runs on every /google and
+// /apple request and returns 500 OAUTH_CONFIG_ERROR unless real-looking provider
+// credentials are present. Provide non-placeholder values so config validation
+// passes and requests reach the security/format/verification stages the tests
+// actually target. (Values are deliberately NOT among the service's placeholder
+// patterns: no `your_`, `example.com`, `test_key`, `test-secret`, etc.)
+const OAUTH_TEST_CONFIG = {
+  GOOGLE_CLIENT_ID: '918273645-googleoauthint.apps.googleusercontent.local',
+  GOOGLE_CLIENT_SECRET: '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value',
+  APPLE_CLIENT_ID: 'com.eventplanner.oauthint',
+  APPLE_TEAM_ID: 'ABCDE12345',
+  APPLE_KEY_ID: 'KEY9876XYZ',
+  APPLE_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\nMIGintegrationkeymaterial\n-----END PRIVATE KEY-----'
+};
+Object.assign(process.env, OAUTH_TEST_CONFIG);
+
+// Mock the Google OAuth client so verifyIdToken never contacts Google and fails
+// deterministically with an `invalid_token` error.
+jest.mock('google-auth-library', () => {
+  return {
+    OAuth2Client: jest.fn().mockImplementation(() => ({
+      verifyIdToken: jest.fn().mockRejectedValue(new Error('invalid_token: signature verification failed'))
+    }))
+  };
+});
+
+// Mock axios so the Apple JWKS fetch never hits the network and fails with a
+// `jwt`-containing message (routes to the Apple-invalid branch of the service).
+jest.mock('axios', () => ({
+  get: jest.fn().mockRejectedValue(new Error('jwt verification unavailable (mocked)')),
+  post: jest.fn().mockRejectedValue(new Error('jwt verification unavailable (mocked)'))
+}));
+
 const request = require('supertest');
 const app = require('../../src/app');
-const { getDatabase } = require('../../src/config/database');
+const { connection } = require('../../src/config/database');
+
+// superagent 10.x does not set a default User-Agent header, and the OAuth
+// `validateSecurityHeaders` middleware rejects requests whose User-Agent is
+// missing or shorter than 10 chars (INVALID_USER_AGENT). Provide a realistic UA
+// on every request that is meant to pass that gate (all except the tests that
+// deliberately send a bad User-Agent).
+const VALID_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) EventPlannerOAuthIntegrationTests/1.0';
 
 describe('OAuth Integration Tests', () => {
   let db;
-  
+
   beforeAll(async () => {
-    db = getDatabase();
+    db = connection;
   });
 
   afterAll(async () => {
-    if (db) {
-      await db.end();
-    }
+    // Do NOT close the shared pool here: `connection` is a process-wide singleton
+    // shared by the app under test. Closing it would break other suites/teardown.
   });
 
   beforeEach(async () => {
+    // Restaurer une configuration OAuth valide avant chaque test: certains tests
+    // (GET /config "missing configuration") suppriment ces variables, ce qui ferait
+    // ensuite echouer validateOAuthConfig (500) sur les requetes POST suivantes.
+    Object.assign(process.env, OAUTH_TEST_CONFIG);
+
     // Nettoyer les tables de test
     await db.query('DELETE FROM user_identities WHERE email LIKE \'test_%\'');
     await db.query('DELETE FROM users WHERE email LIKE \'test_%\'');
@@ -28,17 +96,29 @@ describe('OAuth Integration Tests', () => {
     test('should reject request without token', async () => {
       const response = await request(app)
         .post('/api/auth/oauth/google')
+        .set('User-Agent', VALID_UA)
         .send({})
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.code).toBe('GOOGLE_TOKEN_REQUIRED');
+      // With the real verification path active (mock OFF), the express-validator
+      // layer (validateGoogleLogin: idToken.notEmpty()) rejects the empty body
+      // BEFORE the controller's GOOGLE_TOKEN_REQUIRED guard is reached, so the API
+      // returns a generic "Données invalides" validation error (errors nested under
+      // `data`). The token is still rejected with 400 — the test's actual intent.
+      expect(response.body.data.errors).toBeDefined();
+      expect(Array.isArray(response.body.data.errors)).toBe(true);
+      expect(response.body.data.errors.some((e) => e.path === 'idToken' || e.param === 'idToken')).toBe(true);
     });
 
     test('should reject invalid token format', async () => {
       const response = await request(app)
         .post('/api/auth/oauth/google')
-        .send({ idToken: 'invalid-token' })
+        .set('User-Agent', VALID_UA)
+        // Must be within the size window (100-2500) so the size guard passes and
+        // the JWT-format guard (parts.length !== 3) fires. A single segment with
+        // no dots yields parts.length === 1 -> INVALID_JWT_FORMAT.
+        .send({ idToken: 'x'.repeat(120) })
         .expect(400);
 
       expect(response.body.success).toBe(false);
@@ -49,6 +129,7 @@ describe('OAuth Integration Tests', () => {
       const oversizedToken = 'a'.repeat(3000);
       const response = await request(app)
         .post('/api/auth/oauth/google')
+        .set('User-Agent', VALID_UA)
         .send({ idToken: oversizedToken })
         .expect(400);
 
@@ -63,11 +144,13 @@ describe('OAuth Integration Tests', () => {
 
       const response = await request(app)
         .post('/api/auth/oauth/google')
+        .set('User-Agent', VALID_UA)
         .send({ idToken: validGoogleToken })
         .expect(401);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.code).toBe('GOOGLE_TOKEN_INVALID');
+      // OAuthErrorHandler nests the code under `data` via createResponse.
+      expect(response.body.data.code).toBe('GOOGLE_TOKEN_INVALID');
     });
   });
 
@@ -77,17 +160,25 @@ describe('OAuth Integration Tests', () => {
     test('should reject request without identity token', async () => {
       const response = await request(app)
         .post('/api/auth/oauth/apple')
+        .set('User-Agent', VALID_UA)
         .send({})
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.code).toBe('APPLE_IDENTITY_TOKEN_REQUIRED');
+      // As with Google: with mock OFF, validateAppleLogin (identityToken.notEmpty())
+      // preempts the controller's APPLE_IDENTITY_TOKEN_REQUIRED guard and returns a
+      // generic validation error; the empty body is still rejected with 400.
+      expect(response.body.data.errors).toBeDefined();
+      expect(Array.isArray(response.body.data.errors)).toBe(true);
+      expect(response.body.data.errors.some((e) => e.path === 'identityToken' || e.param === 'identityToken')).toBe(true);
     });
 
     test('should reject invalid token format', async () => {
       const response = await request(app)
         .post('/api/auth/oauth/apple')
-        .send({ identityToken: 'invalid-token' })
+        .set('User-Agent', VALID_UA)
+        // Within the size window so the JWT-format guard fires (see Google case).
+        .send({ identityToken: 'x'.repeat(120) })
         .expect(400);
 
       expect(response.body.success).toBe(false);
@@ -103,11 +194,13 @@ describe('OAuth Integration Tests', () => {
 
       const response = await request(app)
         .post('/api/auth/oauth/apple')
+        .set('User-Agent', VALID_UA)
         .send({ identityToken: validAppleToken })
         .expect(401);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.code).toBe('APPLE_TOKEN_INVALID');
+      // OAuthErrorHandler nests the code under `data` via createResponse.
+      expect(response.body.data.code).toBe('APPLE_TOKEN_INVALID');
     });
   });
 
@@ -150,11 +243,12 @@ describe('OAuth Integration Tests', () => {
       const requests = Array(15).fill().map(() =>
         request(app)
           .post('/api/auth/oauth/google')
+          .set('User-Agent', VALID_UA)
           .send({ idToken: token })
       );
 
       const responses = await Promise.all(requests);
-      
+
       // Au moins une requête devrait être limitée
       const rateLimitedResponses = responses.filter(res => res.status === 429);
       expect(rateLimitedResponses.length).toBeGreaterThan(0);
@@ -195,6 +289,7 @@ describe('OAuth Integration Tests', () => {
 
       const response = await request(app)
         .post('/api/auth/oauth/google')
+        .set('User-Agent', VALID_UA)
         .set('Origin', 'https://malicious-domain.com')
         .send({ idToken: 'valid.token.format' })
         .expect(403);
@@ -208,9 +303,10 @@ describe('OAuth Integration Tests', () => {
 
       const response = await request(app)
         .post('/api/auth/oauth/google')
+        .set('User-Agent', VALID_UA)
         .set('Origin', 'https://trusted-domain.com')
         .send({ idToken: 'valid.token.format' });
-        
+
       // La requête devrait passer la validation CORS (échouera plus tard sur le token)
       expect(response.status).not.toBe(403);
     });
@@ -223,7 +319,7 @@ describe('OAuth Service Unit Tests', () => {
   describe('checkConfiguration', () => {
     test('should return configuration status', () => {
       const config = oauthService.checkConfiguration();
-      
+
       expect(config).toBeDefined();
       expect(config.google).toBeDefined();
       expect(config.apple).toBeDefined();

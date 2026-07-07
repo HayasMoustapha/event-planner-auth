@@ -180,7 +180,10 @@ class AdminController {
       await permissionsService.connection.query(`
         INSERT INTO accesses (user_id, role_id, status, granted_at, created_at, updated_at)
         VALUES ($1, $2, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT (user_id, role_id) DO NOTHING
+        ON CONFLICT (user_id, role_id) DO UPDATE SET
+          status = 'active',
+          deleted_at = NULL,
+          updated_at = CURRENT_TIMESTAMP
       `, [userId, roleId]);
       
       // Vider le cache utilisateur

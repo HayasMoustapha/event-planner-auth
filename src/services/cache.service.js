@@ -33,6 +33,10 @@ class CacheService {
         socket: {
           host: config.REDIS_HOST,
           port: config.REDIS_PORT,
+          // node-redis v5: connectTimeout est une option de `socket`, pas top-level.
+          // Le placer ici supprime le "Connection timeout" one-off (il était ignoré
+          // au top-level et le socket utilisait le défaut court).
+          connectTimeout: 10000,
           reconnectStrategy: (retries) => {
             if (retries > 10) {
               logger.error('Redis reconnection failed after 10 attempts');
@@ -42,10 +46,7 @@ class CacheService {
           }
         },
         password: config.REDIS_PASSWORD || undefined,
-        database: config.REDIS_DB,
-        // Configuration de performance
-        connectTimeout: 10000,
-        lazyConnect: true
+        database: config.REDIS_DB
       });
 
       // Écouter les événements
@@ -79,7 +80,7 @@ class CacheService {
    * @returns {boolean} True si connecté
    */
   isReady() {
-    return this.isConnected && this.client;
+    return Boolean(this.isConnected && this.client);
   }
 
   /**

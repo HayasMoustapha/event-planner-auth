@@ -1,5 +1,6 @@
 const permissionRepository = require('./permissions.repository');
 const { createResponse } = require('../../utils/response');
+const { ValidationError, NotFoundError, ConflictError } = require('../../utils/app-errors');
 
 /**
  * Service métier pour la gestion des permissions
@@ -22,28 +23,28 @@ class PermissionService {
 
     // Validation des entrées
     if (!code || !code.trim()) {
-      throw new Error('Le code de la permission est requis');
+      throw new ValidationError('Le code de la permission est requis', 'PERMISSION_CODE_REQUIRED');
     }
 
     if (code.trim().length < 3 || code.trim().length > 100) {
-      throw new Error('Le code de la permission doit contenir entre 3 et 100 caractères');
+      throw new ValidationError('Le code de la permission doit contenir entre 3 et 100 caractères', 'PERMISSION_CODE_LENGTH_INVALID');
     }
 
     // Validation du format du code (format: resource.action)
     if (!/^[a-z_.]+[a-z_.]*$/.test(code.trim())) {
-      throw new Error('Le code doit être en minuscules avec underscores et/ou points (ex: users.read, user.read)');
+      throw new ValidationError('Le code doit être en minuscules avec underscores et/ou points (ex: users.read, user.read)', 'PERMISSION_CODE_FORMAT_INVALID');
     }
 
     if (group && group.trim().length > 50) {
-      throw new Error('Le groupe ne peut pas dépasser 50 caractères');
+      throw new ValidationError('Le groupe ne peut pas dépasser 50 caractères', 'PERMISSION_GROUP_INVALID');
     }
 
     if (group && !/^[a-z_]+$/.test(group.trim())) {
-      throw new Error('Le groupe doit être en minuscules avec underscores uniquement');
+      throw new ValidationError('Le groupe doit être en minuscules avec underscores uniquement', 'PERMISSION_GROUP_FORMAT_INVALID');
     }
 
     if (description && description.length > 255) {
-      throw new Error('La description ne peut pas dépasser 255 caractères');
+      throw new ValidationError('La description ne peut pas dépasser 255 caractères', 'PERMISSION_DESCRIPTION_INVALID');
     }
 
     // Préparation des données pour le repository
@@ -58,7 +59,7 @@ class PermissionService {
     // Vérifier si la permission existe déjà
     const existingPermission = await permissionRepository.findAll({ search: code.trim(), limit: 1 });
     if (existingPermission.permissions.length > 0) {
-      throw new Error('Une permission avec ce code existe déjà');
+      throw new ConflictError('Une permission avec ce code existe déjà', 'PERMISSION_CODE_ALREADY_EXISTS');
     }
 
     // Créer la permission
@@ -87,19 +88,19 @@ class PermissionService {
 
     // Validation des options
     if (page < 1) {
-      throw new Error('Le numéro de page doit être supérieur à 0');
+      throw new ValidationError('Le numéro de page doit être supérieur à 0', 'PAGE_INVALID');
     }
 
     if (limit < 1 || limit > 100) {
-      throw new Error('La limite doit être entre 1 et 100');
+      throw new ValidationError('La limite doit être entre 1 et 100', 'LIMIT_INVALID');
     }
 
     if (sortBy && !['code', 'description', 'group', 'created_at', 'updated_at'].includes(sortBy)) {
-      throw new Error('Le champ de tri est invalide');
+      throw new ValidationError('Le champ de tri est invalide', 'SORT_BY_INVALID');
     }
 
     if (sortOrder && !['ASC', 'DESC'].includes(sortOrder.toUpperCase())) {
-      throw new Error('L\'ordre de tri doit être ASC ou DESC');
+      throw new ValidationError('L\'ordre de tri doit être ASC ou DESC', 'SORT_ORDER_INVALID');
     }
 
     const searchOptions = {
@@ -122,12 +123,12 @@ class PermissionService {
    */
   async getPermissionById(id) {
     if (!id || id <= 0) {
-      throw new Error('ID de permission invalide');
+      throw new ValidationError('ID de permission invalide', 'PERMISSION_ID_INVALID');
     }
 
     const permission = await permissionRepository.findById(id);
     if (!permission) {
-      throw new Error('Permission non trouvée');
+      throw new NotFoundError('Permission non trouvée', 'PERMISSION_NOT_FOUND');
     }
 
     return permission;
@@ -142,13 +143,13 @@ class PermissionService {
    */
   async updatePermission(id, updateData, updatedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID de permission invalide');
+      throw new ValidationError('ID de permission invalide', 'PERMISSION_ID_INVALID');
     }
 
     // Vérifier si la permission existe
     const existingPermission = await permissionRepository.findById(id);
     if (!existingPermission) {
-      throw new Error('Permission non trouvée');
+      throw new NotFoundError('Permission non trouvée', 'PERMISSION_NOT_FOUND');
     }
 
     // Validation des données de mise à jour
@@ -161,40 +162,40 @@ class PermissionService {
 
     if (code !== undefined) {
       if (!code || !code.trim()) {
-        throw new Error('Le code de la permission est requis');
+        throw new ValidationError('Le code de la permission est requis', 'PERMISSION_CODE_REQUIRED');
       }
       if (code.trim().length < 3 || code.trim().length > 100) {
-        throw new Error('Le code de la permission doit contenir entre 3 et 100 caractères');
+        throw new ValidationError('Le code de la permission doit contenir entre 3 et 100 caractères', 'PERMISSION_CODE_LENGTH_INVALID');
       }
 
       // Vérifier si le nouveau code est déjà utilisé par une autre permission
       const codeExists = await permissionRepository.findByCode(code.trim());
       if (codeExists && codeExists.id !== id) {
-        throw new Error('Une permission avec ce code existe déjà');
+        throw new ConflictError('Une permission avec ce code existe déjà', 'PERMISSION_CODE_ALREADY_EXISTS');
       }
     }
 
     if (label !== undefined) {
       if (typeof label !== 'object' || label === null) {
-        throw new Error('Le label doit être un objet JSON');
+        throw new ValidationError('Le label doit être un objet JSON', 'PERMISSION_LABEL_INVALID');
       }
     }
 
     if (description !== undefined && description !== null) {
       if (typeof description !== 'object') {
-        throw new Error('La description doit être un objet JSON');
+        throw new ValidationError('La description doit être un objet JSON', 'PERMISSION_DESCRIPTION_INVALID');
       }
     }
 
     if (group !== undefined) {
       if (!group || !group.trim()) {
-        throw new Error('Le groupe est requis');
+        throw new ValidationError('Le groupe est requis', 'PERMISSION_GROUP_REQUIRED');
       }
       if (group.trim().length < 2 || group.trim().length > 50) {
-        throw new Error('Le groupe doit contenir entre 2 et 50 caractères');
+        throw new ValidationError('Le groupe doit contenir entre 2 et 50 caractères', 'PERMISSION_GROUP_INVALID');
       }
       if (!/^[a-z_]+$/.test(group.trim())) {
-        throw new Error('Le groupe doit être en minuscules avec underscores uniquement');
+        throw new ValidationError('Le groupe doit être en minuscules avec underscores uniquement', 'PERMISSION_GROUP_FORMAT_INVALID');
       }
     }
 
@@ -219,13 +220,13 @@ class PermissionService {
    */
   async deletePermission(id, deletedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID de permission invalide');
+      throw new ValidationError('ID de permission invalide', 'PERMISSION_ID_INVALID');
     }
 
     // Vérifier si la permission existe
     const permission = await permissionRepository.findById(id);
     if (!permission) {
-      throw new Error('Permission non trouvée');
+      throw new NotFoundError('Permission non trouvée', 'PERMISSION_NOT_FOUND');
     }
 
     // Empêcher la suppression de permissions système critiques
@@ -241,7 +242,7 @@ class PermissionService {
     ];
 
     if (criticalPermissions.includes(permission.code)) {
-      throw new Error('Impossible de supprimer une permission système critique');
+      throw new ConflictError('Impossible de supprimer une permission système critique', 'PERMISSION_SYSTEM_PROTECTED');
     }
 
     // Supprimer la permission
@@ -261,7 +262,7 @@ class PermissionService {
    */
   async getUserPermissions(userId) {
     if (!userId || userId <= 0) {
-      throw new Error('ID utilisateur invalide');
+      throw new ValidationError('ID utilisateur invalide', 'USER_ID_INVALID');
     }
 
     return await permissionRepository.getUserPermissions(userId);
@@ -292,7 +293,7 @@ class PermissionService {
    */
   async getRolePermissions(roleId) {
     if (!roleId || roleId <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     return await permissionRepository.getRolePermissions(roleId);
@@ -313,7 +314,7 @@ class PermissionService {
    */
   async getActionsByResource(resource) {
     if (!resource || !resource.trim()) {
-      throw new Error('Nom de ressource requis');
+      throw new ValidationError('Nom de ressource requis', 'RESOURCE_REQUIRED');
     }
 
     return await permissionRepository.getActionsByResource(resource.trim());
@@ -336,18 +337,18 @@ class PermissionService {
    */
   async generateResourcePermissions(group, actions, createdBy = null) {
     if (!group || !group.trim()) {
-      throw new Error('Nom de groupe requis');
+      throw new ValidationError('Nom de groupe requis', 'PERMISSION_GROUP_REQUIRED');
     }
 
     if (!Array.isArray(actions) || actions.length === 0) {
-      throw new Error('Liste d\'actions requise');
+      throw new ValidationError('Liste d\'actions requise', 'ACTIONS_REQUIRED');
     }
 
     const validActions = ['create', 'read', 'update', 'delete', 'manage', 'view', 'list'];
     const invalidActions = actions.filter(action => !validActions.includes(action));
 
     if (invalidActions.length > 0) {
-      throw new Error(`Actions invalides: ${invalidActions.join(', ')}`);
+      throw new ValidationError(`Actions invalides: ${invalidActions.join(', ')}`, 'ACTIONS_INVALID');
     }
 
     const createdPermissions = [];

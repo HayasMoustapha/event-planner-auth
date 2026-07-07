@@ -1,0 +1,34 @@
+name: CI
+
+# E-CI — Gate CI de event-planner-auth sur le patron prouvé (core/payment) :
+# la suite UNITAIRE (sans base) tourne en vert et devient un gate sur chaque
+# PR/poussée vers main.
+#
+# Les suites dépendant d'une base / de l'app (accesses.service, auth.test,
+# postman-validation) ont été reclassées sous tests/integration et seront
+# ajoutées plus tard en job dédié avec un service postgres, pour garder ce gate
+# FIABLE et VERT.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit:
+    name: Tests unitaires (sans base)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install (npm ci)
+        run: npm ci
+      - name: Tests unitaires
+        run: npm run test:unit
+        env:
+          NODE_ENV: test
+          CI: "true"

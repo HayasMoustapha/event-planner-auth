@@ -32,7 +32,6 @@ describe('🛡️ E2E Tests - RBAC System (4 rôles)', () => {
     const personResult = await connection.query(
       `INSERT INTO people (first_name, last_name, email, phone, status, created_at, updated_at)
        VALUES ($1, $2, $3, $4, 'active', NOW(), NOW())
-       ON CONFLICT (email) DO UPDATE SET updated_at = NOW()
        RETURNING id`,
       [userData.first_name, userData.last_name, userData.email, userData.phone]
     );
@@ -44,7 +43,6 @@ describe('🛡️ E2E Tests - RBAC System (4 rôles)', () => {
     const userResult = await connection.query(
       `INSERT INTO users (person_id, user_code, username, email, phone, password, status, email_verified_at, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, 'active', NOW(), NOW(), NOW())
-       ON CONFLICT (email) DO UPDATE SET updated_at = NOW()
        RETURNING id`,
       [personId, userCode, userData.username, userData.email, userData.phone, passwordHash]
     );

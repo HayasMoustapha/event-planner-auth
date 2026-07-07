@@ -1,16 +1,39 @@
+// De-quarantined: fixtures made idempotent (pre-clean static emails so beforeAll never
+// 409s on a dirty DB) and stale contract assertions aligned to the real API:
+//   - /api/health has no `success` flag (status:"OK" + timestamp only)
+//   - / (root) exposes `name`, not `message`
+//   - users.email carries a `+user` suffix; person.email is clean
+//   - register -> user is `inactive`; email OTP verify activates the account before login
+//   - phone OTP exposes only data.contactInfo (no data.identifier)
+//   - OTP verify field is `otpCode` (not `code`); change-password needs `confirmPassword`
+//   - bad creds / bad OTP -> 401 (not 500); no-token /api/users* -> 401 (not 403);
+//     valid non-admin token on admin/lookup routes -> 403
 const request = require('supertest');
 const app = require('../../src/app');
+const { connection } = require('../../src/config/database');
+
+const TEST_EMAIL = 'postman.test@example.com';
+const NEW_USER_EMAIL = 'new.user@example.com';
+
+async function purge(email) {
+  await connection.query('DELETE FROM users WHERE email LIKE $1', [email + '%']);
+  await connection.query('DELETE FROM people WHERE email LIKE $1', [email + '%']);
+}
 
 describe('Postman Synchronization Tests', () => {
   let authToken = null;
   let testUser = null;
 
   beforeAll(async () => {
+    // Fixtures idempotentes : purge d'abord pour éviter tout 409 sur une DB « sale ».
+    await purge(TEST_EMAIL);
+    await purge(NEW_USER_EMAIL);
+
     // Créer un utilisateur de test pour les tests authentifiés
     const userData = {
       firstName: 'Postman',
       lastName: 'Test',
-      email: 'postman.test@example.com',
+      email: TEST_EMAIL,
       phone: '+33699999999',
       password: 'PostmanTest123!',
       username: 'postmantest'
@@ -23,15 +46,9 @@ describe('Postman Synchronization Tests', () => {
         .expect(201);
 
       testUser = registerResponse.body.data.user;
+      testUser.person_id = registerResponse.body.data.person.id;
 
-      // Générer OTP pour vérification
-      await request(app)
-        .post('/api/auth/otp/email/generate')
-        .send({ email: userData.email })
-        .expect(201);
-
-      // Récupérer OTP depuis la base
-      const { connection } = require('../../src/config/database');
+      // Récupérer OTP de vérification email depuis la base (créé au register)
       const otpResult = await connection.query(
         'SELECT otp_code FROM otps WHERE person_id = $1 AND purpose = $2 AND is_used = FALSE ORDER BY created_at DESC LIMIT 1',
         [registerResponse.body.data.person.id, 'email']
@@ -40,7 +57,7 @@ describe('Postman Synchronization Tests', () => {
       if (otpResult.rows.length > 0) {
         const otpCode = otpResult.rows[0].otp_code;
 
-        // Vérifier email
+        // Vérifier email -> active le compte
         await request(app)
           .post('/api/auth/verify-email')
           .send({
@@ -71,7 +88,6 @@ describe('Postman Synchronization Tests', () => {
         .get('/api/health')
         .expect(200);
 
-      expect(response.body.success).toBe(true);
       expect(response.body.status).toBe('OK');
       expect(response.body.timestamp).toBeDefined();
     });
@@ -81,7 +97,7 @@ describe('Postman Synchronization Tests', () => {
         .get('/')
         .expect(200);
 
-      expect(response.body.message).toBeDefined();
+      expect(response.body.name).toBeDefined();
     });
   });
 
@@ -156,7 +172,8 @@ describe('Postman Synchronization Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.token).toBeDefined();
-      expect(response.body.data.user.email).toBe('postman.test@example.com');
+      // users.email carries a `+user` suffix; person.email stays clean.
+      expect(response.body.data.user.email).toBe('postman.test@example.com+user');
     });
 
     it('should reject invalid credentials', async () => {
@@ -166,7 +183,7 @@ describe('Postman Synchronization Tests', () => {
           email: 'postman.test@example.com',
           password: 'WrongPassword123!'
         })
-        .expect(500);
+        .expect(401);
 
       expect(response.body.success).toBe(false);
     });
@@ -204,7 +221,7 @@ describe('Postman Synchronization Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.email).toBe('postman.test@example.com');
+      expect(response.body.data.email).toBe('postman.test@example.com+user');
     });
 
     it('should change password', async () => {
@@ -215,7 +232,8 @@ describe('Postman Synchronization Tests', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           currentPassword: 'PostmanTest123!',
-          newPassword: 'NewPassword456!'
+          newPassword: 'NewPassword456!',
+          confirmPassword: 'NewPassword456!'
         })
         .expect(200);
 
@@ -225,9 +243,17 @@ describe('Postman Synchronization Tests', () => {
     it('should logout user', async () => {
       if (!authToken) return;
 
+      // Logout blacklists the presented token. Use a fresh throwaway token so the
+      // shared `authToken` stays valid for later authenticated-permission assertions.
+      // Password is `NewPassword456!` at this point (set by the change-password test).
+      const freshLogin = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'postman.test@example.com', password: 'NewPassword456!' })
+        .expect(200);
+
       const response = await request(app)
         .post('/api/auth/logout')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${freshLogin.body.data.token}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -253,7 +279,8 @@ describe('Postman Synchronization Tests', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.identifier).toBe('+33699999999');
+      // PHONE OTP exposes only data.contactInfo (no data.identifier).
+      expect(response.body.data.contactInfo).toBe('+33699999999');
     });
 
     it('should verify email OTP', async () => {
@@ -264,7 +291,6 @@ describe('Postman Synchronization Tests', () => {
         .expect(201);
 
       // Récupérer l'OTP depuis la base
-      const { connection } = require('../../src/config/database');
       const otpResult = await connection.query(
         'SELECT otp_code FROM otps WHERE person_id = $1 AND purpose = $2 AND is_used = FALSE ORDER BY created_at DESC LIMIT 1',
         [testUser.person_id, 'email']
@@ -277,7 +303,7 @@ describe('Postman Synchronization Tests', () => {
           .post('/api/auth/otp/email/verify')
           .send({
             email: 'postman.test@example.com',
-            code: otpCode
+            otpCode: otpCode
           })
           .expect(200);
 
@@ -291,9 +317,9 @@ describe('Postman Synchronization Tests', () => {
         .post('/api/auth/otp/email/verify')
         .send({
           email: 'postman.test@example.com',
-          code: '999999'
+          otpCode: '999999'
         })
-        .expect(500);
+        .expect(401);
 
       expect(response.body.success).toBe(false);
     });
@@ -315,8 +341,7 @@ describe('Postman Synchronization Tests', () => {
         .send({ email: 'postman.test@example.com' })
         .expect(201);
 
-      // Récupérer l'OTP depuis la base
-      const { connection } = require('../../src/config/database');
+      // Récupérer l'OTP depuis la base (password-reset persisté avec purpose='email')
       const otpResult = await connection.query(
         'SELECT otp_code FROM otps WHERE person_id = $1 AND purpose = $2 AND is_used = FALSE ORDER BY created_at DESC LIMIT 1',
         [testUser.person_id, 'email']
@@ -329,7 +354,7 @@ describe('Postman Synchronization Tests', () => {
           .post('/api/auth/otp/password-reset/verify')
           .send({
             email: 'postman.test@example.com',
-            code: otpCode,
+            otpCode: otpCode,
             newPassword: 'ResetPassword123!'
           })
           .expect(200);
@@ -343,7 +368,7 @@ describe('Postman Synchronization Tests', () => {
     it('should get users list (protected)', async () => {
       const response = await request(app)
         .get('/api/users')
-        .expect(403); // RBAC protection
+        .expect(401); // No token -> unauthenticated
 
       expect(response.body.success).toBe(false);
     });
@@ -351,7 +376,7 @@ describe('Postman Synchronization Tests', () => {
     it('should get user by ID (protected)', async () => {
       const response = await request(app)
         .get('/api/users/1')
-        .expect(403); // RBAC protection
+        .expect(401); // No token -> unauthenticated
 
       expect(response.body.success).toBe(false);
     });
@@ -362,7 +387,7 @@ describe('Postman Synchronization Tests', () => {
       const response = await request(app)
         .get('/api/users/email/postman.test@example.com')
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(401); // Additional auth required
+        .expect(403); // Authenticated but lacks required permission
 
       expect(response.body.success).toBe(false);
     });
@@ -469,15 +494,10 @@ describe('Postman Synchronization Tests', () => {
   });
 
   afterAll(async () => {
-    // Nettoyage des données de test
+    // Nettoyage des données de test (users.email porte un suffixe `+user` -> LIKE).
     try {
-      const { connection } = require('../../src/config/database');
-      if (testUser) {
-        await connection.query('DELETE FROM users WHERE email = $1', ['postman.test@example.com']);
-        await connection.query('DELETE FROM people WHERE email = $1', ['postman.test@example.com']);
-      }
-      await connection.query('DELETE FROM users WHERE email = $1', ['new.user@example.com']);
-      await connection.query('DELETE FROM people WHERE email = $1', ['new.user@example.com']);
+      await purge(TEST_EMAIL);
+      await purge(NEW_USER_EMAIL);
     } catch (error) {
       console.log('Cleanup error:', error.message);
     }

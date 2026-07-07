@@ -38,6 +38,15 @@ class RbacSeeder {
         description: { en: 'End user access', fr: 'Accès utilisateur final' },
         is_system: true,
         level: 4
+      },
+      {
+        // Rôle dédié au scan : un opérateur de porte ne doit PAS avoir tous les
+        // droits d'un organisateur, seulement le strict nécessaire au scan.
+        code: 'scan_operator',
+        label: { en: 'Scan Operator', fr: 'Opérateur de Scan' },
+        description: { en: 'On-site ticket scanning only', fr: 'Scan des billets sur site uniquement' },
+        is_system: false,
+        level: 4
       }
     ];
 
@@ -86,6 +95,12 @@ class RbacSeeder {
       { code: 'marketplace.update', group: 'marketplace', label: { en: 'Update Marketplace', fr: 'Mettre à Jour Marketplace' } },
       { code: 'marketplace.delete', group: 'marketplace', label: { en: 'Delete Marketplace', fr: 'Supprimer Marketplace' } },
 
+      // Scans permissions (dedicated scan operator scope)
+      { code: 'scans.validate', group: 'scans', label: { en: 'Validate Scan', fr: 'Valider Scan' } },
+      { code: 'scans.sessions.create', group: 'scans', label: { en: 'Create Scan Session', fr: 'Créer Session Scan' } },
+      { code: 'scans.sessions.read', group: 'scans', label: { en: 'Read Scan Session', fr: 'Lire Session Scan' } },
+      { code: 'scans.history.read', group: 'scans', label: { en: 'Read Scan History', fr: 'Lire Historique Scans' } },
+
       // System permissions
       { code: 'system.health', group: 'system', label: { en: 'System Health', fr: 'Santé Système' } },
       { code: 'system.logs', group: 'system', label: { en: 'System Logs', fr: 'Journaux Système' } },
@@ -107,6 +122,11 @@ class RbacSeeder {
       ],
       'user': [
         'events.read', 'tickets.read', 'guests.read'
+      ],
+      // Scope strictement minimal : valider un billet, gérer/lire sa session de
+      // scan et consulter l'historique. Aucun droit de gestion d'événement.
+      'scan_operator': [
+        'scans.validate', 'scans.sessions.create', 'scans.sessions.read', 'scans.history.read'
       ]
     };
   }

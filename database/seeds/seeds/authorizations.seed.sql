@@ -11,13 +11,13 @@
 -- 1. CLEANUP
 -- ========================================
 
--- Remove authorizations for roles outside the 4 target roles
+-- Remove authorizations for roles outside the target roles
 DELETE FROM authorizations
-WHERE role_id IN (SELECT id FROM roles WHERE code NOT IN ('super_admin', 'organizer', 'designer', 'user'));
+WHERE role_id IN (SELECT id FROM roles WHERE code NOT IN ('super_admin', 'organizer', 'designer', 'user', 'scan_operator'));
 
 -- Reset ALL target roles (will be fully re-populated below)
 DELETE FROM authorizations
-WHERE role_id IN (SELECT id FROM roles WHERE code IN ('super_admin', 'organizer', 'designer', 'user'));
+WHERE role_id IN (SELECT id FROM roles WHERE code IN ('super_admin', 'organizer', 'designer', 'user', 'scan_operator'));
 
 -- ========================================
 -- 2. SUPER ADMIN = ALL PERMISSIONS
@@ -253,6 +253,19 @@ INSERT INTO role_permissions (role_code, permission_code) VALUES
 
 -- === QR CODE (present ticket for scanning as attendee) ===
 ('user', 'scans.qr.decode');
+
+-- ========================================
+-- 3d. SCAN OPERATOR
+-- ========================================
+-- Scope: dedicated on-site scanning role. Strictly minimal scan permissions,
+-- NO event/guest/ticket management, NO admin. Distinct from organizer so that
+-- gate staff can validate tickets without inheriting organizer privileges.
+
+INSERT INTO role_permissions (role_code, permission_code) VALUES
+('scan_operator', 'scans.validate'),
+('scan_operator', 'scans.sessions.create'),
+('scan_operator', 'scans.sessions.read'),
+('scan_operator', 'scans.history.read');
 
 -- ========================================
 -- 4. INSERT AUTHORIZATIONS FROM TEMP TABLE

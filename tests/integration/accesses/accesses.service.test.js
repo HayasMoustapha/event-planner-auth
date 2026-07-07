@@ -1,10 +1,16 @@
 const accessesService = require('../../../src/modules/accesses/accesses.service');
 const usersRepository = require('../../../src/modules/users/users.repository');
 const rolesRepository = require('../../../src/modules/roles/roles.repository');
+const accessesRepository = require('../../../src/modules/accesses/accesses.repository');
 
-// Mock des repositories
+// Mock des repositories.
+// IMPORTANT: accesses.repository DOIT être mocké au niveau module (hoisté), sinon le
+// service utilise la vraie implémentation (DB live) et les tests dépendent de l'état réel
+// de la base; les anciens jest.mock() placés DANS les it() étaient hoistés mais les stubs
+// posés ensuite n'étaient jamais vus par le service (réf déjà capturée) -> 0 appel.
 jest.mock('../../../src/modules/users/users.repository');
 jest.mock('../../../src/modules/roles/roles.repository');
+jest.mock('../../../src/modules/accesses/accesses.repository');
 
 describe('AccessesService', () => {
   beforeEach(() => {
@@ -16,7 +22,9 @@ describe('AccessesService', () => {
       // Mock des repositories
       usersRepository.findById.mockResolvedValue({ id: 1, username: 'testuser' });
       rolesRepository.findById.mockResolvedValue({ id: 2, code: 'MANAGER' });
-      
+      accessesRepository.findByUserIdAndRoleId = jest.fn().mockResolvedValue(null);
+      accessesRepository.create = jest.fn().mockResolvedValue({ id: 99, userId: 1, roleId: 2, status: 'active' });
+
       const accessData = {
         userId: 1,
         roleId: 2,
@@ -71,8 +79,6 @@ describe('AccessesService', () => {
         pagination: { page: 1, limit: 10, total: 1, pages: 1 }
       };
 
-      const accessesRepository = require('../../../src/modules/accesses/accesses.repository');
-      jest.mock('../../../src/modules/accesses/accesses.repository');
       accessesRepository.findAll = jest.fn().mockResolvedValue(mockResult);
 
       const result = await accessesService.getAllAccesses();
@@ -104,9 +110,7 @@ describe('AccessesService', () => {
   describe('getUserRoles', () => {
     it('should return user roles successfully', async () => {
       usersRepository.findById.mockResolvedValue({ id: 1, username: 'testuser' });
-      
-      const accessesRepository = require('../../../src/modules/accesses/accesses.repository');
-      jest.mock('../../../src/modules/accesses/accesses.repository');
+
       accessesRepository.findByUserId = jest.fn().mockResolvedValue([
         { id: 1, userId: 1, roleId: 2, code: 'MANAGER' }
       ]);
@@ -126,8 +130,6 @@ describe('AccessesService', () => {
 
   describe('checkUserHasRole', () => {
     it('should return true if user has role', async () => {
-      const accessesRepository = require('../../../src/modules/accesses/accesses.repository');
-      jest.mock('../../../src/modules/accesses/accesses.repository');
       accessesRepository.userHasRole = jest.fn().mockResolvedValue(true);
 
       const result = await accessesService.checkUserHasRole(1, 2, true);
@@ -151,9 +153,7 @@ describe('AccessesService', () => {
     it('should assign multiple roles successfully', async () => {
       usersRepository.findById.mockResolvedValue({ id: 1, username: 'testuser' });
       rolesRepository.findById.mockResolvedValue({ id: 2, code: 'MANAGER' });
-      
-      const accessesRepository = require('../../../src/modules/accesses/accesses.repository');
-      jest.mock('../../../src/modules/accesses/accesses.repository');
+
       accessesRepository.create = jest.fn().mockResolvedValue({ id: 1, userId: 1, roleId: 2 });
       accessesRepository.findByUserIdAndRoleId = jest.fn().mockResolvedValue(null);
 

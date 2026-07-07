@@ -318,26 +318,19 @@ class RoleRepository {
     // Supprimer d'abord les associations existantes
     await this.removeAllPermissions(roleId);
 
-    const values = permissionIds.map((permissionId, index) => {
-      const baseIndex = index * 3;
-      return `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`;
-    }).join(', ');
-
-    const flatValues = permissionIds.flatMap(permissionId => [
-      roleId,
-      permissionId,
-      createdBy
-    ]);
-
+    // The query takes exactly 3 params: role_id, created_by, and the permission id array.
+    // (The previous ($1,$2,$3)-per-permission construction was dead code that mismatched the
+    // SELECT ... WHERE p.id = ANY($3) query, sending created_by into ANY() -> "malformed array literal".)
     const query = `
       INSERT INTO authorizations (role_id, permission_id, menu_id, created_by, created_at)
       SELECT $1, p.id, 1, $2, CURRENT_TIMESTAMP
       FROM permissions p
       WHERE p.id = ANY($3)
+      RETURNING id
     `;
 
     try {
-      const result = await connection.query(query, flatValues);
+      const result = await connection.query(query, [roleId, createdBy, permissionIds]);
       return result.rows.length;
     } catch (error) {
       if (error.code === '23505') {

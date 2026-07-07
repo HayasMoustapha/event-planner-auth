@@ -69,10 +69,10 @@ class PasswordController {
           result.message
         ));
       } else {
-        res.status(400).json(createResponse(
-          false,
-          result.message
-        ));
+        res.status(400).json({
+          ...createResponse(false, result.message),
+          code: 'PASSWORD_RESET_INVALID'
+        });
       }
     } catch (error) {
       logger.error('Password reset error', {

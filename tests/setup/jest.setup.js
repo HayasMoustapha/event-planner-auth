@@ -1,11 +1,17 @@
 // Configuration Jest pour les tests
+// E-CI(auth) — Charger les vraies variables d'env (.env) AVANT tout : l'ancien
+// setup codait en dur DB_PASSWORD='postgres' (erroné) -> "password authentication
+// failed" sur tous les tests touchant la base. On charge .env puis on ne fixe que
+// des valeurs de repli, sans écraser les creds DB réelles.
+require('dotenv').config();
+
 process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = 'test_secret_key_for_testing_only_32_chars';
-process.env.DB_HOST = 'localhost';
-process.env.DB_PORT = '5432';
-process.env.DB_NAME = 'event_planner_auth';
-process.env.DB_USER = 'postgres';
-process.env.DB_PASSWORD = 'postgres';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_secret_key_for_testing_only_32_chars';
+process.env.DB_HOST = process.env.DB_HOST || 'localhost';
+process.env.DB_PORT = process.env.DB_PORT || '5432';
+process.env.DB_NAME = process.env.DB_NAME || 'event_planner_auth';
+process.env.DB_USER = process.env.DB_USER || 'postgres';
+// DB_PASSWORD provient de .env (ne pas coder en dur une valeur erronée).
 
 // Configuration pour les services externes (optionnels en test)
 process.env.TWILIO_PHONE_NUMBER = '+1234567890';

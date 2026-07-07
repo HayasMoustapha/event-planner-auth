@@ -39,15 +39,15 @@ describe('JWT Configuration', () => {
     });
 
     it('should throw error for expired token', () => {
-      // Create token with very short expiration for testing
-      const shortLivedToken = jwt.sign(mockPayload, 'test_secret', { expiresIn: '1ms' });
-      
-      // Wait for token to expire
-      setTimeout(() => {
-        expect(() => {
-          jwtConfig.verifyToken(shortLivedToken);
-        }).toThrow();
-      }, 10);
+      // E-CI(auth) — l'ancien test utilisait `jwt` non importé (ReferenceError) et
+      // un setTimeout sans done (assertion jamais évaluée). On génère un token déjà
+      // expiré, signé avec le MÊME secret que jwtConfig, et on vérifie le throw.
+      const jwt = require('jsonwebtoken');
+      const expiredToken = jwt.sign(mockPayload, jwtConfig.secret, { expiresIn: '-1s' });
+
+      expect(() => {
+        jwtConfig.verifyToken(expiredToken);
+      }).toThrow();
     });
   });
 
@@ -63,10 +63,11 @@ describe('JWT Configuration', () => {
 
     it('should decode invalid token without throwing', () => {
       const invalidToken = 'invalid.token.here';
+      // jwt.decode renvoie null pour un token indécodable : ne doit pas throw,
+      // et il n'y a pas de userId exploitable.
+      expect(() => jwtConfig.decodeToken(invalidToken)).not.toThrow();
       const decoded = jwtConfig.decodeToken(invalidToken);
-      
-      expect(decoded).toBeDefined();
-      expect(decoded.userId).toBeUndefined();
+      expect(decoded?.userId).toBeUndefined();
     });
   });
 

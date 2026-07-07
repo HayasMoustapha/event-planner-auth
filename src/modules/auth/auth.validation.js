@@ -19,7 +19,9 @@ const handleValidationErrors = (req, res, next) => {
 
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
-      field: error.param,
+      // express-validator v7 exposes `path` (v6 used `param`); keep both for safety so each
+      // validation error names its field instead of returning `field: undefined`.
+      field: error.path || error.param,
       message: error.msg,
       value: error.value
     }));
@@ -369,16 +371,15 @@ const validateChangePassword = [
  * Validation pour l'inscription d'un nouvel utilisateur
  */
 const validateRegister = [
+  // Le prénom est OBLIGATOIRE. Les alias (firstName, fullName) sont déjà mappés
+  // vers first_name par normalizeAuthPayloadAliases avant cette validation, donc
+  // valider uniquement first_name suffit. Sans cette règle, un body sans prénom
+  // passait la validation puis faisait planter le service d'inscription en 500
+  // au lieu de renvoyer un 400 explicite.
   body('first_name')
-    .optional()
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Le prénom doit contenir entre 2 et 50 caractères')
-    .matches(/^[a-zA-Z0-9À-ÿ\s'-]+$/)
-    .withMessage('Le prénom peut contenir des lettres, chiffres, espaces, tirets et apostrophes'),
-
-  body('firstName')
-    .optional()
+    .notEmpty()
+    .withMessage('Le prénom est obligatoire')
+    .bail()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Le prénom doit contenir entre 2 et 50 caractères')

@@ -20,7 +20,7 @@ describe('🔑 Authorizations CRUD API Tests', () => {
       .post('/api/auth/login')
       .send({
         email: 'admin@eventplanner.com',
-        password: 'admin123'
+        password: 'Admin123!'
       });
 
     if (loginResponse.status === 200 && loginResponse.body.success) {
@@ -72,13 +72,16 @@ describe('🔑 Authorizations CRUD API Tests', () => {
       if (response.status === 201) {
         expect(response.body).toHaveProperty('success', true);
         expect(response.body).toHaveProperty('data');
-        expect(response.body.data).toHaveProperty('roleId', 1);
-        expect(response.body.data).toHaveProperty('permissionId', 1);
-        expect(response.body.data).toHaveProperty('menuId', 1);
+        // API contract returns snake_case DB columns (ids serialized as strings by pg).
+        expect(Number(response.body.data.role_id)).toBe(1);
+        expect(Number(response.body.data.permission_id)).toBe(1);
+        expect(Number(response.body.data.menu_id)).toBe(1);
         createdAuthorizationId = response.body.data.id;
       } else {
-        // Si l'autorisation existe déjà, c'est normal
-        expect([400, 409]).toContain(response.status);
+        // Selon l'état réel de la base seedée: déjà existante (400/409) OU
+        // role/permission/menu référencé absent (404, contrat correct depuis le
+        // mapping "n'existe pas" -> 404 au lieu d'un 500 opaque).
+        expect([400, 404, 409]).toContain(response.status);
       }
     });
 
@@ -159,9 +162,10 @@ describe('🔑 Authorizations CRUD API Tests', () => {
       if (response.status === 200) {
         expect(response.body).toHaveProperty('success', true);
         expect(response.body).toHaveProperty('data');
-        expect(response.body.data).toHaveProperty('roleId', 2);
-        expect(response.body.data).toHaveProperty('permissionId', 2);
-        expect(response.body.data).toHaveProperty('menuId', 2);
+        // API contract returns snake_case DB columns (ids serialized as strings by pg).
+        expect(Number(response.body.data.role_id)).toBe(2);
+        expect(Number(response.body.data.permission_id)).toBe(2);
+        expect(Number(response.body.data.menu_id)).toBe(2);
       } else {
         // Erreur attendue si l'autorisation n'existe pas
         expect([400, 404]).toContain(response.status);
@@ -301,9 +305,9 @@ describe('🔍 Authorizations Schema Validation', () => {
       menuId: 1
     };
 
-    expect(validSchema.roleId).toBeNumber();
-    expect(validSchema.permissionId).toBeNumber();
-    expect(validSchema.menuId).toBeNumber();
+    expect(typeof validSchema.roleId).toBe('number');
+    expect(typeof validSchema.permissionId).toBe('number');
+    expect(typeof validSchema.menuId).toBe('number');
     expect(validSchema.roleId).toBeGreaterThan(0);
     expect(validSchema.permissionId).toBeGreaterThan(0);
     expect(validSchema.menuId).toBeGreaterThan(0);
@@ -316,9 +320,9 @@ describe('🔍 Authorizations Schema Validation', () => {
       menuId: 2
     };
 
-    expect(validUpdateSchema.roleId).toBeNumber();
-    expect(validUpdateSchema.permissionId).toBeNumber();
-    expect(validUpdateSchema.menuId).toBeNumber();
+    expect(typeof validUpdateSchema.roleId).toBe('number');
+    expect(typeof validUpdateSchema.permissionId).toBe('number');
+    expect(typeof validUpdateSchema.menuId).toBe('number');
   });
 });
 

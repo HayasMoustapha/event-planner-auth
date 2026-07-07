@@ -1,5 +1,6 @@
 const roleRepository = require('./roles.repository');
 const { createResponse } = require('../../utils/response');
+const { ValidationError, NotFoundError, ConflictError } = require('../../utils/app-errors');
 
 /**
  * Service métier pour la gestion des rôles
@@ -23,35 +24,35 @@ class RoleService {
 
     // Validation des entrées
     if (!code || !code.trim()) {
-      throw new Error('Le code du rôle est requis');
+      throw new ValidationError('Le code du rôle est requis', 'ROLE_CODE_REQUIRED');
     }
 
     if (code.trim().length < 2 || code.trim().length > 50) {
-      throw new Error('Le code du rôle doit contenir entre 2 et 50 caractères');
+      throw new ValidationError('Le code du rôle doit contenir entre 2 et 50 caractères', 'ROLE_CODE_LENGTH_INVALID');
     }
 
     // Validation du format du code (alphanumérique avec underscores)
     if (!/^[a-zA-Z0-9_]+$/.test(code.trim())) {
-      throw new Error('Le code du rôle ne peut contenir que des lettres, chiffres et underscores');
+      throw new ValidationError('Le code du rôle ne peut contenir que des lettres, chiffres et underscores', 'ROLE_CODE_FORMAT_INVALID');
     }
 
     // Validation du niveau
     if (level !== null && (isNaN(level) || level < 0)) {
-      throw new Error('Le niveau doit être un entier positif ou null');
+      throw new ValidationError('Le niveau doit être un entier positif ou null', 'ROLE_LEVEL_INVALID');
     }
 
     // Validation du label (JSONB requis)
     if (!label) {
-      throw new Error('Le label est requis');
+      throw new ValidationError('Le label est requis', 'ROLE_LABEL_REQUIRED');
     }
 
     if (typeof label !== 'object') {
-      throw new Error('Le label doit être un objet JSON');
+      throw new ValidationError('Le label doit être un objet JSON', 'ROLE_LABEL_INVALID');
     }
 
     // Validation du type boolean
     if (typeof isSystem !== 'boolean') {
-      throw new Error('is_system doit être un boolean');
+      throw new ValidationError('is_system doit être un boolean', 'ROLE_IS_SYSTEM_INVALID');
     }
 
     // Préparation des données pour le repository
@@ -67,7 +68,7 @@ class RoleService {
     // Vérifier si le code existe déjà
     const existingRole = await roleRepository.findAll({ search: code.trim(), limit: 1 });
     if (existingRole.roles && existingRole.roles.length > 0) {
-      throw new Error('Un rôle avec ce code existe déjà');
+      throw new ConflictError('Un rôle avec ce code existe déjà', 'ROLE_CODE_ALREADY_EXISTS');
     }
 
     // Créer le rôle
@@ -94,19 +95,19 @@ class RoleService {
 
     // Validation des options
     if (page < 1) {
-      throw new Error('Le numéro de page doit être supérieur à 0');
+      throw new ValidationError('Le numéro de page doit être supérieur à 0', 'PAGE_INVALID');
     }
 
     if (limit < 1 || limit > 100) {
-      throw new Error('La limite doit être entre 1 et 100');
+      throw new ValidationError('La limite doit être entre 1 et 100', 'LIMIT_INVALID');
     }
 
     if (sortBy && !['code', 'label', 'description', 'level', 'is_system', 'created_at', 'updated_at'].includes(sortBy)) {
-      throw new Error('Le champ de tri est invalide');
+      throw new ValidationError('Le champ de tri est invalide', 'SORT_BY_INVALID');
     }
 
     if (sortOrder && !['ASC', 'DESC'].includes(sortOrder.toUpperCase())) {
-      throw new Error('L\'ordre de tri doit être ASC ou DESC');
+      throw new ValidationError('L\'ordre de tri doit être ASC ou DESC', 'SORT_ORDER_INVALID');
     }
 
     return await roleRepository.findAll({
@@ -125,12 +126,12 @@ class RoleService {
    */
   async getRoleById(id) {
     if (!id || id <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     const role = await roleRepository.findById(id);
     if (!role) {
-      throw new Error('Rôle non trouvé');
+      throw new NotFoundError('Rôle non trouvé', 'ROLE_NOT_FOUND');
     }
 
     // Récupérer les permissions associées
@@ -151,13 +152,13 @@ class RoleService {
    */
   async updateRole(id, updateData, updatedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     // Vérifier si le rôle existe
     const existingRole = await roleRepository.findById(id);
     if (!existingRole) {
-      throw new Error('Rôle non trouvé');
+      throw new NotFoundError('Rôle non trouvé', 'ROLE_NOT_FOUND');
     }
 
     // Validation des données de mise à jour
@@ -171,34 +172,34 @@ class RoleService {
 
     if (code !== undefined) {
       if (!code || !code.trim()) {
-        throw new Error('Le code du rôle est requis');
+        throw new ValidationError('Le code du rôle est requis', 'ROLE_CODE_REQUIRED');
       }
       if (code.trim().length < 2 || code.trim().length > 50) {
-        throw new Error('Le code du rôle doit contenir entre 2 et 50 caractères');
+        throw new ValidationError('Le code du rôle doit contenir entre 2 et 50 caractères', 'ROLE_CODE_LENGTH_INVALID');
       }
 
       // Vérifier si le nouveau code est déjà utilisé par un autre rôle
       const codeExists = await roleRepository.findByCode(code.trim());
       if (codeExists && codeExists.id !== id) {
-        throw new Error('Un rôle avec ce code existe déjà');
+        throw new ConflictError('Un rôle avec ce code existe déjà', 'ROLE_CODE_ALREADY_EXISTS');
       }
     }
 
     if (label !== undefined) {
       if (typeof label !== 'object' || label === null) {
-        throw new Error('Le label doit être un objet JSON');
+        throw new ValidationError('Le label doit être un objet JSON', 'ROLE_LABEL_INVALID');
       }
     }
 
     if (description !== undefined && description !== null) {
       if (typeof description !== 'object') {
-        throw new Error('La description doit être un objet JSON');
+        throw new ValidationError('La description doit être un objet JSON', 'ROLE_DESCRIPTION_INVALID');
       }
     }
 
     if (level !== undefined) {
       if (typeof level !== 'number' || level < 0 || level > 100) {
-        throw new Error('Le niveau doit être un nombre entre 0 et 100');
+        throw new ValidationError('Le niveau doit être un nombre entre 0 et 100', 'ROLE_LEVEL_INVALID');
       }
     }
 
@@ -224,25 +225,25 @@ class RoleService {
    */
   async deleteRole(id, deletedBy = null) {
     if (!id || id <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     // Vérifier si le rôle existe
     const role = await roleRepository.findById(id);
     if (!role) {
-      throw new Error('Rôle non trouvé');
+      throw new NotFoundError('Rôle non trouvé', 'ROLE_NOT_FOUND');
     }
 
     // Empêcher la suppression du rôle si des utilisateurs l'utilisent
     const roleUsers = await roleRepository.getRoleUsers(id, { limit: 1 });
     if (roleUsers.users.length > 0) {
-      throw new Error('Impossible de supprimer un rôle utilisé par des utilisateurs');
+      throw new ConflictError('Impossible de supprimer un rôle utilisé par des utilisateurs', 'ROLE_IN_USE');
     }
 
     // Empêcher la suppression du rôle si des permissions y sont associées
     const permissions = await roleRepository.getRolePermissions(id);
     if (permissions.length > 0) {
-      throw new Error('Impossible de supprimer un rôle avec des permissions associées');
+      throw new ConflictError('Impossible de supprimer un rôle avec des permissions associées', 'ROLE_HAS_PERMISSIONS');
     }
 
     // Supprimer le rôle
@@ -264,11 +265,11 @@ class RoleService {
    */
   async assignPermissions(roleId, permissionIds, createdBy = null) {
     if (!roleId || roleId <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     if (!Array.isArray(permissionIds)) {
-      throw new Error('Les IDs de permissions doivent être un tableau');
+      throw new ValidationError('Les IDs de permissions doivent être un tableau', 'PERMISSION_IDS_INVALID');
     }
 
     // Si le tableau est vide, supprimer toutes les permissions du rôle
@@ -284,7 +285,7 @@ class RoleService {
     // Vérifier si le rôle existe
     const role = await roleRepository.findById(roleId);
     if (!role) {
-      throw new Error('Rôle non trouvé');
+      throw new NotFoundError('Rôle non trouvé', 'ROLE_NOT_FOUND');
     }
 
     // Valider les IDs de permissions
@@ -293,7 +294,7 @@ class RoleService {
     );
 
     if (validPermissionIds.length !== permissionIds.length) {
-      throw new Error('Certains IDs de permissions sont invalides');
+      throw new ValidationError('Certains IDs de permissions sont invalides', 'PERMISSION_IDS_INVALID');
     }
 
     // Associer les permissions
@@ -320,12 +321,12 @@ class RoleService {
    */
   async removeAllPermissions(roleId) {
     if (!roleId || roleId <= 0) {
-      throw new Error('ID de rôle invalide');
+      throw new ValidationError('ID de rôle invalide', 'ROLE_ID_INVALID');
     }
 
     const role = await roleRepository.findById(roleId);
     if (!role) {
-      throw new Error('Rôle non trouvé');
+      throw new NotFoundError('Rôle non trouvé', 'ROLE_NOT_FOUND');
     }
 
     const removedCount = await roleRepository.removeAllPermissions(roleId);
@@ -346,7 +347,7 @@ class RoleService {
    */
   async getUserRoles(userId) {
     if (!userId || userId <= 0) {
-      throw new Error('ID utilisateur invalide');
+      throw new ValidationError('ID utilisateur invalide', 'USER_ID_INVALID');
     }
 
     return await roleRepository.getUserRoles(userId);
@@ -401,7 +402,7 @@ class RoleService {
    */
   async duplicateRole(sourceRoleId, newRoleData, createdBy = null) {
     if (!sourceRoleId || sourceRoleId <= 0) {
-      throw new Error('ID du rôle source invalide');
+      throw new ValidationError('ID du rôle source invalide', 'ROLE_ID_INVALID');
     }
 
     const { name, description } = newRoleData;
@@ -409,7 +410,7 @@ class RoleService {
     // Vérifier si le rôle source existe
     const sourceRole = await roleRepository.findById(sourceRoleId);
     if (!sourceRole) {
-      throw new Error('Rôle source non trouvé');
+      throw new NotFoundError('Rôle source non trouvé', 'ROLE_NOT_FOUND');
     }
 
     // Créer le nouveau rôle avec les mêmes propriétés

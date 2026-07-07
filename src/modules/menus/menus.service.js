@@ -19,7 +19,9 @@ class MenuService {
       route,
       component,
       parentPath,
-      menuGroup,
+      // menus.menu_group is NOT NULL DEFAULT 1; the controller/validation don't expose it, so default
+      // it here to match the DB default instead of hard-failing every create with 500.
+      menuGroup = 1,
       parentMenuId = null,
       sortOrder = 0,
       depth = 0,
@@ -69,7 +71,8 @@ class MenuService {
       status: 'active'
     });
 
-    const duplicateLabel = existingMenus.menus.find(menu =>
+    // menuRepository.findAll returns { data, pagination } (not { menus }).
+    const duplicateLabel = (existingMenus.data || []).find(menu =>
       JSON.stringify(menu.label).toLowerCase() === JSON.stringify(label).toLowerCase()
     );
 

@@ -3,6 +3,17 @@ const env = require('../config/env');
 const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
 
+  // Erreurs applicatives typees (AppError : statusCode + code explicites pour l'UX)
+  if (err && Number.isInteger(err.statusCode)) {
+    return res.status(err.statusCode).json({
+      success: false,
+      code: err.code || 'ERROR',
+      error: err.name || 'Error',
+      message: err.message,
+      ...(err.details ? { details: err.details } : {})
+    });
+  }
+
   // Erreurs de validation
   if (err.name === 'ValidationError') {
     return res.status(400).json({
@@ -83,10 +94,15 @@ const asyncHandler = (fn) => {
 const getStatusCodeFromError = (message) => {
   const lowercaseMessage = message.toLowerCase();
   if (lowercaseMessage.includes('non trouvé') || lowercaseMessage.includes('not found')) return 404;
+  // "n'existe pas" / "does not exist" = ressource introuvable -> 404 (et non 500).
+  // (à ne pas confondre avec "existe déjà" traité plus bas en 409).
+  if (lowercaseMessage.includes("n'existe pas") || lowercaseMessage.includes('does not exist')) return 404;
   if (lowercaseMessage.includes('déjà') || lowercaseMessage.includes('already') || lowercaseMessage.includes('existe déjà')) return 409;
   if (lowercaseMessage.includes('incorrect') || lowercaseMessage.includes('invalide') || lowercaseMessage.includes('invalid') || lowercaseMessage.includes('authentification a échoué')) return 401;
   if (lowercaseMessage.includes('autorisé') || lowercaseMessage.includes('unauthorized') || lowercaseMessage.includes('non autorisé')) return 401;
   if (lowercaseMessage.includes('interdit') || lowercaseMessage.includes('forbidden') || lowercaseMessage.includes('accès refusé')) return 403;
+  // Compte verrouillé/désactivé/suspendu = accès refusé (403), pas une erreur serveur (500).
+  if (lowercaseMessage.includes('verrouillé') || lowercaseMessage.includes('désactivé') || lowercaseMessage.includes('suspendu') || lowercaseMessage.includes('locked') || lowercaseMessage.includes('disabled')) return 403;
   if (lowercaseMessage.includes('requis') || lowercaseMessage.includes('required') || lowercaseMessage.includes('manquant')) return 400;
   return 500;
 };

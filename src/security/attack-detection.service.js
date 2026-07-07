@@ -14,7 +14,10 @@ class AttackDetectionService {
         new RegExp('(\\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\\b.*\\b(FROM|INTO|WHERE|SET|VALUES)\\b)', 'gi'),
         new RegExp('(\\b(OR|AND)\\s+\\d+\\s*=\\s*\\d+|\\b(OR|AND)\\s+\'[^\']*\'\\s*=\\s*\'[^\']*\'|\\b(OR|AND)\\s+\"[^\"]*\"\\s*=\\s*\"[^\"]*\")', 'gi'),
         new RegExp('(\\b(UNION|UNION\\s+ALL|UNION\\s+DISTINCT)\\s+SELECT)', 'gi'),
-        new RegExp('(\\b(EXEC|EXECUTE)\\s*\\(|\\b(SP_EXECUTESQL)\\b)', 'gi')
+        new RegExp('(\\b(EXEC|EXECUTE)\\s*\\(|\\b(SP_EXECUTESQL)\\b)', 'gi'),
+        // Stacked-query DDL (e.g. "'; DROP TABLE users; --") — a bare DROP/TRUNCATE/ALTER/CREATE on a
+        // TABLE/DATABASE/... has no FROM/WHERE clause so the pattern above misses it.
+        new RegExp('(\\b(DROP|TRUNCATE|ALTER|CREATE)\\s+(TABLE|DATABASE|SCHEMA|INDEX|VIEW)\\b)', 'gi')
       ],
       
       // Patterns XSS
@@ -552,15 +555,18 @@ class AttackDetectionService {
    * @returns {string} Niveau de risque (low, medium, high, critical)
    */
   calculateRiskLevel(attackTypes) {
+    // analyzeRequest emits camelCase attack-type keys (sqlInjection, pathTraversal, ...); the previous
+    // snake_case-only table scored every non-xss attack via the `|| 1` default -> always 'low' ->
+    // blockOnHighRisk never fired. Accept BOTH conventions so risk scoring is correct.
     const riskScores = {
-      sql_injection: 10,
+      sqlInjection: 10, sql_injection: 10,
       xss: 8,
-      command_injection: 9,
-      path_traversal: 7,
-      brute_force: 6,
-      proxy_usage: 3,
-      suspicious_fields: 4,
-      oversized_payload: 5
+      commandInjection: 9, command_injection: 9,
+      pathTraversal: 7, path_traversal: 7,
+      bruteForce: 6, brute_force: 6,
+      proxyUsage: 3, proxy_usage: 3,
+      suspiciousFields: 4, suspicious_fields: 4,
+      oversizedPayload: 5, oversized_payload: 5
     };
 
     const totalScore = attackTypes.reduce((sum, attackType) => {
